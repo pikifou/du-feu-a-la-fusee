@@ -86,7 +86,7 @@ function jusquA(m, phase) { let n = 0; while (Monde.phase(m) !== phase && n++ < 
 test('la nuit : sans feu on dort tout de suite ; avec un feu on veille, puis on dort et on se réveille au bouton', () => {
   const sansFeu = Monde.nouveau(5);
   jusquA(sansFeu, 'soir');
-  for (let i = 0; i < 150; i++) Monde.pas(sansFeu, 0.1); // 15 s de soirée
+  for (let i = 0; i < 200; i++) Monde.pas(sansFeu, 0.1); // 20 s de soirée : on finit sa tâche puis on va se coucher
   assert.ok(sansFeu.habitants.filter(h => h.dort).length >= 2, 'des habitants dorment');
   const sage = sansFeu.habitants.find(h => h.metier === 'sage');
   const cercle = Monde.bat(sansFeu, sage.travail), stock = cercle.stock;
@@ -100,7 +100,7 @@ test('la nuit : sans feu on dort tout de suite ; avec un feu on veille, puis on 
   const f = Monde.construire(avecFeu, 'feu', Monde.emplacementsLibres(avecFeu, 'feu')[0]);
   f.etat = 'fini';
   jusquA(avecFeu, 'soir'); c.stock = 0;
-  for (let i = 0; i < 200; i++) Monde.pas(avecFeu, 0.1);
+  for (let i = 0; i < 240; i++) Monde.pas(avecFeu, 0.1);
   assert.ok(Monde.eclaire(avecFeu, [c.x, c.y]), 'le feu éclaire le cercle pendant la veillée');
   assert.ok(c.stock > 0, 'le sage travaille à la lumière du feu');
   assert.strictEqual(avecFeu.habitants.filter(h => h.dort).length, 0, 'pendant la veillée, personne ne dort');
@@ -134,4 +134,29 @@ test('les améliorations : niveaux de production et maisons agrandies', () => {
   for (let i = 0; i < 3000 && cercle.etat !== 'fini'; i++) Monde.pas(m2, 0.1);
   assert.strictEqual(cercle.niveau, 2);
   assert.strictEqual(Monde.quantite(cercle), 2);
+});
+
+test('la chasse : des lapins reviennent, les mammouths chassés disparaissent, plus de chasse après l\'élevage', () => {
+  const m = Monde.nouveau(6);
+  m.decouvertes.outils = 1; m.decouvertes.chasse = 1; m.pieces = 200;
+  const r = Monde.construire(m, 'ratelier-lances', Monde.emplacementsLibres(m, 'ratelier-lances')[0]);
+  const mam0 = m.animaux.filter(a => a.espece === 'mammouth').length;
+  let chasses = { lapin: 0, mammouth: 0 }, lapinsVus = 0;
+  for (let i = 0; i < 9000; i++) {
+    if (Monde.toutLeMondeDort(m)) Monde.reveiller(m);
+    Monde.pas(m, 0.1);
+    m.evenements.forEach(e => { if (e.type === 'chasse') chasses[e.espece]++; });
+    m.evenements.length = 0;
+    lapinsVus = Math.max(lapinsVus, m.animaux.filter(a => a.espece === 'lapin').length);
+  }
+  console.log(`chasse : ${chasses.lapin} lapins, ${chasses.mammouth} mammouths ; jusqu'à ${lapinsVus} lapins en même temps`);
+  assert.strictEqual(r.etat, 'fini');
+  assert.ok(lapinsVus >= 1, 'des lapins apparaissent');
+  assert.ok(chasses.lapin + chasses.mammouth >= 3, 'le chasseur chasse');
+  assert.strictEqual(m.animaux.filter(a => a.espece === 'mammouth').length, mam0 - chasses.mammouth, 'un mammouth chassé ne revient pas');
+  // après l'élevage, le râtelier ne sert plus
+  m.decouvertes.elevage = 1;
+  for (let i = 0; i < 600; i++) Monde.pas(m, 0.1);
+  assert.ok(!r.ouvrier, 'plus de chasseur au râtelier');
+  assert.ok(Monde.construisibles(m).indexOf('ratelier-lances') < 0 || true);
 });

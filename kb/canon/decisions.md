@@ -164,3 +164,9 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée. Précise ADR-023.
 - **Décision** : (1) une merveille ou une décoration ne donne aucun bonus de jeu : elle embellit le village et raconte sa vraie histoire. (2) Au changement d'époque, les monuments déjà posés restent dans la vallée, mais ceux de l'époque précédente ne peuvent plus être construits.
 - **Contexte** : Julien : « Non, pas de bonus quand on fait une merveille. OK pour le changement d'époque. »
+
+## ADR-025 : on chasse les lapins et les mammouths ; plus de chasse après l'élevage
+- **Date** : 2026-10-19
+- **Statut** : acceptée. Tranche le rôle du mammouth (proposition de Claude jusque-là).
+- **Décision** : (1) des lapins et des mammouths se promènent dans la vallée, et les chasseurs vont les chasser (on ne voit pas que de la cueillette). (2) Un mammouth chassé disparaît pour de bon. (3) Des lapins réapparaissent de temps en temps, pour qu'il y ait toujours de quoi chasser. (4) Une fois l'élevage découvert, on n'a plus besoin d'aller chasser : c'est la transition vers le néolithique.
+- **Contexte** : Julien : « Le mammouth, une fois qu'on l'a tué, il n'est plus là. Autant faut faire spawner des lapins de temps en temps pour qu'ils aillent les manger. Comme ça, au moins, ça fait une transition. Quand après on fait de l'élevage, il n'y a plus besoin d'y aller. »

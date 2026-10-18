@@ -206,11 +206,12 @@ var Donnees = (function () {
     },
     'ratelier-lances': {
       resume: "Les chasseurs y prennent leurs lances.",
-      explication: 'Le râtelier des chasseurs. On y range les lances. Les chasseurs traversent la rivière pour suivre le mammouth et rapportent de la viande et des peaux.',
+      explication: "Le râtelier des chasseurs. On y range les lances. Les chasseurs attrapent les lapins près de la forêt, et parfois un mammouth de l'autre côté de la rivière.",
       vignettes: [{ img: 'chasse', texte: "Les chasseurs avancent ensemble, cachés dans les hautes herbes, vers le mammouth." }],
       nom: 'Le râtelier des chasseurs', sprite: '01-pierre/ratelier-lances', epoque: 1, jusqua: 9, debloque: 'chasse',
       zone: 'pre', cout: 10, bois: 2, largeur: 125, taille: 1,
-      travail: { metier: 'chasseur', aller: 'mammouth', porte: 'viande', duree: 6, produit: 'pieces', qte: 2 }
+      finitAvec: 'elevage',
+      travail: { metier: 'chasseur', aller: 'gibier', porte: 'viande', duree: 6, produit: 'pieces', qte: 2 }
     },
     'sechoir-poissons': {
       resume: "On y fait sécher les poissons du pêcheur.",
@@ -375,7 +376,7 @@ var Donnees = (function () {
 
   // Ce qu'on porte dans les bras, selon l'époque (h : homme, f : femme)
   var porteurs = {
-    1: { bois: { h: 'e1-bois-h', f: 'e1-bois-f' }, viande: 'e1-viande', poisson: 'e1-poisson', silex: 'e1-silex' },
+    1: { bois: { h: 'e1-bois-h', f: 'e1-bois-f' }, viande: 'e1-viande', lapin: 'e1-lapin', poisson: 'e1-poisson', silex: 'e1-silex' },
     2: { bois: { h: 'e2-bois-h', f: 'e2-bois-f' }, ble: { h: 'e2-ble-h', f: 'e2-ble-f' }, argile: { h: 'e2-argile-h', f: 'e2-argile-f' }, poisson: 'e2-poisson' }
   };
   var femmes = ['cueilleuse', 'porteuse-jarre'];
@@ -415,6 +416,7 @@ var Donnees = (function () {
     libre: ['Bonjour !', 'Il fait bon ici.', 'Quelle belle vallée !']
   },
     nature: {
+    lapin: ['faune/lapin-assis', 'Un lapin', "Un lapin sauvage. Les chasseurs-cueilleurs l'attrapaient pour sa viande et sa fourrure."],
     arbre: ['nature/sapin-grand', 'Un arbre', "Le bûcheron coupe les arbres pour avoir du bois. Petit à petit, la forêt recule et laisse de la place pour construire."],
     souche: ['nature/souche', 'Une souche', 'Ici, le bûcheron a coupé un arbre. On peut construire à cet endroit.'],
     rocher: ['nature/rochers', 'Des rochers', 'On ne peut pas construire sur les rochers.'],
@@ -445,6 +447,7 @@ var Donnees = (function () {
       finEpoque: { 1: "Tu as fait toutes les découvertes de l'âge de pierre ! Ton village est prêt à changer d'époque." },
       amelioration: "Les habitants vont chercher du bois pour améliorer le bâtiment. Regarde les étoiles !",
       outilsBois: 'Avec les outils de pierre, le bûcheron peut maintenant couper les arbres !',
+      plusDeChasse: "Avec l'élevage, plus besoin d'aller chasser : la viande vient de l'enclos !",
       embellir: "Embellis ton village avec les monuments de l'époque ! Chacun raconte une vraie histoire.",
       dejaConstruit: 'Tu l\'as déjà ! Il n\'en existe qu\'un seul.',
       finJeu: "Tu as fait toutes les découvertes du néolithique ! La suite de l'histoire, l'âge des métaux, arrive bientôt."

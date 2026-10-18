@@ -414,7 +414,7 @@
       ctx.fillStyle = '#8fb3c9'; ctx.beginPath(); ctx.ellipse(0, -8, 14, 7, 0, 0, 7); ctx.fill();
       ctx.beginPath(); ctx.moveTo(12, -8); ctx.lineTo(22, -15); ctx.lineTo(22, -1); ctx.fill();
       ctx.fillStyle = '#2b3a44'; ctx.beginPath(); ctx.arc(-7, -10, 1.8, 0, 7); ctx.fill();
-    } else if (objet === 'viande') {
+    } else if ((objet === 'viande' || objet === 'lapin')) {
       ctx.fillStyle = '#b5523b'; ctx.beginPath(); ctx.ellipse(-3, -10, 12, 9, -0.4, 0, 7); ctx.fill();
       ctx.fillStyle = '#f3e7d3'; ctx.beginPath(); ctx.roundRect(6, -6, 12, 5, 2.5); ctx.fill();
     } else if (objet === 'silex') {
@@ -567,6 +567,17 @@
   }
 
   function dessinerAnimal(a) {
+    if (a.espece === 'lapin') {
+      // le lapin sautille : deux images, assis et en plein saut
+      var saut = a.marche && Math.sin(T * 11 + a.id) > -0.2, il = IMG[saut ? 'faune/lapin-saut' : 'faune/lapin-assis'];
+      if (!il) return;
+      var lw = (saut ? 34 : 24) * V.s, lh = lw * il.height / il.width, pl = E(a.x, a.y);
+      var hop = a.marche ? Math.abs(Math.sin(T * 11 + a.id)) * 9 * V.s : 0;
+      ombre(pl[0], pl[1] - V.s, 9 * V.s, 2.5 * V.s, 0.16);
+      ctx.save(); ctx.translate(pl[0], pl[1] - hop); ctx.scale(a.dir < 0 ? -1 : 1, 1);
+      ctx.drawImage(il, -lw / 2, -lh * pied(il), lw, lh); ctx.restore();
+      return;
+    }
     var im = IMG[a.espece === 'mammouth' ? '01-pierre/mammouth' : '02-neolithique/chevre'];
     if (!im) return;
     var w = (a.espece === 'mammouth' ? 165 : 50) * V.s, H = w * im.height / im.width;
@@ -697,7 +708,7 @@
       paysan: ['Le blé est doré !', 'Belle récolte !'], berger: ['Bêêê !', 'Viens, petit !'], porteur: ['Au grenier !'],
       potier: ['Un beau pot !', 'Tout rond !'], meunier: ['Bientôt du pain !', 'Ça fait de la farine !']
     },
-    porte: { bois: ['Lourd, ce bois !', 'Du bois !'], viande: ['Ce soir, on mange !'], poisson: ['Regardez ma pêche !'],
+    porte: { bois: ['Lourd, ce bois !', 'Du bois !'], viande: ['Ce soir, on mange !'], lapin: ['Un lapin pour ce soir !'], poisson: ['Regardez ma pêche !'],
       silex: ['Des cailloux tout neufs !'], ble: ['Plein de blé !'], argile: ['De la bonne argile !'] },
     chantier: ['On construit !', 'Encore un peu !', 'Ça avance !'],
     veillee: ['Qu\'il fait bon !', 'On se raconte une histoire ?', 'Ça sent bon la viande !'],
@@ -1132,7 +1143,7 @@
     var d = D.decouvertes[id];
     var debloques = Object.keys(D.batiments).filter(function (k) { return D.batiments[k].debloque === id; });
     debloques.forEach(function (k) { if (ui.nouveaux.indexOf(k) < 0) ui.nouveaux.push(k); });
-    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); apresDecouverte(); } });
+    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); } });
     sauver();
   }
   function apresDecouverte() {
@@ -1413,9 +1424,10 @@
       var h = monde.habitants.filter(function (q) { return q.id === b.ouvrier; })[0];
       statut = h ? 'Ici travaille ' + METIERS[d.travail.metier] + '.' : 'Personne n\'y travaille encore : il faut un nouvel habitant.';
     } else if (d.lits) statut = '👥 ' + d.lits + ' personnes y dorment';
+    if (d.finitAvec && monde.decouvertes[d.finitAvec]) statut = 'Depuis l\'élevage, plus besoin de chasser : la viande vient de l\'enclos.';
     var n = monde.habitants.filter(function (q) { return q.dort && q.dortChez === b.id; }).length;
     if (n) statut = '😴 Chut… ' + (n > 1 ? n + ' personnes dorment' : 'quelqu\'un dort') + ' ici.';
-    if (d.travail && b.etat === 'fini') statut = (statut ? statut + ' · ' : '') + '⭐ Niveau ' + (b.niveau || 1) + ' : ' + (d.travail.produit === 'idees' ? '💡' : '🪙') + ' +' + M.quantite(b) + ' à chaque fois';
+    if (d.travail && b.etat === 'fini' && !(d.finitAvec && monde.decouvertes[d.finitAvec])) statut = (statut ? statut + ' · ' : '') + '⭐ Niveau ' + (b.niveau || 1) + ' : ' + (d.travail.produit === 'idees' ? '💡' : '🪙') + ' +' + M.quantite(b) + ' à chaque fois';
     montrerInfo({ img: d.sprite, titre: d.nom, texte: d.resume || d.explication || '', statut: statut, page: pageDuBat(b.type), type: b.type, bat: b });
   }
   function infoNature(cle) { var n = D.textes.nature[cle]; montrerInfo({ img: n[0], titre: n[1], texte: n[2] }); }
@@ -1459,7 +1471,7 @@
     if (best2 && bd2 < Math.max(24, 36 * V.s)) { parler(best2); return; }
     // un animal ?
     var an = monde.animaux.filter(function (a) {
-      var p = E(a.x, a.y), lw = (a.espece === 'mammouth' ? 165 : 50) * V.s;
+      var p = E(a.x, a.y), lw = (a.espece === 'mammouth' ? 165 : a.espece === 'lapin' ? 40 : 50) * V.s;
       return Math.abs(x - p[0]) < lw / 2 && y < p[1] + 6 && y > p[1] - lw * 0.8;
     })[0];
     if (an) { infoNature(an.espece); return; }
@@ -1507,6 +1519,8 @@
         var b = M.bat(monde, e.bat);
         if (b) { var t = tailleBat(b); pouf(b.x, b.y - t.h / V.s * 0.3, 14); son('fini'); }
         if (b && D.batiments[b.type].lits) aideUneFois('maison', A.maison);
+      } else if (e.type === 'chasse') {
+        pouf(e.x, e.y - 10, e.espece === 'mammouth' ? 14 : 7, '235,225,205');
       } else if (e.type === 'bulle') {
         aideUneFois('bulle', A.bulle);
       } else if (e.type === 'arrivee') {

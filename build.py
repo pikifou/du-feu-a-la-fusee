@@ -61,6 +61,8 @@ def assets() -> dict:
         elif f.parent.name == "porteurs":
             cible_h = min(im.height, 280)
             im = im.resize((round(im.width * cible_h / im.height), cible_h), Image.LANCZOS)
+        elif f.parent.name == "faune":
+            im = im.resize((160, round(im.height * 160 / im.width)), Image.LANCZOS)
         elif f.parent.name == "eau":
             cible_l = min(im.width, 1000 if f.stem.startswith("pont") else 300)
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)

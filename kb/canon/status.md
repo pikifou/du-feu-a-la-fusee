@@ -3,15 +3,15 @@ title: État courant
 domain: canon
 type: doc
 status: active
-updated: 2026-10-18
+updated: 2026-10-19
 ---
 
-# Où on en est (18/10/2026)
+# Où on en est (19/10/2026)
 
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 24 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 25 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.
@@ -19,6 +19,7 @@ updated: 2026-10-18
 - Sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants, 24 éléments de nature, 12 poses de travail, 8 éléments de nuit ; 16 vignettes illustrées pour les fiches.
 - Test d'intégration des sprites sur le plateau concluant (`assets/raw/test-integration.jpg`).
 
+- **v0.10** : la chasse (ADR-025) : des lapins sautillent près de la forêt et réapparaissent de temps en temps (jusqu'à 5 à l'âge de pierre, 3 au néolithique), trois mammouths broutent sur l'autre rive ; le chasseur du râtelier part chasser un lapin (ou parfois un mammouth) et le rapporte dans ses bras ; un mammouth chassé ne revient pas ; après l'élevage, le râtelier n'a plus de chasseur.
 - **v0.9** : bandeau redessiné (cartes plus soignées, prix en pastille, nombre possédé en haut à droite, « Nouveau » en étiquette) avec deux onglets : 🏠 Construire et ✨ Embellir ; 12 décorations et merveilles historiques (ADR-023) : 4 peintures au choix (Chauvet, Lascaux, Altamira, Gargas) et la hutte en os de mammouth à l'âge de pierre ; menhir, Dame de Saint-Sernin, dolmen, alignements de Carnac, cairn de Barnenez, Stonehenge et Göbekli Tepe au néolithique ; chacune a sa grande page lue à voix haute. Avant la découverte des outils, le bûcheron ramasse des branches au lieu d'abattre les arbres.
 - **v0.8** : nombre de bâtiments possédés en bas à droite de chaque carte du bandeau ; voix de narratrice enregistrée pour les 182 phrases du jeu (ADR-022) ; améliorations payantes (ADR-021) ; une vraie passerelle en bois sur le gué ; au néolithique, des pirogues vont et viennent sur la rivière et la mer ; les fenêtres s'ouvrent toujours en haut ; message de fin de démo dans les découvertes.
 - **v0.7** : deux niveaux d'explication (ADR-018) : la fiche courte (une phrase, les chiffres, un bouton « En savoir plus ») et la grande page illustrée (une scène en grand, avant / maintenant, 3 « Le savais-tu ? », ce que ça permet de construire avec les vignettes) ; découvrir une technologie ouvre sa grande page, qu'on peut relire depuis la liste des découvertes ou depuis la fiche courte. La nuit, les maisons s'ouvrent en coupe et on voit les dormeurs couchés dedans, éclairés par le foyer (ADR-019). Habitants plus vivants (ADR-020) : petites phrases dans des bulles, gestes de travail en deux images, objets portés dans les bras (bois, viande, poisson, silex, blé, argile).
@@ -35,7 +36,6 @@ updated: 2026-10-18
 ## Prochaine étape
 - Choisir avec Julien d'autres façons de dépenser (cf. journal, propositions de Claude) et régler les prix des améliorations.
 - Faire relire par Julien les « Le savais-tu ? » (proposition de Claude, dans `src/data.js`).
-- Valider le rôle du mammouth (autre rive, chassé, part au néolithique) : proposition de Claude, pas encore validée.
 - Test du prototype avec Joshua sur tablette.
 - Valider les questions ouvertes restantes du GD (titre, voix off).
 

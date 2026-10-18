@@ -69,6 +69,11 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 - De temps en temps, quelqu'un dit une petite phrase selon ce qu'il fait (au travail, en portant, à la veillée, en allant se coucher, au réveil).
 - Les gestes de travail alternent deux images ; ce qu'on rapporte se porte dans les bras.
 
+## La chasse (ADR-025)
+- Des lapins sautillent près de la forêt ; il en réapparaît un toutes les 20 à 40 s le jour (au plus 5 à l'âge de pierre, 3 au néolithique). Trois mammouths broutent sur l'autre rive.
+- Le chasseur du râtelier part vers le gibier le plus proche (un mammouth une fois sur quatre environ), le chasse, puis rapporte la prise dans ses bras. Un mammouth rapporte trois fois plus, prend deux fois plus de temps, et ne revient jamais.
+- Après la découverte de l'élevage, le râtelier n'a plus de chasseur (une aide l'explique). Les chiffres sont une proposition de Claude.
+
 ## Embellir : décorations et merveilles (ADR-023)
 - Onglet ✨ du bandeau. Uniquement des monuments réels de l'époque, avec leur grande page (vraie histoire, 2 « Le savais-tu ? »).
 - Âge de pierre : les chevaux de Chauvet (15), le taureau de Lascaux (18), les bisons d'Altamira (18), les mains de Gargas (12), merveille : la hutte en os de mammouth (45).

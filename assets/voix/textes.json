@@ -512,8 +512,8 @@
   "texte": "Les chasseurs y prennent leurs lances."
  },
  {
-  "id": "79bdb08666",
-  "texte": "Le râtelier des chasseurs. On y range les lances. Les chasseurs traversent la rivière pour suivre le mammouth et rapportent de la viande et des peaux."
+  "id": "d8279d2f11",
+  "texte": "Le râtelier des chasseurs. On y range les lances. Les chasseurs attrapent les lapins près de la forêt, et parfois un mammouth de l'autre côté de la rivière."
  },
  {
   "id": "340ddfbfa3",
@@ -840,6 +840,10 @@
   "texte": "Quelle belle vallée !"
  },
  {
+  "id": "3a45b7877a",
+  "texte": "Un lapin sauvage. Les chasseurs-cueilleurs l'attrapaient pour sa viande et sa fourrure."
+ },
+ {
   "id": "f42190f05e",
   "texte": "Le bûcheron coupe les arbres pour avoir du bois. Petit à petit, la forêt recule et laisse de la place pour construire."
  },
@@ -950,6 +954,10 @@
  {
   "id": "650820d918",
   "texte": "Avec les outils de pierre, le bûcheron peut maintenant couper les arbres !"
+ },
+ {
+  "id": "5640ef95e4",
+  "texte": "Avec l'élevage, plus besoin d'aller chasser : la viande vient de l'enclos !"
  },
  {
   "id": "b508241a6a",
