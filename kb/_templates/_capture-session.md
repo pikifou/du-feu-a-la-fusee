@@ -1,12 +1,12 @@
 ---
-title: Template — capture de session
+title: Template : capture de session
 domain: canon
 type: template
 status: active
 updated: 2026-10-18
 ---
 
-# Capture de session — [date]
+# Capture de session : [date]
 
 **Domaine(s)** :
 **Sujet** :
