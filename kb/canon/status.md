@@ -11,7 +11,7 @@ updated: 2026-10-18
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 11 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 14 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.
@@ -26,8 +26,8 @@ updated: 2026-10-18
 ## En cours
 - Game design en brouillon : proposition de Claude, pas encore validée par Julien (`domains/game-design/gd.md`).
 
-## Question ouverte majeure
-- **La carte** : Julien trouve qu'on est vite limité en place et s'attendait à un grand espace vert où l'on peut presque tout construire. Options présentées le 18/10 (agrandir la vallée ou carte en tuiles extensible), réponse attendue.
+## En cours (18/10, fin d'après-midi)
+- Refonte du terrain en tuiles (ADR-012), sentiers émergents (ADR-013), habitants plus petits (ADR-014).
 
 ## Prochaine étape
 - Test du prototype avec Joshua sur tablette.

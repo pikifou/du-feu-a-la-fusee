@@ -85,3 +85,22 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Décision** : le jeu alterne le jour et la nuit. La nuit, il fait noir et froid : sans feu, les habitants rentrent dormir et tout s'arrête ; dans la lumière d'un feu de camp, on se réchauffe et le travail continue.
 - **Contexte** : demande de Julien, pour illustrer l'intérêt du feu.
 - **Réglage du prototype** : 150 s de jour, 60 s de nuit (cf. `src/monde.js`).
+
+## ADR-012 : une carte en tuiles qui s'agrandit
+- **Date** : 2026-10-18
+- **Statut** : acceptée. Remplace le plateau fixe d'ADR-005 pour le terrain de jeu (le style diorama 3D cosy des sprites est conservé).
+- **Décision** : le terrain est une grille isométrique de tuiles (herbe, forêt, eau, sable, roche). On peut construire presque partout où il y a de l'herbe libre. Les arbres sont des objets que les bûcherons abattent : la forêt recule et libère de la place. La carte s'agrandit à chaque époque.
+- **Contexte** : Julien : « on est assez vite limité » ; « la B permet de vraiment mieux comprendre ce qui se passe et comment on fait évoluer les choses ».
+- **Alternatives écartées** : A, un plus grand plateau dessiné d'un seul bloc (recommandation de Claude).
+
+## ADR-013 : les chemins naissent des pas des habitants ; les routes sont une technologie
+- **Date** : 2026-10-18
+- **Statut** : acceptée
+- **Décision** : l'herbe s'use là où les habitants passent souvent : herbe drue, herbe tassée, sentier, chemin de terre. Les habitants préfèrent les chemins déjà tracés, si bien que le réseau de sentiers émerge tout seul. Les vraies routes arrivent plus tard, comme découverte, et permettront les chevaux, les charrettes et le transport des marchandises.
+- **Contexte** : Julien : « au fur et à mesure qu'ils marchent, [les gens] allaient créer des routes […] les routes, c'est quelque chose qui viendrait plus tard dans les technologies ».
+
+## ADR-014 : des habitants plus petits que les maisons
+- **Date** : 2026-10-18
+- **Statut** : acceptée
+- **Décision** : les habitants sont nettement plus petits que les huttes et ont plus d'espace autour d'eux, pour qu'on imagine qu'ils entrent dans les maisons.
+- **Contexte** : Julien : « les bonhommes font la même taille que les huttes ».
