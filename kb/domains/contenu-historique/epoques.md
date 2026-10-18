@@ -39,6 +39,8 @@ Chaque découverte répond à un **problème** de la vie quotidienne : c'est le 
 | Monnaie | Écriture, Bronze | Échanger un mouton contre du blé, c'est compliqué → des pièces | Marché |
 | Voile | Élevage (laine, tissage) | On ne va pas loin en pirogue → des bateaux à voile | Port |
 
+Piste (ADR-013) : une découverte « Les routes » à cette époque, qui transforme les chemins de terre en routes empierrées et permet les charrettes et les chevaux.
+
 ## 4. Moyen Âge
 | Découverte | Prérequis | Problème résolu | Ce qui pousse |
 |---|---|---|---|

@@ -31,12 +31,13 @@ Style et outil : cf. ADR-005 (diorama 3D low-poly cosy) et ADR-006 (Arcads, Nano
 | Fichier | Contenu |
 |---|---|
 | `assets/raw/ref-age-pierre.png` | Référence de style (vallée à l'âge de pierre) |
-| `assets/raw/plateau-vide.png` | La vallée vide : fond du jeu |
+| `assets/raw/plateau-vide.png` | Ancien fond du jeu (avant la carte en tuiles, ADR-012), gardé comme référence de couleurs |
 | `assets/raw/concept-antiquite.png`, `concept-vapeur.png`, `concept-moderne.png` | Concepts de la vallée aux époques 3, 5 et 7 |
 | `assets/raw/style-aquarelle-rejete.png` | Style écarté (ADR-005) |
 | `assets/raw/test-integration.jpg` | Sprites posés sur le plateau vide |
 | `assets/sprites/01-pierre/` | tente, hutte-branches, hutte-peaux, feu, buisson-baies, sechoir-poissons, tas-bois, atelier-silex, peintures-rupestres, ratelier-lances, cercle-pierres, mammouth |
 | `assets/sprites/02-neolithique/` | champ-ble, champ-pousses, maison-torchis, maison-longue, grenier, atelier-potier, enclos-moutons, chevre, meule, passerelle, puits, pirogue |
+| `assets/sprites/nature/` | sapin-grand, sapin-moyen, sapin-petit, sapins-double, chene, arbre-clair, bouleau, buisson-rond, souche, tronc, souche-hache, pousse, grotte, rocher-mousse, rochers, pierres-plates, touffe, fleurs, roseaux, nenuphar, arbuste, champignons, galets, buisson-fleuri |
 | `assets/sprites/habitants/` | porteur-bois, cueilleuse, enfant-pierre, chasseur, paysan, porteuse-jarre, berger, sage |
 
 ## Points connus

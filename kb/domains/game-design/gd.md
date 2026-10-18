@@ -43,12 +43,20 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 5. Quand il a assez d'idées : **une découverte**. Nouveaux bâtiments, les anciens peuvent s'améliorer.
 6. Quand toutes les découvertes d'une époque sont faites : **changement d'époque**, grand moment de transformation de la vallée.
 
+## Le terrain (ADR-012, ADR-013)
+- Une île en tuiles : prairie, forêt, rivière avec un gué, grotte sur l'autre rive, plage et mer. Elle s'agrandit à chaque époque.
+- La forêt recule là où le bûcheron travaille : on gagne de la place en défrichant.
+- Les habitants usent l'herbe là où ils passent : herbe tassée, sentier, chemin de terre. Un réseau de sentiers apparaît tout seul. Les vraies routes viendront plus tard comme découverte (chevaux, charrettes, marchandises).
+
+## Comprendre ce qu'on voit (ADR-015)
+Toucher un bâtiment, un arbre, la grotte, le mammouth, le gué ou un sentier ouvre une petite fiche lue à voix haute : à quoi ça sert, qui y travaille, ce que ça change. Choisir un bâtiment à construire montre la même fiche.
+
 ## Le rôle de Joshua dans la construction
 Tranché par ADR-008 : **Joshua pose, la ville fait le reste.** Ce qui suit est la proposition d'application, à valider.
 
 **Ce que fait Joshua**
 - Il choisit un bâtiment dans un bandeau d'icônes (seulement ceux débloqués et payables).
-- Les emplacements libres de la prairie s'allument ; il tape celui qu'il veut, ou glisse le bâtiment dessus.
+- La zone où l'on peut construire s'allume en jaune clair ; il touche l'endroit voulu.
 - Il peut déplacer un bâtiment déjà posé, gratuitement (appui long puis glisser).
 
 **Ce que fait la ville toute seule**
