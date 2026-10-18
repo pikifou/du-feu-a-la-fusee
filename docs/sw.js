@@ -1,5 +1,5 @@
 // service worker versionné : une nouvelle version du jeu remplace l'ancienne
-const CACHE = 'feu-fusee-bf488e2b7e';
+const CACHE = 'feu-fusee-4c7328a35a';
 const FICHIERS = ["./", "index.html", "manifest.webmanifest", "icone-192.png", "icone-512.png"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FICHIERS))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });

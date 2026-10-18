@@ -122,3 +122,21 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée. Précise ADR-010 et ADR-015.
 - **Décision** : (1) quand un habitant travaille à son poste, on le voit en plein geste (le tailleur qui frappe le silex, le pêcheur avec son harpon…) ; (2) la fiche d'un bâtiment montre une vignette illustrée de l'activité, avec l'explication ; (3) chaque habitant a sa maison : il y rentre dormir, et on voit sa tête qui dépasse de la couverture.
 - **Contexte** : Julien : « qu'on puisse voir le bonhomme qui s'occupe des silex, qu'on comprenne un peu ce qu'il construit et à quoi ça sert » ; « que les bonhommes soient liés à l'endroit où ils sont, genre dans la hutte ». Images générées avec Arcads (ADR-006).
+
+## ADR-018 : deux niveaux d'explication, la fiche courte et la grande page illustrée
+- **Date** : 2026-10-18
+- **Statut** : acceptée. Précise ADR-015 et ADR-017.
+- **Décision** : (1) toucher un bâtiment ou une carte du bandeau de construction ouvre une fiche courte, un vrai résumé ; un bouton y ouvre la grande page. (2) La grande page est un pop-up en grand, avec une image de mise en scène (pour le feu : les villageois autour du feu, la nourriture, les bêtes sauvages autour) et des explications qui instruisent vraiment. (3) Découvrir une technologie, c'est toucher sa carte : ce qu'on gagne, c'est sa grande page qui s'ouvre. (4) La grande page se rouvre ensuite depuis la fiche courte.
+- **Contexte** : Julien : « on mélange encore trop les 2. C'est trop court pour de l'instructif et un poil trop long pour un résumé. »
+
+## ADR-019 : les dormeurs sont dans leur maison, vue en coupe
+- **Date** : 2026-10-18
+- **Statut** : acceptée. Précise ADR-017 (point 3).
+- **Décision** : les habitants qui dorment sont montrés à l'intérieur de leur maison, grâce à une vue en coupe (plan de coupe) ; à défaut, la maison peut être rendue transparente par-dessus les dormeurs.
+- **Contexte** : Julien, sur la v0.6 où les dormeurs étaient couchés devant la porte : « faudrait les mettre dans la hutte, et pour ça faire un plan de coupe ».
+
+## ADR-020 : des habitants plus vivants (bulles, gestes, objets dans les bras)
+- **Date** : 2026-10-18
+- **Statut** : acceptée. Précise ADR-010 et ADR-017.
+- **Décision** : (1) les habitants disent de temps en temps une petite phrase dans une bulle, avec une police ronde et grasse façon jeu mobile (type Clash Royale) ; (2) les gestes de travail sont animés en deux images (ex. le bûcheron qui lève puis abat sa hache) ; (3) ce qu'on transporte se porte dans les bras (le bûcheron et ses bûches), plutôt qu'au-dessus de la tête, même si cela demande plus d'images de personnages.
+- **Contexte** : Julien, sur la v0.6 : « des petites bulles pour les gens qui parlent », « des animations (genre pour le bûcheron en 2 frames) », « les personnages qui portent dans les mains plutôt qu'au-dessus de leurs têtes ».

@@ -58,6 +58,12 @@ def assets() -> dict:
         if f.parent.name == "habitants":
             cible_h = min(im.height, 280)
             im = im.resize((round(im.width * cible_h / im.height), cible_h), Image.LANCZOS)
+        elif f.parent.name == "porteurs":
+            cible_h = min(im.height, 280)
+            im = im.resize((round(im.width * cible_h / im.height), cible_h), Image.LANCZOS)
+        elif f.parent.name == "coupe":
+            cible_l = min(im.width, round(larg.get(cle.replace("coupe/", "01-pierre/"), larg.get(cle.replace("coupe/", "02-neolithique/"), 220)) * 2.6))
+            im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
         elif f.parent.name in ("poses", "nuit"):
             # facteur unique : les tailles relatives de la planche sont gardées
             k = 0.45 if f.parent.name == "poses" else 0.4
@@ -72,6 +78,11 @@ def assets() -> dict:
                 cible_l = min(im.width, 420 if cle.endswith("grotte") else 300)
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
         res[cle] = webp(im, 85)
+    # scènes des grandes pages (ADR-018)
+    for f in sorted((RACINE / "assets" / "raw" / "scenes").glob("*.png")):
+        im = Image.open(f).convert("RGB")
+        im.thumbnail((1100, 1100), Image.LANCZOS)
+        res[f"scenes/{f.stem}"] = webp(im, 78)
     # vignettes illustrées des fiches (ADR-017), avec leur propre fond
     for f in sorted((SPRITES / "vignettes").glob("*.jpg")):
         im = Image.open(f).convert("RGB")

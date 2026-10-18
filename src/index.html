@@ -7,7 +7,7 @@
 <title>Du Feu à la Fusée</title>
 <!--PWA-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&display=swap">
 <style>
 /* Univers unique, volontairement clair : la vallée en plein jour (pas de thème sombre).
    Cartes crème posées sur le décor, encre brun chaud, accent orange du feu de camp. */
@@ -149,6 +149,50 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 .ligne-boutons { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 12px; }
 .ligne-boutons .gros-bouton { margin: 0; }
 
+/* ---- la grande page (ADR-018) ---- */
+#page { z-index: 30; padding: 14px; }
+#page .fenetre { max-width: 1060px; padding: 0; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); overflow: hidden; height: min(640px, 92vh); }
+#page-image { position: relative; background: #e9dcc6; min-height: 0; }
+#page-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#page-bandeau { position: absolute; left: 14px; top: 14px; background: var(--orange); color: #fff; font-weight: 700; font-size: 16px;
+  border-radius: 999px; padding: 6px 16px; box-shadow: var(--ombre); animation: battre 1.4s ease-in-out infinite; }
+#page-corps { overflow-y: auto; padding: 20px 22px 18px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
+#page-epoque { font-size: 14px; font-weight: 600; color: var(--encre-douce); text-transform: uppercase; letter-spacing: .04em; }
+#page-titre { font-size: 28px; font-weight: 700; margin: -4px 0 0; line-height: 1.1; padding-right: 44px; text-align: left; }
+#page-texte { font-size: 18px; line-height: 1.4; margin: 0; }
+#page h3 { font-size: 16px; margin: 6px 0 0; color: var(--orange-fonce); }
+#page-faits { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+#page-faits li { background: var(--carte-2); border-radius: 14px; padding: 8px 12px 8px 40px; font-size: 15.5px; line-height: 1.35; position: relative; cursor: pointer; }
+#page-faits li::before { content: '💡'; position: absolute; left: 11px; top: 7px; font-size: 18px; }
+#page-bats { display: flex; flex-direction: column; gap: 8px; }
+.page-bat { display: flex; gap: 10px; align-items: center; background: var(--carte-2); border-radius: 16px; padding: 8px; }
+.page-bat.ici { outline: 3px solid var(--orange); }
+.page-bat .imgs { display: flex; gap: 6px; flex: 0 0 auto; }
+.page-bat .imgs img { width: 84px; height: 84px; border-radius: 12px; object-fit: cover; cursor: pointer; background: #fff; }
+.page-bat .imgs img.sprite { object-fit: contain; padding: 4px; }
+.page-bat b { display: block; font-size: 15.5px; }
+.page-bat span { font-size: 14px; line-height: 1.3; color: var(--encre-douce); }
+#page .fermer { z-index: 2; }
+#page .ligne-boutons { justify-content: flex-start; margin-top: 4px; }
+#page .gros-bouton { font-size: 19px; padding: 8px 26px; }
+@media (max-height: 520px) {
+  #page { padding: 8px; }
+  #page .fenetre { height: 96vh; max-height: 96vh; border-radius: 20px; }
+  #page-corps { padding: 12px 14px; gap: 7px; }
+  #page-titre { font-size: 22px; }
+  #page-texte { font-size: 15.5px; }
+  #page-faits li { font-size: 14px; padding: 6px 10px 6px 34px; }
+  #page-faits li::before { left: 8px; top: 5px; font-size: 15px; }
+  .page-bat .imgs img { width: 64px; height: 64px; }
+  .page-bat span { font-size: 13px; }
+}
+@media (max-width: 640px) { #page .fenetre { grid-template-columns: 1fr; grid-template-rows: 38% 1fr; } }
+#info-plus { border: 0; background: var(--orange); color: #fff; font-family: inherit; font-weight: 700; font-size: 15px; border-radius: 999px;
+  padding: 6px 14px; margin-top: 7px; cursor: pointer; box-shadow: 0 3px 0 var(--orange-fonce); }
+#info-plus:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--orange-fonce); }
+.dec.faite { cursor: pointer; }
+#scene-illu { width: 100%; max-height: 42vh; object-fit: cover; border-radius: 18px; margin: 4px 0 8px; display: block; }
+
 #vole { position: fixed; pointer-events: none; font-size: 22px; font-weight: 700; z-index: 50; transition: transform .7s cubic-bezier(.5,-0.3,.7,1), opacity .7s; }
 #menu .fenetre { max-width: 400px; text-align: center; }
 .petit-bouton { border: 0; background: var(--carte-2); color: var(--encre); font-family: inherit; font-size: 17px; font-weight: 600;
@@ -176,7 +220,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
     <div id="info-titre"></div>
     <div id="info-texte"></div>
     <div id="info-statut"></div>
-    <div id="info-vignettes" hidden></div>
+    <button id="info-plus" hidden>📖 En savoir plus</button>
   </div>
   <div class="info-boutons">
     <button class="bouton-rond" id="info-fermer" aria-label="Fermer">✕</button>
@@ -195,11 +239,30 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
 <div class="voile" id="scene"><div class="fenetre">
   <h2 id="scene-titre"></h2>
+  <img id="scene-illu" alt="" hidden>
   <div id="scene-images"></div>
   <p id="scene-texte"></p>
   <div class="ligne-boutons">
     <button class="bouton-rond" id="scene-voix" aria-label="Écouter">🔊</button>
     <button class="gros-bouton" id="scene-ok">Super !</button>
+  </div>
+</div></div>
+
+<div class="voile" id="page"><div class="fenetre">
+  <div id="page-image"><img id="page-img" alt=""><div id="page-bandeau" hidden>Nouvelle découverte !</div></div>
+  <div id="page-corps">
+    <button class="bouton-rond fermer" id="page-fermer" aria-label="Fermer">✕</button>
+    <div id="page-epoque"></div>
+    <h2 id="page-titre"></h2>
+    <p id="page-texte"></p>
+    <h3>Le savais-tu ?</h3>
+    <ul id="page-faits"></ul>
+    <h3 id="page-bats-titre">Ce que ça permet de construire</h3>
+    <div id="page-bats"></div>
+    <div class="ligne-boutons">
+      <button class="bouton-rond" id="page-voix" aria-label="Écouter">🔊</button>
+      <button class="gros-bouton" id="page-ok">Super !</button>
+    </div>
   </div>
 </div></div>
 

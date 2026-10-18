@@ -58,6 +58,17 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 - Au travail, chacun est montré en plein geste à son poste, avec une pose qui dit ce qu'il fabrique.
 - La fiche d'un bâtiment montre une ou deux vignettes illustrées de l'activité ; toucher une vignette la lit à voix haute.
 
+## Deux niveaux d'explication (ADR-018)
+- **La fiche courte** : on touche un bâtiment (sur la carte ou dans le bandeau de construction) ; une phrase de résumé, les chiffres, et un bouton « 📖 En savoir plus ».
+- **La grande page** : une scène illustrée en grand, l'avant / maintenant, trois « Le savais-tu ? » et ce que ça permet de construire, avec les vignettes ; tout se lit à voix haute en touchant.
+- **Découvrir** une technologie, c'est toucher sa carte : sa grande page s'ouvre, avec « Nouvelle découverte ! ». On la relit ensuite depuis la liste des découvertes (📖 Relire) ou depuis la fiche courte.
+- Les bâtiments du tout début (cercle des anciens, tas de bois, baies, tentes) ont leur page « Les chasseurs-cueilleurs » ; la pirogue a la sienne.
+
+## Des habitants vivants (ADR-019, ADR-020)
+- La nuit, les maisons occupées s'ouvrent en coupe : on voit les dormeurs dans leurs couchages, autour du foyer.
+- De temps en temps, quelqu'un dit une petite phrase selon ce qu'il fait (au travail, en portant, à la veillée, en allant se coucher, au réveil).
+- Les gestes de travail alternent deux images ; ce qu'on rapporte se porte dans les bras.
+
 ## Comprendre ce qu'on voit (ADR-015)
 Toucher un bâtiment, un arbre, la grotte, le mammouth, le gué ou un sentier ouvre une petite fiche lue à voix haute : à quoi ça sert, qui y travaille, ce que ça change. Choisir un bâtiment à construire montre la même fiche.
 
@@ -81,6 +92,7 @@ Tranché par ADR-008 : **Joshua pose, la ville fait le reste.** Ce qui suit est 
 - Rien ne se démolit, rien ne se perd.
 
 ## Les découvertes : le moment pédagogique
+- Depuis la v0.7, le moment pédagogique est la grande page (ADR-018), cf. plus haut.
 - Une grosse carte illustrée, avec ce qu'il faut pour la débloquer (💡 + les découvertes prérequises en icônes).
 - Une scène courte en voix off, construite en **avant / après** : « Avant, on avait froid la nuit. Grâce au feu, on peut se chauffer et cuire la viande. »
 - Le contenu (liste, prérequis, problèmes résolus) vit dans `domains/contenu-historique/epoques.md`.

@@ -43,7 +43,14 @@ Style et outil : cf. ADR-005 (diorama 3D low-poly cosy) et ADR-006 (Arcads, Nano
 | `assets/sprites/poses/` (ADR-017) | tailleur, bucheron, cueilleuse, chasseur, pecheur, peintre, sage-assis, allume-feu, paysan-faucille, berger-agneau, potiere, meuniere |
 | `assets/sprites/nuit/` (ADR-016) | feu-braises, feu-cendres, tete-adulte, tete-enfant, deux-tetes, tete-sage, coq, torche (pas encore utilisée) |
 | `assets/sprites/vignettes/` (ADR-017, JPEG avec leur fond) | âge de pierre : sage, bois, baies, silex, chasse, peche, veillee, peinture ; néolithique : semer, moisson, enclos, poterie, meule, grenier, torchis, pirogue |
+| `assets/raw/scenes/` (ADR-018) | 11 scènes 16:9 des grandes pages : cueilleurs, outils, feu, chasse, abri, peinture, agriculture, elevage, grenier, poterie, meule (générées une par une avec la planche de vignettes de l'époque en référence) |
+| `assets/sprites/coupe/` (ADR-019) | tente, hutte-branches, hutte-peaux, maison-torchis, maison-longue en vue en coupe, couchages vides ; les places des couchages sont dans `COUCHAGES` (`src/jeu.js`) |
+| `assets/sprites/poses/*-b.png` (ADR-020) | deuxième image de chaque pose de travail (planche `planche-poses-b.png`, retouche de la planche des poses) |
+| `assets/sprites/porteurs/` (ADR-020) | e1-bois-h, e1-bois-f, e1-viande, e1-poisson, e1-silex, e2-bois-h, e2-bois-f, e2-ble-h, e2-ble-f, e2-argile-f, e2-argile-h, e2-poisson |
 | `assets/raw/planche-poses.png`, `planche-nuit.png`, `vignettes-pierre.png`, `vignettes-neolithique.png` | Planches brutes de la v0.6 |
+
+## Animations en deux images
+Pour obtenir la deuxième image d'une planche de poses, on donne la planche elle-même en référence et on demande « la même planche, mêmes personnages, même place dans la grille, à l'autre moment du geste ». En jeu, les deux images sont calées sur le milieu des pieds (calculé à l'image), pour ne pas sautiller.
 
 ## Points connus
 - Le sol gris-bleu clair que le générateur dessine sous les objets est converti en ombre brune transparente par `decoupe_planche.py`. Il reste de petites taches claires à l'intérieur de certaines ouvertures (tentes).
