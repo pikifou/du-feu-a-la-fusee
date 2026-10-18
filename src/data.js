@@ -98,7 +98,7 @@ var Donnees = (function () {
     'ratelier-lances': {
       nom: 'Le râtelier des chasseurs', sprite: '01-pierre/ratelier-lances', epoque: 1, jusqua: 9, debloque: 'chasse',
       zone: 'pre', cout: 10, bois: 2, largeur: 123,
-      travail: { metier: 'chasseur', aller: 'foret', porte: 'viande', duree: 6, produit: 'pieces', qte: 2 }
+      travail: { metier: 'chasseur', aller: 'mammouth', porte: 'viande', duree: 6, produit: 'pieces', qte: 2 }
     },
     'sechoir-poissons': {
       nom: 'Le séchoir à poissons', sprite: '01-pierre/sechoir-poissons', epoque: 1, jusqua: 9, debloque: 'chasse',

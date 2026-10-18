@@ -202,6 +202,16 @@
   function dessinerHab(h) {
     var im = IMG['habitants/' + h.allure];
     if (!im) return;
+    if (h.dort) {
+      // il dort dans sa hutte : on ne voit que les « z »
+      var pz = E(h.x, h.y - 70);
+      var k = (T * 0.5 + h.id * 0.37) % 1;
+      ctx.font = '700 ' + Math.round(14 + 10 * k) + 'px Fredoka, system-ui';
+      ctx.fillStyle = 'rgba(235,240,255,' + (1 - k) + ')';
+      ctx.textAlign = 'center';
+      ctx.fillText('z', pz[0] + k * 18, pz[1] - k * 40 * V.s);
+      return;
+    }
     var H = (h.enfant ? tailles.enfant : h.allure === 'sage' ? tailles.sage : tailles.adulte) * V.s;
     var w = H * im.width / im.height;
     var p = E(h.x, h.y), ph = h.id * 1.7;
@@ -336,6 +346,50 @@
     });
   }
 
+  // ---------- la nuit (ADR-011) ----------
+  var nuitCv = document.createElement('canvas'), nctx = nuitCv.getContext('2d');
+  function dessinerNuit() {
+    var d = M.obscurite(monde);
+    if (d <= 0) return;
+    // crépuscule et aube : une touche orangée
+    var lueur = d * (1 - d) * 4;
+    if (lueur > 0.02) { ctx.fillStyle = 'rgba(255,140,70,' + (0.16 * lueur) + ')'; ctx.fillRect(0, 0, V.W, V.H); }
+    if (nuitCv.width !== cv.width || nuitCv.height !== cv.height) { nuitCv.width = cv.width; nuitCv.height = cv.height; }
+    nctx.setTransform(1, 0, 0, 1, 0, 0);
+    nctx.globalCompositeOperation = 'source-over';
+    nctx.clearRect(0, 0, nuitCv.width, nuitCv.height);
+    nctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
+    nctx.fillStyle = 'rgba(14,20,58,' + (0.7 * d) + ')';
+    nctx.fillRect(0, 0, V.W, V.H);
+    nctx.globalCompositeOperation = 'destination-out';
+    var feux = monde.batiments.filter(function (b) { return b.type === 'feu' && b.etat === 'fini'; });
+    function trou(x, y, r, force, aplat) {
+      nctx.save(); nctx.translate(x, y); nctx.scale(1, aplat);
+      var g = nctx.createRadialGradient(0, 0, 0, 0, 0, r);
+      g.addColorStop(0, 'rgba(0,0,0,' + force + ')'); g.addColorStop(0.55, 'rgba(0,0,0,' + (force * 0.8) + ')'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      nctx.fillStyle = g; nctx.beginPath(); nctx.arc(0, 0, r, 0, 7); nctx.fill(); nctx.restore();
+    }
+    var vacille = 1 + Math.sin(T * 9) * 0.03 + Math.sin(T * 23) * 0.02;
+    feux.forEach(function (f) { var p = E(f.x, f.y - 20); trou(p[0], p[1], M.RAYON_FEU * V.s * vacille, 1, 0.62); });
+    // fenêtres éclairées des maisons
+    monde.batiments.forEach(function (b) {
+      if (b.etat !== 'fini' || !D.batiments[b.type].lits || monde.epoque < 2) return;
+      var t = tailleBat(b), p = E(b.x, b.y);
+      trou(p[0], p[1] - t.h * 0.35, 80 * V.s, 0.7, 0.8);
+    });
+    nctx.globalCompositeOperation = 'source-over';
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(nuitCv, 0, 0); ctx.restore();
+    // lueur chaude du feu
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    feux.forEach(function (f) {
+      var p = E(f.x, f.y - 20), r = M.RAYON_FEU * V.s * 0.55 * vacille;
+      var g = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], r);
+      g.addColorStop(0, 'rgba(255,130,50,' + (0.26 * d) + ')'); g.addColorStop(1, 'rgba(255,110,40,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fill();
+    });
+    ctx.restore();
+  }
+
   function dessiner(dt) {
     ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
     ctx.imageSmoothingQuality = 'high';
@@ -352,6 +406,7 @@
     liste.forEach(function (e) { e.f(e.o); });
     fumees(dt);
     dessinerParts(dt);
+    dessinerNuit();
     dessinerEmplacements();
     dessinerBulles();
     dessinerParoles();
@@ -370,9 +425,10 @@
         derniers[k] = v[k];
       }
     });
-    if (derniers.epoque !== monde.epoque) {
-      derniers.epoque = monde.epoque;
-      $('epoque-nom').textContent = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0].nom;
+    var moment = M.estNuit(monde) ? ' 🌙' : ' ☀️';
+    if (derniers.epoque !== monde.epoque || derniers.moment !== moment) {
+      derniers.epoque = monde.epoque; derniers.moment = moment;
+      $('epoque-nom').textContent = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0].nom + moment;
     }
     var possible = M.decouvertesEpoque(monde).some(function (id) { return M.etatDecouverte(monde, id) === 'possible'; });
     $('btn-decouvertes').classList.toggle('pret', possible);
@@ -712,6 +768,7 @@
   }
 
   // ---------- événements du monde ----------
+  var etaitNuit = false;
   function traiterEvenements() {
     var ev = monde.evenements.splice(0);
     ev.forEach(function (e) {
@@ -725,6 +782,15 @@
         aideUneFois('arrivee', 'Quelqu\'un arrive dans la vallée !');
       }
     });
+    var nuit = M.estNuit(monde);
+    if (nuit && !etaitNuit && !enScene) {
+      var aFeu = monde.batiments.some(function (b) { return b.type === 'feu' && b.etat === 'fini'; });
+      if (aFeu) aideUneFois('nuit-feu', 'La nuit tombe. Autour du feu, on a chaud et on y voit clair : le travail continue !');
+      else if (monde.decouvertes.feu) aide('Il fait nuit et tout le monde dort… Construis un feu de camp près du village !');
+      else if (!ui.aide['nuit1']) aideUneFois('nuit1', 'La nuit tombe ! Brrr, il fait froid et tout noir : tout le monde va dormir. Il faudrait découvrir le feu…');
+      else aideUneFois('nuit2', 'Encore la nuit… Avec le feu, on pourrait continuer à travailler. Regarde dans les découvertes !');
+    }
+    etaitNuit = nuit;
     if (!ui.aide.idee && monde.idees >= 4 && !Object.keys(monde.decouvertes).length && !enScene) {
       aideUneFois('idee', 'Tu as assez d\'idées ! Touche l\'ampoule pour faire une découverte.');
     }

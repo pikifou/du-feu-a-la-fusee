@@ -78,3 +78,10 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Décision** : les habitants travaillent, transportent, construisent et s'affairent sous les yeux du joueur. Chaque production et chaque chantier se voient : on doit avoir l'impression d'un monde qui s'agite et avance tout seul.
 - **Contexte** : Julien : « un petit monde qui vit un peu comme Settlers […] le plaisir qu'on a quand on regarde un Anno, un SimCity. Le monde devient vivant. C'est cosy, c'est mignon, et on est content de voir les choses avancer. »
 - **Conséquence** : la production n'est pas un simple minuteur sur un bâtiment, c'est un trajet d'habitant (aller chercher, travailler, rapporter). Précise ADR-004 et ADR-008.
+
+## ADR-011 : un cycle jour / nuit qui montre à quoi sert le feu
+- **Date** : 2026-10-18
+- **Statut** : acceptée
+- **Décision** : le jeu alterne le jour et la nuit. La nuit, il fait noir et froid : sans feu, les habitants rentrent dormir et tout s'arrête ; dans la lumière d'un feu de camp, on se réchauffe et le travail continue.
+- **Contexte** : demande de Julien, pour illustrer l'intérêt du feu.
+- **Réglage du prototype** : 150 s de jour, 60 s de nuit (cf. `src/monde.js`).

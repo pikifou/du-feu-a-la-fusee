@@ -56,10 +56,7 @@ var Carte = (function () {
     gue: { gauche: [1540, 670], droite: [1720, 570], milieu: [1630, 620] },
 
     // d'où arrivent les nouveaux habitants
-    arrivee: [900, 1110],
-
-    // promenade du mammouth et des chèvres
-    lisiere: [[760, 680], [900, 640], [1040, 610], [680, 820]]
+    arrivee: [900, 1110]
   };
 })();
 if (typeof module !== 'undefined') module.exports = Carte;

@@ -67,3 +67,25 @@ test('sauvegarde puis reprise', () => {
   assert.strictEqual(copie.habitants.length, m.habitants.length);
   assert.strictEqual(Math.round(copie.habitants[0].x), Math.round(m.habitants[0].x));
 });
+
+test('la nuit, sans feu tout le monde dort ; avec un feu, le travail continue', () => {
+  const sansFeu = Monde.nouveau(5);
+  while (!Monde.estNuit(sansFeu)) Monde.pas(sansFeu, 0.1);
+  for (let i = 0; i < 200; i++) Monde.pas(sansFeu, 0.1); // 20 s dans la nuit
+  assert.ok(sansFeu.habitants.filter(h => h.dort).length >= 2, 'des habitants dorment');
+  const stockSage = Monde.bat(sansFeu, sansFeu.habitants.find(h => h.metier === 'sage').travail).stock;
+  for (let i = 0; i < 300; i++) Monde.pas(sansFeu, 0.1);
+  const cercle = Monde.bat(sansFeu, sansFeu.habitants.find(h => h.metier === 'sage').travail);
+  assert.strictEqual(cercle.stock, stockSage, 'le sage ne produit pas dans le noir');
+
+  const avecFeu = Monde.nouveau(5);
+  avecFeu.decouvertes.feu = 1; avecFeu.pieces = 50;
+  const c = avecFeu.batiments.find(b => b.type === 'cercle-pierres');
+  const f = Monde.construire(avecFeu, 'feu', Monde.emplacementsLibres(avecFeu, 'feu')[0]);
+  f.etat = 'fini';
+  assert.ok(Monde.eclaire(avecFeu, [c.x, c.y]), 'le feu éclaire le cercle');
+  while (!Monde.estNuit(avecFeu)) { Monde.pas(avecFeu, 0.1); c.stock = 0; }
+  for (let i = 0; i < 400; i++) Monde.pas(avecFeu, 0.1);
+  assert.ok(c.stock > 0, 'le sage travaille à la lumière du feu');
+  assert.strictEqual(avecFeu.habitants.filter(h => h.dort).length, 0, 'personne ne dort : on se réchauffe au feu');
+});

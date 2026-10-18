@@ -7,6 +7,9 @@ var Monde = (function () {
   var BULLES_MAX = 3; // unités de production stockées par bâtiment
   var VITESSE = { adulte: 85, enfant: 125, sage: 55 };
   var DELAI_ARRIVEE = 25;
+  // Jour et nuit (ADR-011) : 150 s de jour, 60 s de nuit. La partie commence le matin.
+  var CYCLE = 210, DEBUT = 20;
+  var RAYON_FEU = 430;
 
   // ---------- outils ----------
   function hasard(m) {
@@ -50,6 +53,14 @@ var Monde = (function () {
     var g = C.gue;
     return a === 'gauche' ? [g.gauche, g.milieu, g.droite, vers] : [g.droite, g.milieu, g.gauche, vers];
   }
+  function pointDans(m, poly, autour, rayon) {
+    for (var i = 0; i < 30; i++) {
+      var a = hasard(m) * Math.PI * 2, r = rayon * Math.sqrt(hasard(m));
+      var p = [autour[0] + Math.cos(a) * r, autour[1] + Math.sin(a) * r * 0.55];
+      if (dedans(p, poly)) return p;
+    }
+    return autour.slice();
+  }
   function pointPrairie(m, autour, rayon) {
     for (var i = 0; i < 20; i++) {
       var a = hasard(m) * Math.PI * 2, r = rayon * Math.sqrt(hasard(m));
@@ -76,7 +87,7 @@ var Monde = (function () {
     var b = ajouterHabitant(m, { allure: 'porteur-bois', x: 1000, y: 900 });
     affecter(m, b, tas);
     ajouterHabitant(m, { allure: 'cueilleuse', x: 1250, y: 960 });
-    m.animaux.push({ id: m.prochainId++, espece: 'mammouth', x: 760, y: 690, etapes: [], dir: 1, marche: false });
+    m.animaux.push({ id: m.prochainId++, espece: 'mammouth', x: 2080, y: 740, etapes: [], dir: -1, marche: false });
     m.evenements.push({ type: 'epoque', epoque: 1 });
     return m;
   }
@@ -137,22 +148,27 @@ var Monde = (function () {
   // Dans le pré, les emplacements ne sont pas fixes : on cherche des places libres
   // sur une grille fine, en tenant compte de la taille de chaque bâtiment.
   var grillePre = null;
-  function grille() {
-    if (grillePre) return grillePre;
-    grillePre = [];
+  function grille(m) {
+    if (!grillePre) calculerGrille();
+    // l'autre rive est le territoire du mammouth : on n'y construit qu'au néolithique
+    return m && m.epoque >= 2 ? grillePre.tout : grillePre.gauche;
+  }
+  function calculerGrille() {
+    var tout = [];
     var o = C.depart.cercle;
     var reserves = [].concat(C.emplacements.rive, C.emplacements.grotte, C.emplacements.plage);
-    [[C.prairie, 70], [C.riveDroite, 45]].forEach(function (t) {
+    [[C.prairie, 70, 'g'], [C.riveDroite, 45, 'd']].forEach(function (t) {
       for (var i = -26; i <= 26; i++) for (var j = -26; j <= 26; j++) {
         var p = [o[0] + (i + j) * 55, o[1] + (i - j) * 30];
         if (!dedans(p, t[0]) || distBord(p, t[0]) <= t[1]) continue;
         if (reserves.some(function (q) { return !assezLoin(p, 120, q, 160); })) continue;
         if (Math.hypot(p[0] - C.gue.gauche[0], p[1] - C.gue.gauche[1]) < 120) continue;
-        grillePre.push(p);
+        p.cote = t[2];
+        tout.push(p);
       }
     });
-    grillePre.sort(function (a, b) { return dist(a, o) - dist(b, o); });
-    return grillePre;
+    tout.sort(function (a, b) { return dist(a, o) - dist(b, o); });
+    grillePre = { tout: tout, gauche: tout.filter(function (p) { return p.cote === 'g'; }) };
   }
   function distBord(p, poly) {
     var best = 1e9;
@@ -174,7 +190,7 @@ var Monde = (function () {
       });
     }
     var w = d.largeur, choisis = [];
-    grille().forEach(function (p) {
+    grille(m).forEach(function (p) {
       var libre = m.batiments.every(function (b) {
         return assezLoin(p, w, [b.x, b.y], D.batiments[b.type].largeur);
       }) && choisis.every(function (q) { return assezLoin(p, w, q, w); });
@@ -246,7 +262,7 @@ var Monde = (function () {
       var pass = poser(m, 'passerelle', 'gue', C.gue.milieu, false);
       pass.automatique = true;
       // le mammouth s'en va, les chèvres arrivent
-      m.animaux.forEach(function (a) { if (a.espece === 'mammouth') { a.part = true; a.etapes = [[380, 760]]; } });
+      m.animaux.forEach(function (a) { if (a.espece === 'mammouth') { a.part = true; a.etapes = [[2260, 760], [2560, 700]]; } });
       for (var i = 0; i < 2; i++) m.animaux.push({ id: m.prochainId++, espece: 'chevre', x: C.arrivee[0] + i * 40, y: C.arrivee[1], etapes: [], dir: 1, marche: false });
     }
     // les habitants changent de tenue, un par un
@@ -265,6 +281,45 @@ var Monde = (function () {
     return { produit: tr.produit, n: n };
   }
 
+  // ---------- jour et nuit ----------
+  function heure(m) { return ((m.t + DEBUT) % CYCLE) / CYCLE; }
+  // obscurité de 0 (plein jour) à 1 (pleine nuit), avec crépuscule et aube
+  function obscurite(m) {
+    var h = heure(m), J = 150 / CYCLE;
+    if (h < J - 0.05) return 0;
+    if (h < J) return (h - (J - 0.05)) / 0.05;
+    if (h < 0.96) return 1;
+    return 1 - (h - 0.96) / 0.04;
+  }
+  function estNuit(m) { return obscurite(m) > 0.5; }
+  function feux(m) { return m.batiments.filter(function (b) { return b.type === 'feu' && b.etat === 'fini'; }); }
+  function eclaire(m, p) {
+    return feux(m).some(function (f) { return Math.hypot(p[0] - f.x, (p[1] - f.y) / 0.6) < RAYON_FEU; });
+  }
+  function feuProche(m, p) {
+    var best = null, bd = 1e9;
+    feux(m).forEach(function (f) { var d = Math.hypot(p[0] - f.x, p[1] - f.y); if (d < bd) { bd = d; best = f; } });
+    return best;
+  }
+  function maisonProche(m, p) {
+    var best = null, bd = 1e9;
+    m.batiments.forEach(function (b) {
+      if (!D.batiments[b.type].lits && b.type !== 'cercle-pierres') return;
+      var d = Math.hypot(p[0] - b.x, p[1] - b.y); if (d < bd) { bd = d; best = b; }
+    });
+    return best;
+  }
+  function planNuit(m, h) {
+    var f = feuProche(m, [h.x, h.y]);
+    if (f) {
+      // autour du feu : on a chaud et on y voit
+      h.etapes = [{ fait: 'aller', p: pointPrairie(m, [f.x, f.y + 20], 120) }, { fait: 'attendre', d: 3 + hasard(m) * 4, anim: h.enfant ? 'jeu' : 'repos' }];
+      return;
+    }
+    var mai = maisonProche(m, [h.x, h.y]);
+    h.etapes = [{ fait: 'aller', p: mai ? devant(mai) : [h.x, h.y] }, { fait: 'dormir' }];
+  }
+
   // ---------- comportement des habitants ----------
   function devant(b) { return [b.x + 10, b.y + 28]; }
 
@@ -272,7 +327,11 @@ var Monde = (function () {
     var tr = D.batiments[b.type].travail;
     var et = [];
     var lieu = null;
-    if (tr.aller === 'champ') {
+    if (tr.aller === 'mammouth') {
+      var mam = m.animaux.filter(function (a) { return a.espece === 'mammouth' && !a.part; })[0];
+      var cible = mam ? [mam.x - 130 + hasard(m) * 40, mam.y + 40 + hasard(m) * 30] : choisir(m, C.points.foret);
+      lieu = [cible[0], cible[1]];
+    } else if (tr.aller === 'champ') {
       var champs = m.batiments.filter(function (c) { return c.type === 'champ-ble' && c.etat === 'fini'; });
       if (champs.length) { var c = choisir(m, champs); lieu = [c.x + (hasard(m) - 0.5) * 80, c.y - 10 + (hasard(m) - 0.5) * 30]; }
     } else if (tr.aller) {
@@ -335,6 +394,19 @@ var Monde = (function () {
 
   function decider(m, h) {
     var b = h.travail ? bat(m, h.travail) : null;
+    if (estNuit(m)) {
+      // la nuit, on ne travaille que dans la lumière d'un feu
+      var ch0 = chantierEnAttente(m);
+      var tas = m.batiments.filter(function (t) { return t.type === 'tas-bois' && t.etat === 'fini'; })[0];
+      if (!h.enfant && !b && ch0 && eclaire(m, [ch0.x, ch0.y]) && (!tas || eclaire(m, [tas.x, tas.y]))) { h.etapes = planChantier(m, h, ch0); return; }
+      if (!h.enfant && b && b.etat === 'fini' && b.stock < BULLES_MAX && eclaire(m, [b.x, b.y])) {
+        var plan = planTravail(m, h, b);
+        var dehors = plan.filter(function (e) { return e.fait === 'aller' && !eclaire(m, e.p); }).length;
+        if (!dehors) { h.etapes = plan; return; }
+      }
+      planNuit(m, h);
+      return;
+    }
     if (h.enfant) {
       var p = pointPrairie(m, lieuDeRepos(m), 380);
       h.etapes = [{ fait: 'aller', p: p }, { fait: 'attendre', d: 0.5 + hasard(m) * 2, anim: 'jeu' }];
@@ -391,6 +463,10 @@ var Monde = (function () {
         } else {
           h.x += dx / d * pas; h.y += dy / d * pas; reste = 0;
         }
+      } else if (e.fait === 'dormir') {
+        h.marche = false;
+        if (estNuit(m)) { h.dort = true; h.anim = 'dort'; reste = 0; }
+        else { h.dort = false; h.etapes.shift(); }
       } else if (e.fait === 'attendre') {
         h.marche = false;
         h.anim = e.anim || 'repos';
@@ -424,7 +500,8 @@ var Monde = (function () {
     if (!a.etapes.length) {
       if (a.part) { a.parti = true; return; }
       if (a.attente > 0) { a.attente -= dt; a.marche = false; return; }
-      var p = a.espece === 'mammouth' ? choisir(m, C.lisiere) : pointPrairie(m, lieuDeRepos(m), 330);
+      if (estNuit(m)) { a.marche = false; return; }
+      var p = a.espece === 'mammouth' ? pointDans(m, C.riveDroite, [2080, 760], 160) : pointPrairie(m, lieuDeRepos(m), 330);
       a.etapes = [[p[0] + (hasard(m) - 0.5) * 60, p[1] + (hasard(m) - 0.5) * 30]];
       a.attente = 3 + hasard(m) * 6;
     }
@@ -438,6 +515,7 @@ var Monde = (function () {
   function arrivees(m, dt) {
     var pop = m.habitants.length;
     if (pop >= lits(m)) { m.arrivee = 0; return; }
+    if (estNuit(m) && !aFeu(m)) return;
     m.arrivee += dt;
     var delai = aFeu(m) ? DELAI_ARRIVEE / 2 : DELAI_ARRIVEE;
     if (m.arrivee < delai) return;
@@ -484,7 +562,8 @@ var Monde = (function () {
     emplacementsLibres: emplacementsLibres, peutConstruire: peutConstruire,
     decouvertesEpoque: decouvertesEpoque, etatDecouverte: etatDecouverte, decouvrir: decouvrir,
     epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter,
-    lits: lits, bat: bat, exporter: exporter, importer: importer, BULLES_MAX: BULLES_MAX
+    lits: lits, bat: bat, exporter: exporter, importer: importer, BULLES_MAX: BULLES_MAX,
+    heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU
   };
 })();
 if (typeof module !== 'undefined') module.exports = Monde;
