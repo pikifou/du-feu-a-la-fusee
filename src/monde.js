@@ -391,10 +391,11 @@ var Monde = (function () {
       et.push({ fait: 'attendre', d: 0.6, anim: 'repos' });
       et.push({ fait: 'deposer' });
     } else {
+      var dedans = b.type === 'cercle-pierres'; // le sage s'assoit au milieu du cercle
       var p = b.type === 'champ-ble' || b.type === 'enclos-moutons'
-        ? [b.x + (hasard(m) - 0.5) * 120, b.y + (hasard(m) - 0.5) * 40] : devant(m, b);
+        ? [b.x + (hasard(m) - 0.5) * 120, b.y + (hasard(m) - 0.5) * 40] : dedans ? [b.x, b.y] : devant(m, b);
       et.push({ fait: 'aller', p: p });
-      et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose });
+      et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose, dans: dedans ? b.id : null });
     }
     et.push({ fait: 'produire', bat: b.id });
     return et;
@@ -526,7 +527,7 @@ var Monde = (function () {
         var cible = e.route[0];
         var dx = cible[0] - h.x, dy = cible[1] - h.y, d = Math.hypot(dx, dy);
         var pas = h.vitesse * reste;
-        h.marche = true; h.anim = 'marche'; h.pose = null;
+        h.marche = true; h.anim = 'marche'; h.pose = null; h.dans = null;
         if (Math.abs(dx) > 2) h.dir = dx > 0 ? 1 : -1;
         TR.user(m.terrain, h.x, h.y, Math.min(reste, d / h.vitesse)); // l'herbe s'use sous les pas (ADR-013)
         if (d <= pas) {
@@ -545,6 +546,7 @@ var Monde = (function () {
         h.marche = false;
         h.anim = e.anim || 'repos';
         h.pose = e.pose || null;
+        h.dans = e.dans || null;
         if (e.reste == null) e.reste = e.d;
         if (e.reste > reste) { e.reste -= reste; reste = 0; } else { reste -= e.reste; h.etapes.shift(); }
       } else {

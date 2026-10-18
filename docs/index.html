@@ -1067,10 +1067,11 @@ var Monde = (function () {
       et.push({ fait: 'attendre', d: 0.6, anim: 'repos' });
       et.push({ fait: 'deposer' });
     } else {
+      var dedans = b.type === 'cercle-pierres'; // le sage s'assoit au milieu du cercle
       var p = b.type === 'champ-ble' || b.type === 'enclos-moutons'
-        ? [b.x + (hasard(m) - 0.5) * 120, b.y + (hasard(m) - 0.5) * 40] : devant(m, b);
+        ? [b.x + (hasard(m) - 0.5) * 120, b.y + (hasard(m) - 0.5) * 40] : dedans ? [b.x, b.y] : devant(m, b);
       et.push({ fait: 'aller', p: p });
-      et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose });
+      et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose, dans: dedans ? b.id : null });
     }
     et.push({ fait: 'produire', bat: b.id });
     return et;
@@ -1202,7 +1203,7 @@ var Monde = (function () {
         var cible = e.route[0];
         var dx = cible[0] - h.x, dy = cible[1] - h.y, d = Math.hypot(dx, dy);
         var pas = h.vitesse * reste;
-        h.marche = true; h.anim = 'marche'; h.pose = null;
+        h.marche = true; h.anim = 'marche'; h.pose = null; h.dans = null;
         if (Math.abs(dx) > 2) h.dir = dx > 0 ? 1 : -1;
         TR.user(m.terrain, h.x, h.y, Math.min(reste, d / h.vitesse)); // l'herbe s'use sous les pas (ADR-013)
         if (d <= pas) {
@@ -1221,6 +1222,7 @@ var Monde = (function () {
         h.marche = false;
         h.anim = e.anim || 'repos';
         h.pose = e.pose || null;
+        h.dans = e.dans || null;
         if (e.reste == null) e.reste = e.d;
         if (e.reste > reste) { e.reste -= reste; reste = 0; } else { reste -= e.reste; h.etapes.shift(); }
       } else {
@@ -1653,6 +1655,24 @@ if (typeof module !== 'undefined') module.exports = Monde;
     }
   }
 
+  // hauteur des pieds dans l'image (dernière ligne bien opaque), pour poser l'ombre juste dessous
+  function pied(im) {
+    if (im.__pied != null) return im.__pied;
+    var r = 0.94;
+    try {
+      var c = document.createElement('canvas'), w = Math.min(im.width, 160), h = Math.round(im.height * w / im.width);
+      c.width = w; c.height = h;
+      var x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h);
+      var d = x.getImageData(0, 0, w, h).data;
+      for (var y = h - 1; y > h * 0.5; y--) {
+        var n = 0;
+        for (var i = 0; i < w; i++) if (d[(y * w + i) * 4 + 3] > 200) n++;
+        if (n > 1) { r = (y + 1) / h; break; }
+      }
+    } catch (e) {}
+    im.__pied = r;
+    return r;
+  }
   function ombre(x, y, rx, ry, a) {
     ctx.fillStyle = 'rgba(60,40,20,' + (a || 0.22) + ')';
     ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
@@ -1755,12 +1775,12 @@ if (typeof module !== 'undefined') module.exports = Monde;
     else if (h.anim === 'marteau') { rot = Math.sin(T * 15 + ph) * 0.14; bob = Math.abs(Math.sin(T * 15 + ph)) * 4 * V.s; }
     else if (h.anim === 'jeu') { bob = Math.abs(Math.sin(T * 9 + ph)) * 10 * V.s; }
     else { sy = 1 + Math.sin(T * 2 + ph) * 0.018; }
-    ombre(p[0], p[1], w * 0.3, 4 * V.s);
+    ombre(p[0], p[1] - V.s, w * (pim ? 0.26 : 0.3), 3.5 * V.s);
     ctx.save();
     ctx.translate(p[0], p[1] - bob);
     ctx.rotate(rot);
     ctx.scale(h.dir < 0 ? -1 : 1, sy);
-    ctx.drawImage(im, -w / 2, -H * (pim ? 0.93 : 0.97), w, H);
+    ctx.drawImage(im, -w / 2, -H * pied(im), w, H);
     ctx.restore();
     if (h.porte) dessinerObjet(h.porte, p[0], p[1] - H - bob + 3 * V.s, V.s * 0.75);
     if (h.pouf > 0) {
@@ -1778,9 +1798,11 @@ if (typeof module !== 'undefined') module.exports = Monde;
     if (!im) return;
     var w = (a.espece === 'mammouth' ? 165 : 50) * V.s, H = w * im.height / im.width;
     var p = E(a.x, a.y), bob = a.marche ? Math.abs(Math.sin(T * (a.espece === 'mammouth' ? 4 : 9) + a.id)) * 3 * V.s : 0;
-    ombre(p[0], p[1], w * 0.35, 7 * V.s, 0.18);
+    // le mammouth : ses défenses descendent plus bas que ses pattes, on le pose sur ses pattes
+    var mam = a.espece === 'mammouth', pd = mam ? 0.835 : pied(im);
+    ombre(p[0] + (mam ? (a.dir < 0 ? 1 : -1) * w * 0.04 : 0), p[1] - (mam ? H * 0.05 : V.s), w * (mam ? 0.3 : 0.33), (mam ? 9 : 4) * V.s, 0.18);
     ctx.save(); ctx.translate(p[0], p[1] - bob); ctx.scale(a.dir < 0 ? 1 : -1, 1);
-    ctx.drawImage(im, -w / 2, -H * 0.93, w, H); ctx.restore();
+    ctx.drawImage(im, -w / 2, -H * pd, w, H); ctx.restore();
   }
 
   // ---------- la nature ----------
@@ -2016,6 +2038,7 @@ if (typeof module !== 'undefined') module.exports = Monde;
     monde.habitants.forEach(function (h) {
       if (!visible(h.x, h.y, 120)) return;
       var c = h.dort && couchage[h.id], y = c && c.b ? Math.max(h.y, basBat(c.b) + 6) : h.y; // devant la porte, pas derrière
+      if (h.dans && !h.marche) { var bd = M.bat(monde, h.dans); if (bd) y = Math.max(y, basBat(bd) + 1); } // assis au milieu du cercle
       liste.push({ y: y, f: dessinerHab, o: h });
     });
     monde.animaux.forEach(function (a) { liste.push({ y: a.y, f: dessinerAnimal, o: a }); });
