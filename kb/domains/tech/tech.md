@@ -19,7 +19,7 @@ La Tour aux Aimants et Chasseur de Dragons tournent sur la même recette, éprou
 
 ## Spécifique à ce jeu
 - **Contenu piloté par les données** : époques, découvertes, prérequis et bâtiments dans un seul fichier de données lu par le jeu, construit à partir de `domains/contenu-historique/epoques.md`. Pas de liste en dur dans le code (anti-drift).
-- **Rendu isométrique** : le plateau est une image fixe ; les sprites sont posés sur des emplacements prédéfinis de la prairie, triés par profondeur (y croissant).
+- **Rendu isométrique** : le plateau est une image fixe ; les sprites sont triés par profondeur (y croissant) ; voir plus bas pour les emplacements.
 - **Monde vivant** (ADR-008, ADR-010) : chaque habitant est un petit agent avec une file de tâches (marcher vers, travailler, porter, livrer). Les chantiers et les bâtiments de production publient des besoins ; les habitants libres les prennent.
 - **Temps** : la simulation tourne en temps réel tant que le jeu est ouvert ; les bulles plafonnent par bâtiment, pour que rien ne se perde pendant une pause.
 - **Sauvegarde** : localStorage, une seule partie.
@@ -32,7 +32,7 @@ La Tour aux Aimants et Chasseur de Dragons tournent sur la même recette, éprou
 - `src/jeu.js` : rendu canvas, interface, voix (synthèse vocale du navigateur, en attendant la décision sur les voix), sons, sauvegarde localStorage.
 - `build.py` : `dist/index.html` (page complète) et `dist/artifact.html` (version artefact), images intégrées en webp.
 - `tests/monde.test.js` : un joueur automatique joue des parties entières (rapide et lent), vérifie la fin des chantiers et la sauvegarde. `node --test tests/monde.test.js`.
-- Adresse de test : `?x=8` accélère le temps, `?neuf` repart de zéro, `?test` saute l'intro.
+- Adresse de test (page locale seulement, l'artefact ignore les paramètres) : `?x=8` accélère le temps, `?neuf` repart de zéro, `?test` saute l'intro.
 - Artefact (miroir jouable) : https://claude.ai/artifact/34a6HNKDV74sB5XmyFX4wX
 
 ## Questions ouvertes
