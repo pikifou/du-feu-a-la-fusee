@@ -77,9 +77,22 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 /* ---- messages ---- */
 #bulle-aide { position: fixed; left: 50%; top: calc(66px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--carte); border-radius: 18px;
   padding: 8px 18px; box-shadow: var(--ombre); font-size: 16px; pointer-events: none; font-weight: 600; display: none; max-width: 80vw; text-align: center; }
-#placement { position: fixed; left: 50%; bottom: 104px; transform: translateX(-50%); background: var(--encre); color: #fff;
+#placement { position: fixed; left: 50%; top: calc(64px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--encre); color: #fff;
   border-radius: 999px; padding: 6px 8px 6px 18px; font-size: 16px; white-space: nowrap; font-weight: 600; display: none; align-items: center; gap: 14px; box-shadow: var(--ombre); }
 #placement button { border: 0; background: #fff; color: var(--encre); width: 34px; height: 34px; border-radius: 50%; font-size: 17px; font-weight: 700; font-family: inherit; }
+
+[hidden] { display: none !important; }
+/* ---- fiche d'explication (ADR-015) ---- */
+#info { position: fixed; z-index: 20; left: max(14px, env(safe-area-inset-left, 0px)); bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+  width: min(440px, calc(100vw - 28px)); background: var(--carte); border-radius: 20px; box-shadow: var(--ombre);
+  display: flex; gap: 10px; padding: 10px; align-items: flex-start; animation: monte .25s ease; }
+#info img { width: 70px; height: 62px; object-fit: contain; flex: 0 0 auto; }
+#info .info-corps { flex: 1; min-width: 0; }
+#info-titre { font-size: 17px; font-weight: 700; }
+#info-texte { font-size: 15px; line-height: 1.35; margin-top: 2px; }
+#info-statut { font-size: 14px; font-weight: 600; color: var(--orange-fonce); margin-top: 5px; }
+#info .info-boutons { display: flex; flex-direction: column; gap: 6px; }
+#info .bouton-rond { width: 34px; height: 34px; font-size: 16px; box-shadow: none; background: var(--carte-2); }
 
 /* ---- fenêtres ---- */
 .voile { position: fixed; inset: 0; background: rgba(60, 40, 20, .45); display: none; align-items: center; justify-content: center; padding: 24px; }
@@ -138,6 +151,18 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
 <div id="barre"></div>
 <div id="bulle-aide"></div>
+<div id="info" hidden>
+  <img id="info-img" alt="">
+  <div class="info-corps">
+    <div id="info-titre"></div>
+    <div id="info-texte"></div>
+    <div id="info-statut"></div>
+  </div>
+  <div class="info-boutons">
+    <button class="bouton-rond" id="info-fermer" aria-label="Fermer">✕</button>
+    <button class="bouton-rond" id="info-voix" aria-label="Écouter">🔊</button>
+  </div>
+</div>
 <div id="placement"><span id="placement-texte"></span><button id="placement-annuler" aria-label="Annuler">✕</button></div>
 
 <div class="voile" id="decouvertes"><div class="fenetre">

@@ -104,3 +104,9 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée
 - **Décision** : les habitants sont nettement plus petits que les huttes et ont plus d'espace autour d'eux, pour qu'on imagine qu'ils entrent dans les maisons.
 - **Contexte** : Julien : « les bonhommes font la même taille que les huttes ».
+
+## ADR-015 : chaque bâtiment explique à quoi il sert
+- **Date** : 2026-10-18
+- **Statut** : acceptée
+- **Décision** : chaque bâtiment a une courte explication, lue à voix haute : à quoi il sert, qui y travaille, ce que ça change pour le village. On l'entend en choisissant le bâtiment et en touchant un bâtiment déjà construit.
+- **Contexte** : Julien : « il faudrait expliquer à quoi ils servent et ce qu'ils font. Le but, c'est quand même d'être éducatif sur le sujet. »

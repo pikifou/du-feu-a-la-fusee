@@ -50,10 +50,10 @@ def assets() -> dict:
                 cible_l = 420
             if cle.endswith("chevre"):
                 cible_l = 170
+            if cle.startswith("nature/"):
+                cible_l = min(im.width, 420 if cle.endswith("grotte") else 300)
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
         res[cle] = webp(im, 85)
-    board = Image.open(PLATEAU).convert("RGB")
-    res["plateau"] = webp(board, 78)
     return res
 
 
@@ -61,7 +61,7 @@ def construire(sortie: Path) -> None:
     gabarit = (RACINE / "src" / "index.html").read_text(encoding="utf-8")
     scripts = "".join(
         (RACINE / "src" / n).read_text(encoding="utf-8") + "\n"
-        for n in ["data.js", "carte.js", "monde.js", "jeu.js"]
+        for n in ["data.js", "terrain.js", "monde.js", "jeu.js"]
     )
     a = assets()
     gabarit = gabarit.replace("<!--PWA-->\n", "")

@@ -64,97 +64,117 @@ var Donnees = (function () {
   // combien de temps il travaille (duree, secondes) et ce que ça produit.
   var batiments = {
     'cercle-pierres': {
+      explication: "Le cercle des anciens. Le sage s'y assoit pour réfléchir. Ses idées servent à faire des découvertes.",
       nom: 'Le cercle des anciens', sprite: '01-pierre/cercle-pierres', epoque: 1, jusqua: 9,
-      zone: 'pre', cout: null, largeur: 176,
+      zone: 'pre', cout: null, largeur: 210, taille: 2,
       travail: { metier: 'sage', aller: null, duree: 12, produit: 'idees', qte: 1 }
     },
     'tas-bois': {
+      explication: 'Le tas de bois. Le bûcheron coupe les arbres de la forêt et rapporte les bûches. Le bois sert à construire et à faire du feu.',
       nom: 'Le tas de bois', sprite: '01-pierre/tas-bois', epoque: 1, jusqua: 9,
-      zone: 'pre', cout: null, largeur: 132,
+      zone: 'pre', cout: null, largeur: 130, taille: 1,
       travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: 1 }
     },
     tente: {
+      explication: "Une tente en peaux tendues sur des bâtons. Deux personnes y dorment à l'abri du vent. Plus il y a de maisons, plus de familles viennent vivre au village.",
       nom: 'Une tente', sprite: '01-pierre/tente', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 5, bois: 2, lits: 2, largeur: 154, ameliore: 'maison-torchis'
+      zone: 'pre', cout: 5, bois: 2, lits: 2, largeur: 200, taille: 2, ameliore: 'maison-torchis'
     },
     'hutte-branches': {
+      explication: 'Une hutte de branches entrecroisées. Trois personnes peuvent y dormir.',
       nom: 'Une hutte de branches', sprite: '01-pierre/hutte-branches', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 8, bois: 3, lits: 2, largeur: 154, ameliore: 'maison-torchis'
+      zone: 'pre', cout: 8, bois: 3, lits: 3, largeur: 205, taille: 2, ameliore: 'maison-torchis'
     },
     'buisson-baies': {
+      explication: "Un buisson de baies. La cueilleuse ramasse les fruits sauvages : c'était une grande partie de la nourriture des premiers humains.",
       nom: 'Un buisson de baies', sprite: '01-pierre/buisson-baies', epoque: 1, jusqua: 9,
-      zone: 'pre', cout: 6, bois: 1, largeur: 106,
+      zone: 'pre', cout: 6, bois: 1, largeur: 110, taille: 1,
       travail: { metier: 'cueilleur', aller: null, duree: 7, produit: 'pieces', qte: 1 }
     },
     'atelier-silex': {
+      explication: "L'atelier du tailleur, près de la grotte. Il frappe le silex avec un caillou pour faire des lames, des grattoirs et des pointes bien tranchantes.",
       nom: "L'atelier de silex", sprite: '01-pierre/atelier-silex', epoque: 1, jusqua: 9, debloque: 'outils',
-      zone: 'grotte', cout: 10, bois: 2, largeur: 158,
+      zone: 'grotte', cout: 10, bois: 2, largeur: 130, taille: 1,
       travail: { metier: 'tailleur', aller: 'grotte', porte: 'silex', duree: 4, produit: 'pieces', qte: 2 }
     },
     feu: {
+      explication: 'Le feu de camp. Il réchauffe, il éclaire la nuit, il éloigne les bêtes sauvages et il permet de cuire la viande.',
       nom: 'Un feu de camp', sprite: '01-pierre/feu', epoque: 1, jusqua: 9, debloque: 'feu',
-      zone: 'pre', cout: 6, bois: 2, largeur: 101, effet: 'feu'
+      zone: 'pre', cout: 6, bois: 2, largeur: 105, taille: 1, effet: 'feu'
     },
     'ratelier-lances': {
+      explication: 'Le râtelier des chasseurs. On y range les lances. Les chasseurs traversent la rivière pour suivre le mammouth et rapportent de la viande et des peaux.',
       nom: 'Le râtelier des chasseurs', sprite: '01-pierre/ratelier-lances', epoque: 1, jusqua: 9, debloque: 'chasse',
-      zone: 'pre', cout: 10, bois: 2, largeur: 123,
+      zone: 'pre', cout: 10, bois: 2, largeur: 125, taille: 1,
       travail: { metier: 'chasseur', aller: 'mammouth', porte: 'viande', duree: 6, produit: 'pieces', qte: 2 }
     },
     'sechoir-poissons': {
+      explication: "Le séchoir à poissons, au bord de l'eau. Le pêcheur attrape les poissons, puis on les fait sécher pour pouvoir les garder longtemps.",
       nom: 'Le séchoir à poissons', sprite: '01-pierre/sechoir-poissons', epoque: 1, jusqua: 9, debloque: 'chasse',
-      zone: 'rive', cout: 10, bois: 2, largeur: 145,
+      zone: 'rive', cout: 10, bois: 2, largeur: 140, taille: 1,
       travail: { metier: 'pecheur', aller: 'riviere', porte: 'poisson', duree: 6, produit: 'pieces', qte: 2 }
     },
     'hutte-peaux': {
+      explication: 'Une grande hutte couverte de peaux cousues entre elles. Bien chaude, elle accueille trois personnes, même en hiver.',
       nom: 'Une hutte en peaux', sprite: '01-pierre/hutte-peaux', epoque: 1, jusqua: 1, debloque: 'abri',
-      zone: 'pre', cout: 14, bois: 3, lits: 3, largeur: 180, ameliore: 'maison-longue'
+      zone: 'pre', cout: 14, bois: 3, lits: 3, largeur: 220, taille: 2, ameliore: 'maison-longue'
     },
     'peintures-rupestres': {
+      explication: 'La grotte peinte. À la lumière du feu, on peint les animaux et les chasses sur la roche. Ces dessins racontent nos histoires et donnent des idées.',
       nom: 'La grotte peinte', sprite: '01-pierre/peintures-rupestres', epoque: 1, jusqua: 9, debloque: 'peinture',
-      zone: 'grotte', cout: 12, bois: 2, largeur: 163,
+      zone: 'grotte', cout: 12, bois: 2, largeur: 150, taille: 1,
       travail: { metier: 'peintre', aller: null, duree: 14, produit: 'idees', qte: 2 }
     },
     'maison-torchis': {
+      explication: "Une maison en torchis : de la terre, de la paille et de l'eau collées sur des branches. Les paysans y vivent toute l'année, près de leurs champs.",
       nom: 'Une maison en torchis', sprite: '02-neolithique/maison-torchis', epoque: 2, jusqua: 9, debloque: 'agriculture',
-      zone: 'pre', cout: 14, bois: 3, lits: 3, largeur: 167
+      zone: 'pre', cout: 14, bois: 3, lits: 3, largeur: 215, taille: 2
     },
     'champ-ble': {
+      explication: "Un champ de blé. Le paysan sème les graines, puis récolte les épis. Avec les champs, on n'a plus besoin de partir chercher à manger.",
       nom: 'Un champ de blé', sprite: '02-neolithique/champ-ble', epoque: 2, jusqua: 9, debloque: 'agriculture',
-      zone: 'pre', cout: 12, bois: 1, largeur: 185,
+      zone: 'pre', cout: 12, bois: 1, largeur: 240, taille: 2,
       travail: { metier: 'paysan', aller: null, duree: 8, produit: 'pieces', qte: 2 }
     },
     'enclos-moutons': {
+      explication: "L'enclos à moutons. Le berger garde les moutons : ils donnent de la laine pour les vêtements, et du lait.",
       nom: "L'enclos à moutons", sprite: '02-neolithique/enclos-moutons', epoque: 2, jusqua: 9, debloque: 'elevage',
-      zone: 'pre', cout: 16, bois: 3, largeur: 189,
+      zone: 'pre', cout: 16, bois: 3, largeur: 240, taille: 2,
       travail: { metier: 'berger', aller: null, duree: 9, produit: 'pieces', qte: 2 }
     },
     grenier: {
+      explication: "Le grenier sur pilotis. On y range le blé en hauteur, au sec et loin des souris, pour en avoir tout l'hiver.",
       nom: 'Le grenier', sprite: '02-neolithique/grenier', epoque: 2, jusqua: 9, debloque: 'grenier',
-      zone: 'pre', cout: 18, bois: 3, largeur: 141,
+      zone: 'pre', cout: 18, bois: 3, largeur: 140, taille: 1,
       travail: { metier: 'porteur', aller: 'champ', porte: 'ble', duree: 3, produit: 'pieces', qte: 2 }
     },
     'maison-longue': {
+      explication: "Une maison longue. Plusieurs familles vivent ensemble sous le même toit : jusqu'à cinq personnes.",
       nom: 'Une maison longue', sprite: '02-neolithique/maison-longue', epoque: 2, jusqua: 9, debloque: 'grenier',
-      zone: 'pre', cout: 24, bois: 4, lits: 5, largeur: 202
+      zone: 'pre', cout: 24, bois: 4, lits: 5, largeur: 250, taille: 2
     },
     'atelier-potier': {
+      explication: "L'atelier du potier. Il prend de l'argile au bord de la rivière, façonne des pots et les cuit dans le four pour qu'ils deviennent durs.",
       nom: "L'atelier du potier", sprite: '02-neolithique/atelier-potier', epoque: 2, jusqua: 9, debloque: 'poterie',
-      zone: 'pre', cout: 18, bois: 2, largeur: 167,
+      zone: 'pre', cout: 18, bois: 2, largeur: 210, taille: 2,
       travail: { metier: 'potier', aller: 'riviere', porte: 'argile', duree: 4, produit: 'pieces', qte: 2 }
     },
     meule: {
+      explication: 'La meule. On écrase les grains de blé entre deux pierres pour faire de la farine. Avec la farine, on fait du pain.',
       nom: 'La meule', sprite: '02-neolithique/meule', epoque: 2, jusqua: 9, debloque: 'meule',
-      zone: 'pre', cout: 16, bois: 1, largeur: 119,
+      zone: 'pre', cout: 16, bois: 1, largeur: 120, taille: 1,
       travail: { metier: 'meunier', aller: 'champ', porte: 'ble', duree: 5, produit: 'pieces', qte: 2 }
     },
     pirogue: {
+      explication: "Une pirogue, creusée dans un seul tronc d'arbre. Le pêcheur part pêcher en mer.",
       nom: 'Une pirogue', sprite: '02-neolithique/pirogue', epoque: 2, jusqua: 9,
-      zone: 'plage', cout: 12, bois: 2, largeur: 150,
+      zone: 'plage', cout: 12, bois: 2, largeur: 150, taille: 1,
       travail: { metier: 'pecheur', aller: 'plage', porte: 'poisson', duree: 6, produit: 'pieces', qte: 2 }
     },
     passerelle: {
+      explication: 'La passerelle en bois. Plus besoin de se mouiller les pieds pour traverser la rivière !',
       nom: 'La passerelle', sprite: '02-neolithique/passerelle', epoque: 2, jusqua: 9,
-      zone: 'gue', cout: null, bois: 3, largeur: 176, automatique: true
+      zone: 'gue', cout: null, bois: 3, largeur: 230, taille: 1, automatique: true
     }
   };
 

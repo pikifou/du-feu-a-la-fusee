@@ -11,13 +11,14 @@ updated: 2026-10-18
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 14 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 15 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.
 - 32 sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants.
 - Test d'intégration des sprites sur le plateau concluant (`assets/raw/test-integration.jpg`).
 
+- **v0.5** : la grande refonte. Île en tuiles qui s'agrandit au néolithique (ADR-012) ; forêt d'arbres que les bûcherons abattent (la forêt recule, des souches restent) ; l'herbe s'use en sentiers puis en chemins de terre, et les habitants préfèrent les chemins tracés (ADR-013) ; habitants bien plus petits que les huttes et un espace libre autour de chaque bâtiment (ADR-014) ; fiche d'explication lue à voix haute pour chaque bâtiment, et aussi pour les arbres, la grotte, le mammouth, le gué et les sentiers (ADR-015) ; zone constructible en surbrillance.
 - **v0.4** : cycle jour / nuit (ADR-011) : sans feu tout le monde dort, la lumière du feu permet de continuer à travailler ; le mammouth vit sur l'autre rive (plus dans les arbres) et les chasseurs vont le chasser ; l'autre rive ne devient constructible qu'au néolithique, quand le mammouth est parti.
 - **v0.3** : bouton plein écran, écran « tourne ton téléphone », appli installable pour GitHub Pages (`docs/`, poussé).
 - **v0.2 (retour de Julien : « caméra super loin, icônes immenses »)** : caméra rapprochée sur le village, glisser pour se déplacer, pincer pour zoomer ; interface réduite d'environ un tiers ; images en plus haute définition ; halo blanc sous les sprites remplacé par une ombre douce.
@@ -25,9 +26,6 @@ updated: 2026-10-18
 
 ## En cours
 - Game design en brouillon : proposition de Claude, pas encore validée par Julien (`domains/game-design/gd.md`).
-
-## En cours (18/10, fin d'après-midi)
-- Refonte du terrain en tuiles (ADR-012), sentiers émergents (ADR-013), habitants plus petits (ADR-014).
 
 ## Prochaine étape
 - Test du prototype avec Joshua sur tablette.

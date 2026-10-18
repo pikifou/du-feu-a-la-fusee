@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const Monde = require('../src/monde.js');
+const Terrain = require('../src/terrain.js');
 const D = require('../src/data.js');
 
 // Joueur : récolte toutes les `reflexe` secondes, découvre dès que possible,
@@ -52,11 +53,17 @@ test('rythme avec un joueur lent (récolte toutes les 20 s)', () => {
 
 test('les chantiers se terminent et les habitants ne restent pas bloqués', () => {
   const { m } = jouer(7, 5, 60);
+  for (let i = 0; i < 2400; i++) Monde.pas(m, 0.1); // on laisse finir les derniers chantiers
   const enCours = m.batiments.filter(b => b.etat === 'chantier');
   assert.strictEqual(enCours.length, 0, 'aucun chantier abandonné : ' + enCours.map(b => b.type).join(','));
   m.habitants.forEach(h => {
     assert.ok(Number.isFinite(h.x) && Number.isFinite(h.y), 'position valide');
   });
+  const sentiers = m.terrain.tuiles.filter(t => t.usure >= 0.4).length;
+  const souches = m.terrain.tuiles.filter(t => t.obj === 'souche').length;
+  console.log(`sentiers : ${sentiers} tuiles, arbres abattus : ${souches}`);
+  assert.ok(sentiers >= 10, 'des sentiers se sont formés');
+  assert.ok(souches >= 3, 'la forêt a reculé');
 });
 
 test('sauvegarde puis reprise', () => {

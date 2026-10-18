@@ -1,12 +1,12 @@
 // Rendu, interface et boucle de jeu (navigateur).
 (function () {
-  var D = Donnees, C = Carte, M = Monde;
+  var D = Donnees, TR = Terrain, M = Monde;
   var cv = document.getElementById('ecran');
   var ctx = cv.getContext('2d');
   var $ = function (id) { return document.getElementById(id); };
   var params = new URLSearchParams(location.search);
   var VITESSE = +params.get('x') || 1;
-  var CLE = 'feu-fusee-v1';
+  var CLE = 'feu-fusee-v2';
 
   // ---------- images ----------
   var IMG = {};
@@ -25,34 +25,54 @@
   function charger() {
     try {
       var o = JSON.parse(localStorage.getItem(CLE) || 'null');
-      if (o && o.v === 1) { ui = Object.assign(ui, o.ui || {}); return M.importer(o.monde); }
+      if (o && o.v === 2 && o.monde && o.monde.terrain) { ui = Object.assign(ui, o.ui || {}); return M.importer(o.monde); }
     } catch (e) {}
     return null;
   }
   function sauver() {
-    try { localStorage.setItem(CLE, JSON.stringify({ v: 1, monde: M.exporter(monde), ui: ui })); } catch (e) {}
+    try { localStorage.setItem(CLE, JSON.stringify({ v: 2, monde: M.exporter(monde), ui: ui })); } catch (e) {}
   }
   var monde = params.has('neuf') ? null : charger();
   var nouvellePartie = !monde;
   if (!monde) monde = M.nouveau((Date.now() % 100000) + 1);
 
   // ---------- vue (caméra rapprochée, glisser pour se déplacer, pincer pour zoomer) ----------
-  var V = { s: 1, ox: 0, oy: 0, W: 0, H: 0, dpr: 1, cx: 1300, cy: 830, sMin: 0.3, sMax: 1.6, init: false };
+  var V = { s: 1, ox: 0, oy: 0, W: 0, H: 0, dpr: 1, cx: 0, cy: 0, sMin: 0.3, sMax: 1.6, init: false };
+  // la caméra reste au-dessus de l'île (qui grandit à chaque époque)
+  var bornesCache = null, bornesEpoque = -1;
+  function bornes() {
+    var T0 = monde.terrain;
+    if (bornesCache && bornesEpoque === T0.epoque) return bornesCache;
+    var b = { x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9 };
+    T0.tuiles.forEach(function (t) {
+      if (!TR.surIle(T0, t)) return;
+      var c = TR.centre(t.i, t.j);
+      b.x0 = Math.min(b.x0, c[0] - TR.TW); b.x1 = Math.max(b.x1, c[0] + TR.TW);
+      b.y0 = Math.min(b.y0, c[1] - 260); b.y1 = Math.max(b.y1, c[1] + 160);
+    });
+    bornesCache = b; bornesEpoque = T0.epoque;
+    return b;
+  }
+  function tailleSol() { return { w: TR.N * 2 * TR.TW, h: TR.OY + TR.N * 2 * TR.TH + 140 }; }
   function redim() {
     V.dpr = Math.min(window.devicePixelRatio || 1, 2);
     V.W = innerWidth; V.H = innerHeight;
     cv.width = Math.round(V.W * V.dpr); cv.height = Math.round(V.H * V.dpr);
-    V.sMin = Math.min(V.W / C.cadre.l, V.H / C.cadre.h);
-    V.sMax = Math.max(V.sMin, 1.5);
-    if (!V.init) { V.init = true; V.s = V.W / (V.W < 1000 ? 1200 : 1500); V.cx = 1240; V.cy = 830; }
+    var b = bornes();
+    V.sMin = Math.min(V.W / (b.x1 - b.x0), V.H / (b.y1 - b.y0)) * 1.15;
+    V.sMax = 1.6;
+    if (!V.init) {
+      V.init = true;
+      V.s = V.W / (V.W < 1000 ? 1300 : 1700);
+      var c = TR.centre(TR.CI + 1, TR.CJ + 1); V.cx = c[0]; V.cy = c[1] - 40;
+    }
     V.s = Math.max(V.sMin, Math.min(V.sMax, V.s));
     borner();
   }
   function borner() {
-    var dw = V.W / 2 / V.s, dh = V.H / 2 / V.s;
-    var x0 = C.cadre.x, x1 = C.cadre.x + C.cadre.l, y0 = C.cadre.y - 60, y1 = C.cadre.y + C.cadre.h + 60;
-    V.cx = x1 - x0 <= 2 * dw ? (x0 + x1) / 2 : Math.max(x0 + dw, Math.min(x1 - dw, V.cx));
-    V.cy = y1 - y0 <= 2 * dh ? (y0 + y1) / 2 : Math.max(y0 + dh, Math.min(y1 - dh, V.cy));
+    var b = bornes(), dw = V.W / 2 / V.s, dh = V.H / 2 / V.s;
+    V.cx = b.x1 - b.x0 <= 2 * dw ? (b.x0 + b.x1) / 2 : Math.max(b.x0 + dw, Math.min(b.x1 - dw, V.cx));
+    V.cy = b.y1 - b.y0 <= 2 * dh ? (b.y0 + b.y1) / 2 : Math.max(b.y0 + dh, Math.min(b.y1 - dh, V.cy));
     V.ox = V.W / 2 - V.cx * V.s;
     V.oy = V.H / 2 - V.cy * V.s;
   }
@@ -63,20 +83,118 @@
     V.cy = wy - (my - V.H / 2) / V.s;
     borner();
   }
-  function dessinerFond() {
-    ctx.fillStyle = '#e2d4ba'; ctx.fillRect(0, 0, V.W, V.H);
-    var im = IMG.plateau;
-    if (!im) return;
-    // on prolonge les bords du plateau pour que le fond soit continu
-    var iw = im.width, ih = im.height;
-    var bx = V.ox, by = V.oy, bw = C.largeur * V.s, bh = C.hauteur * V.s;
-    if (by + bh < V.H) ctx.drawImage(im, 0, ih - 2, iw, 2, bx, by + bh - 1, bw, V.H - by - bh + 1);
-    if (by > 0) ctx.drawImage(im, 0, 0, iw, 2, bx, 0, bw, by + 1);
-    if (bx > 0) ctx.drawImage(im, 0, 0, 2, ih, 0, Math.max(0, by), bx + 1, bh);
-    if (bx + bw < V.W) ctx.drawImage(im, iw - 2, 0, 2, ih, bx + bw - 1, Math.max(0, by), V.W - bx - bw + 1, bh);
-    ctx.drawImage(im, bx, by, bw, bh);
-  }
   function E(x, y) { return [V.ox + x * V.s, V.oy + y * V.s]; }
+  function W2(sx, sy) { return [(sx - V.ox) / V.s, (sy - V.oy) / V.s]; }
+
+  // ---------- le sol : couleurs douces, île en diorama, sentiers (ADR-012, ADR-013) ----------
+  var G = 0.5, sol = null, solEpoque = -1, usureCv = null, usureT = 99;
+  function losange(c, i, j, k, e) {
+    var p = TR.centre(i, j), tw = TR.TW * (k || 1), th = TR.TH * (k || 1);
+    c.moveTo(p[0] * e, (p[1] - th) * e); c.lineTo((p[0] + tw) * e, p[1] * e);
+    c.lineTo(p[0] * e, (p[1] + th) * e); c.lineTo((p[0] - tw) * e, p[1] * e); c.closePath();
+  }
+  function couleurTuile(t) {
+    var n = (TR.h2(t.i, t.j, 9) - 0.5) * 14;
+    var c = t.sol === 'herbe' ? (t.obj === 'arbre' ? [112, 158, 74] : t.sauvage ? [146, 186, 92] : [142, 192, 92])
+      : t.sol === 'sable' ? [234, 214, 158]
+      : t.sol === 'roche' ? [170, 158, 146]
+      : (t.i + t.j >= 60 ? [92, 162, 206] : [116, 184, 220]);
+    if (t.gue) c = [134, 192, 222];
+    return 'rgb(' + c.map(function (v) { return Math.max(0, Math.min(255, Math.round(v + n))); }).join(',') + ')';
+  }
+  var motif = null;
+  function motifHerbe() {
+    if (motif) return motif;
+    var m = document.createElement('canvas'); m.width = m.height = 96;
+    var g = m.getContext('2d');
+    for (var k = 0; k < 260; k++) {
+      var x = Math.random() * 96, y = Math.random() * 96;
+      g.fillStyle = Math.random() < 0.5 ? 'rgba(40,70,20,0.5)' : 'rgba(255,255,210,0.5)';
+      g.fillRect(x, y, 1 + Math.random() * 1.5, 2 + Math.random() * 2);
+    }
+    motif = m;
+    return m;
+  }
+  function construireSol() {
+    var T = monde.terrain, b = tailleSol();
+    var Wd = Math.ceil(b.w * G), Hd = Math.ceil(b.h * G);
+    sol = document.createElement('canvas'); sol.width = Wd; sol.height = Hd;
+    var g = sol.getContext('2d');
+    var sur = T.tuiles.filter(function (t) { return TR.surIle(T, t); });
+    // 1. couleurs en basse résolution, agrandies : les terrains se fondent les uns dans les autres
+    var f = 8, bas = document.createElement('canvas');
+    bas.width = Math.ceil(Wd / f); bas.height = Math.ceil(Hd / f);
+    var bc = bas.getContext('2d');
+    sur.forEach(function (t) { bc.beginPath(); losange(bc, t.i, t.j, 1.35, G / f); bc.fillStyle = couleurTuile(t); bc.fill(); });
+    // 2. côtés de l'île (terre en couches), du fond vers l'avant
+    var prof = 90;
+    sur.slice().sort(function (a, b2) { return (a.i + a.j) - (b2.i + b2.j); }).forEach(function (t) {
+      var p = TR.centre(t.i, t.j), droite = TR.tuile(T, t.i + 1, t.j), gauche = TR.tuile(T, t.i, t.j + 1);
+      var bas0 = [p[0], p[1] + TR.TH], dr = [p[0] + TR.TW, p[1]], ga = [p[0] - TR.TW, p[1]];
+      function face(a, c, teinte) {
+        var gr = g.createLinearGradient(0, a[1] * G, 0, (a[1] + prof) * G);
+        gr.addColorStop(0, '#6f9e45'); gr.addColorStop(0.1, '#6f9e45'); gr.addColorStop(0.11, teinte[0]);
+        gr.addColorStop(0.45, teinte[1]); gr.addColorStop(0.46, teinte[2]); gr.addColorStop(1, teinte[3]);
+        g.beginPath(); g.moveTo(a[0] * G, a[1] * G); g.lineTo(c[0] * G, c[1] * G);
+        g.lineTo(c[0] * G, (c[1] + prof) * G); g.lineTo(a[0] * G, (a[1] + prof) * G); g.closePath();
+        g.fillStyle = gr; g.fill();
+      }
+      if (!droite || !TR.surIle(T, droite)) face(bas0, dr, ['#c78a57', '#b5764a', '#a8693f', '#8a5434']);
+      if (!gauche || !TR.surIle(T, gauche)) face(ga, bas0, ['#b07546', '#9c643c', '#8f5935', '#73432a']);
+    });
+    // 3. le dessus de l'île, découpé net
+    g.save();
+    g.beginPath(); sur.forEach(function (t) { losange(g, t.i, t.j, 1.002, G); }); g.clip();
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.drawImage(bas, 0, 0, Wd, Hd);
+    g.globalAlpha = 0.13; g.fillStyle = g.createPattern(motifHerbe(), 'repeat'); g.fillRect(0, 0, Wd, Hd);
+    g.globalAlpha = 1;
+    // écume au bord de l'eau
+    sur.forEach(function (t) {
+      if (t.sol !== 'eau' || t.gue) return;
+      var bord = [[1, 0], [0, 1], [-1, 0], [0, -1]].some(function (d) { var n = TR.tuile(T, t.i + d[0], t.j + d[1]); return n && TR.surIle(T, n) && n.sol !== 'eau'; });
+      if (!bord) return;
+      var p = TR.centre(t.i, t.j);
+      var gr = g.createRadialGradient(p[0] * G, p[1] * G, 0, p[0] * G, p[1] * G, TR.TW * G);
+      gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.8, 'rgba(255,255,255,0.0)'); gr.addColorStop(1, 'rgba(255,255,255,0.25)');
+      g.fillStyle = gr; g.beginPath(); losange(g, t.i, t.j, 1, G); g.fill();
+    });
+    g.restore();
+    solEpoque = T.epoque;
+    usureCv = document.createElement('canvas'); usureCv.width = Wd; usureCv.height = Hd;
+    usureT = 99;
+  }
+  function majUsure(dt) {
+    usureT += dt;
+    if (usureT < 1.5) return;
+    usureT = 0;
+    var T = monde.terrain, u = usureCv.getContext('2d');
+    u.clearRect(0, 0, usureCv.width, usureCv.height);
+    T.tuiles.forEach(function (t) {
+      if (t.sol !== 'herbe' || t.usure < 0.1 || !TR.surIle(T, t)) return;
+      var e = TR.etatHerbe(t);
+      var col = e <= 1 ? [200, 192, 118] : e === 2 ? [190, 156, 104] : [172, 130, 86];
+      var a = e <= 1 ? 0.3 + t.usure * 0.8 : e === 2 ? 0.7 : 0.9;
+      var p = TR.centre(t.i, t.j), x = p[0] * G, y = p[1] * G;
+      u.save(); u.translate(x, y); u.scale(1, 0.5);
+      var r = TR.TW * G * 1.05;
+      var gr = u.createRadialGradient(0, 0, 0, 0, 0, r);
+      gr.addColorStop(0, 'rgba(' + col + ',' + a + ')'); gr.addColorStop(0.6, 'rgba(' + col + ',' + (a * 0.75) + ')'); gr.addColorStop(1, 'rgba(' + col + ',0)');
+      u.fillStyle = gr; u.beginPath(); u.arc(0, 0, r, 0, 7); u.fill(); u.restore();
+    });
+  }
+  function dessinerFond(dt) {
+    ctx.fillStyle = '#e2d4ba'; ctx.fillRect(0, 0, V.W, V.H);
+    if (!sol || solEpoque !== monde.terrain.epoque) {
+      construireSol(); redim();
+      ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
+      ctx.fillStyle = '#e2d4ba'; ctx.fillRect(0, 0, V.W, V.H);
+    }
+    majUsure(dt);
+    var w = sol.width / G * V.s, h = sol.height / G * V.s;
+    ctx.drawImage(sol, V.ox, V.oy, w, h);
+    ctx.drawImage(usureCv, V.ox, V.oy, w, h);
+  }
 
   // ---------- son ----------
   var audio = null;
@@ -123,11 +241,13 @@
 
   // ---------- dessin ----------
   var T = 0;
+  var TAILLE_HAB = { sage: 66, enfant: 48, adulte: 62 }; // ADR-014 : bien plus petits que les huttes
   function tailleBat(b) {
     var d = D.batiments[b.type], im = IMG[d.sprite];
     var w = d.largeur * V.s;
     return { w: w, h: im ? w * im.height / im.width : w, im: im };
   }
+  function basBat(b) { return b.y + b.k * TR.TH * 0.55; }
   function dessinerSprite(im, x, y, w, h, alpha) {
     if (!im) return;
     ctx.globalAlpha = alpha == null ? 1 : alpha;
@@ -135,13 +255,12 @@
     ctx.globalAlpha = 1;
   }
   function dessinerBat(b) {
-    var p = E(b.x, b.y), t = tailleBat(b), d = D.batiments[b.type];
+    var p = E(b.x, basBat(b)), t = tailleBat(b);
+    if (b.type === 'passerelle') return dessinerPasserelle(b, t);
     if (b.etat === 'fini') {
-      var k = 1;
-      var age = monde.t - (b.apparu || -10);
+      var k = 1, age = monde.t - (b.apparu || -10);
       if (age < 0.7) k = 1 + Math.sin(age / 0.7 * Math.PI) * 0.18 * (1 - age / 0.7) - (age < 0.1 ? 0.3 * (1 - age / 0.1) : 0);
-      var w = t.w * k, h = t.h * (2 - k);
-      dessinerSprite(t.im, p[0], p[1], w, h);
+      dessinerSprite(t.im, p[0], p[1], t.w * k, t.h * (2 - k));
       return;
     }
     var prog = b.besoin ? b.livre / b.besoin : 1;
@@ -149,14 +268,14 @@
       var da = D.batiments[b.ancien], ia = IMG[da.sprite], wa = da.largeur * V.s;
       dessinerSprite(ia, p[0], p[1], wa, wa * ia.height / ia.width, 1 - prog * 0.9);
     }
-    // piquets du chantier
+    // piquets et cordeau du chantier, aux coins de l'empreinte
+    var c = E(b.x, b.y), rx = b.k * TR.TW * V.s * 0.9, ry = b.k * TR.TH * V.s * 0.9;
     ctx.strokeStyle = '#8a5a32'; ctx.lineWidth = Math.max(2, 4 * V.s); ctx.lineCap = 'round';
-    var rx = t.w * 0.42, ry = t.w * 0.2;
     [[-rx, 0], [rx, 0], [0, -ry], [0, ry]].forEach(function (q) {
-      ctx.beginPath(); ctx.moveTo(p[0] + q[0], p[1] + q[1] - 4 * V.s); ctx.lineTo(p[0] + q[0], p[1] + q[1] - 26 * V.s); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(c[0] + q[0], c[1] + q[1]); ctx.lineTo(c[0] + q[0], c[1] + q[1] - 24 * V.s); ctx.stroke();
     });
-    ctx.globalAlpha = 0.5; ctx.setLineDash([6 * V.s, 6 * V.s]); ctx.lineWidth = Math.max(1.5, 2.5 * V.s);
-    ctx.beginPath(); ctx.moveTo(p[0] - rx, p[1] - 18 * V.s); ctx.lineTo(p[0], p[1] - ry - 18 * V.s); ctx.lineTo(p[0] + rx, p[1] - 18 * V.s); ctx.lineTo(p[0], p[1] + ry - 18 * V.s); ctx.closePath(); ctx.stroke();
+    ctx.globalAlpha = 0.55; ctx.setLineDash([6 * V.s, 6 * V.s]); ctx.lineWidth = Math.max(1.5, 2.5 * V.s);
+    ctx.beginPath(); ctx.moveTo(c[0] - rx, c[1] - 16 * V.s); ctx.lineTo(c[0], c[1] - ry - 16 * V.s); ctx.lineTo(c[0] + rx, c[1] - 16 * V.s); ctx.lineTo(c[0], c[1] + ry - 16 * V.s); ctx.closePath(); ctx.stroke();
     ctx.setLineDash([]); ctx.globalAlpha = 1;
     dessinerSprite(t.im, p[0], p[1], t.w, t.h, 0.22);
     if (prog > 0) {
@@ -165,6 +284,30 @@
       ctx.beginPath(); ctx.rect(p[0] - t.w, bas - hauteur, t.w * 2, hauteur); ctx.clip();
       dessinerSprite(t.im, p[0], p[1], t.w, t.h);
       ctx.restore();
+    }
+  }
+  function dessinerPasserelle(b, t) {
+    var g = monde.terrain.gues, a = TR.centre(g[0][0], g[0][1]), z = TR.centre(g[g.length - 1][0], g[g.length - 1][1]);
+    var prog = b.etat === 'fini' ? 1 : (b.besoin ? b.livre / b.besoin : 0);
+    var n = 7, pa = E(a[0], a[1]), pz = E(z[0], z[1]);
+    var dx = pz[0] - pa[0], dy = pz[1] - pa[1], L = Math.hypot(dx, dy) + 130 * V.s;
+    var ux = dx / Math.hypot(dx, dy), uy = dy / Math.hypot(dx, dy);
+    var cx = (pa[0] + pz[0]) / 2, cy = (pa[1] + pz[1]) / 2;
+    // planches posées une à une
+    for (var k = 0; k < n; k++) {
+      if (k / n >= prog) break;
+      var s = -L / 2 + (k + 0.5) * L / n;
+      var x = cx + ux * s, y = cy + uy * s;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(uy, ux) + Math.PI / 2);
+      ctx.fillStyle = k % 2 ? '#9b6a3f' : '#a87648'; ctx.fillRect(-34 * V.s, -L / n / 2 + 1, 68 * V.s, L / n - 2);
+      ctx.restore();
+    }
+    if (prog >= 1) {
+      ctx.strokeStyle = '#7a4f2c'; ctx.lineWidth = Math.max(2, 5 * V.s);
+      [-1, 1].forEach(function (cote) {
+        var ox = -uy * 34 * V.s * cote, oy = ux * 34 * V.s * cote;
+        ctx.beginPath(); ctx.moveTo(cx - ux * L / 2 + ox, cy - uy * L / 2 + oy - 18 * V.s); ctx.lineTo(cx + ux * L / 2 + ox, cy + uy * L / 2 + oy - 18 * V.s); ctx.stroke();
+      });
     }
   }
 
@@ -198,68 +341,112 @@
     ctx.restore();
   }
 
-  var tailles = { sage: 100, enfant: 74, adulte: 94 };
+
+
   function dessinerHab(h) {
     var im = IMG['habitants/' + h.allure];
     if (!im) return;
     if (h.dort) {
-      // il dort dans sa hutte : on ne voit que les « z »
-      var pz = E(h.x, h.y - 70);
+      var pz = E(h.x, h.y - 60);
       var k = (T * 0.5 + h.id * 0.37) % 1;
-      ctx.font = '700 ' + Math.round(14 + 10 * k) + 'px Fredoka, system-ui';
+      ctx.font = '700 ' + Math.round(12 + 8 * k) + 'px Fredoka, system-ui';
       ctx.fillStyle = 'rgba(235,240,255,' + (1 - k) + ')';
       ctx.textAlign = 'center';
-      ctx.fillText('z', pz[0] + k * 18, pz[1] - k * 40 * V.s);
+      ctx.fillText('z', pz[0] + k * 14, pz[1] - k * 34 * V.s);
       return;
     }
-    var H = (h.enfant ? tailles.enfant : h.allure === 'sage' ? tailles.sage : tailles.adulte) * V.s;
+    var H = (h.enfant ? TAILLE_HAB.enfant : h.allure === 'sage' ? TAILLE_HAB.sage : TAILLE_HAB.adulte) * V.s;
     var w = H * im.width / im.height;
     var p = E(h.x, h.y), ph = h.id * 1.7;
     var bob = 0, rot = 0, sy = 1;
-    if (h.marche) { bob = Math.abs(Math.sin(T * 11 + ph)) * 7 * V.s; rot = Math.sin(T * 11 + ph) * 0.05; }
-    else if (h.anim === 'travail') { rot = Math.sin(T * 7 + ph) * 0.11; bob = Math.abs(Math.sin(T * 7 + ph)) * 3 * V.s; }
-    else if (h.anim === 'marteau') { rot = Math.sin(T * 15 + ph) * 0.14; bob = Math.abs(Math.sin(T * 15 + ph)) * 5 * V.s; }
-    else if (h.anim === 'jeu') { bob = Math.abs(Math.sin(T * 9 + ph)) * 14 * V.s; }
+    if (h.marche) { bob = Math.abs(Math.sin(T * 11 + ph)) * 5 * V.s; rot = Math.sin(T * 11 + ph) * 0.05; }
+    else if (h.anim === 'travail') { rot = Math.sin(T * 7 + ph) * 0.11; bob = Math.abs(Math.sin(T * 7 + ph)) * 2 * V.s; }
+    else if (h.anim === 'marteau') { rot = Math.sin(T * 15 + ph) * 0.14; bob = Math.abs(Math.sin(T * 15 + ph)) * 4 * V.s; }
+    else if (h.anim === 'jeu') { bob = Math.abs(Math.sin(T * 9 + ph)) * 10 * V.s; }
     else { sy = 1 + Math.sin(T * 2 + ph) * 0.018; }
-    ombre(p[0], p[1], w * 0.3, 6 * V.s);
+    ombre(p[0], p[1], w * 0.3, 4 * V.s);
     ctx.save();
     ctx.translate(p[0], p[1] - bob);
     ctx.rotate(rot);
     ctx.scale(h.dir < 0 ? -1 : 1, sy);
     ctx.drawImage(im, -w / 2, -H * 0.97, w, H);
     ctx.restore();
-    if (h.porte) dessinerObjet(h.porte, p[0], p[1] - H - bob + 4 * V.s, V.s * 1.1);
+    if (h.porte) dessinerObjet(h.porte, p[0], p[1] - H - bob + 3 * V.s, V.s * 0.75);
     if (h.pouf > 0) {
-      var k = 1 - h.pouf / 0.6;
-      ctx.fillStyle = 'rgba(255,255,255,' + (1 - k) + ')';
-      for (var i = 0; i < 6; i++) { var a = i / 6 * 6.28; ctx.beginPath(); ctx.arc(p[0] + Math.cos(a) * 30 * k * V.s, p[1] - H / 2 + Math.sin(a) * 30 * k * V.s, (12 - 8 * k) * V.s, 0, 7); ctx.fill(); }
+      var k2 = 1 - h.pouf / 0.6;
+      ctx.fillStyle = 'rgba(255,255,255,' + (1 - k2) + ')';
+      for (var i = 0; i < 6; i++) { var a = i / 6 * 6.28; ctx.beginPath(); ctx.arc(p[0] + Math.cos(a) * 22 * k2 * V.s, p[1] - H / 2 + Math.sin(a) * 22 * k2 * V.s, (9 - 6 * k2) * V.s, 0, 7); ctx.fill(); }
     }
-    // éclats de travail
     if (!h.marche && (h.anim === 'travail' || h.anim === 'marteau') && Math.random() < 0.04) {
-      particule({ type: 'eclat', x: h.x + (Math.random() - 0.5) * 20, y: h.y - 30, vx: (Math.random() - 0.5) * 80, vy: -60 - Math.random() * 40, max: 0.6, r: 4, c: h.anim === 'marteau' ? '170,120,70' : '210,190,140' });
+      particule({ type: 'eclat', x: h.x + (Math.random() - 0.5) * 16, y: h.y - 24, vx: (Math.random() - 0.5) * 60, vy: -50 - Math.random() * 30, max: 0.6, r: 3, c: h.anim === 'marteau' ? '170,120,70' : '210,190,140' });
     }
   }
 
   function dessinerAnimal(a) {
     var im = IMG[a.espece === 'mammouth' ? '01-pierre/mammouth' : '02-neolithique/chevre'];
     if (!im) return;
-    var w = (a.espece === 'mammouth' ? 175 : 62) * V.s, H = w * im.height / im.width;
-    var p = E(a.x, a.y), bob = a.marche ? Math.abs(Math.sin(T * (a.espece === 'mammouth' ? 4 : 9) + a.id)) * 4 * V.s : 0;
-    ombre(p[0], p[1], w * 0.35, 8 * V.s, 0.18);
+    var w = (a.espece === 'mammouth' ? 165 : 50) * V.s, H = w * im.height / im.width;
+    var p = E(a.x, a.y), bob = a.marche ? Math.abs(Math.sin(T * (a.espece === 'mammouth' ? 4 : 9) + a.id)) * 3 * V.s : 0;
+    ombre(p[0], p[1], w * 0.35, 7 * V.s, 0.18);
     ctx.save(); ctx.translate(p[0], p[1] - bob); ctx.scale(a.dir < 0 ? 1 : -1, 1);
     ctx.drawImage(im, -w / 2, -H * 0.93, w, H); ctx.restore();
   }
 
-  function dessinerGue() {
-    var pass = monde.batiments.filter(function (b) { return b.type === 'passerelle' && b.etat === 'fini'; })[0];
-    if (pass) return;
-    var g = C.gue;
-    for (var i = 0; i <= 5; i++) {
-      var k = i / 5, x = g.gauche[0] + (g.droite[0] - g.gauche[0]) * k, y = g.gauche[1] + (g.droite[1] - g.gauche[1]) * k;
-      var p = E(x + (i % 2 ? 8 : -8), y);
-      ctx.fillStyle = '#8f8a86'; ctx.beginPath(); ctx.ellipse(p[0], p[1], 15 * V.s, 8 * V.s, 0, 0, 7); ctx.fill();
-      ctx.fillStyle = '#b4afaa'; ctx.beginPath(); ctx.ellipse(p[0] - 2 * V.s, p[1] - 3 * V.s, 11 * V.s, 5 * V.s, 0, 0, 7); ctx.fill();
-    }
+  // ---------- la nature ----------
+  var ARBRES_OUEST = [['nature/sapin-grand', 150], ['nature/sapin-moyen', 125], ['nature/sapins-double', 170], ['nature/sapin-moyen', 130], ['nature/sapin-petit', 95]];
+  var ARBRES_AUTRES = [['nature/chene', 175], ['nature/arbre-clair', 150], ['nature/bouleau', 120], ['nature/sapin-moyen', 125], ['nature/sapin-grand', 145]];
+  var DECO = { touffe: ['nature/touffe', 46], fleurs: ['nature/fleurs', 56], roseaux: ['nature/roseaux', 54], galets: ['nature/galets', 46] };
+  function spriteObjet(t) {
+    if (t.obj === 'arbre') { var l = (t.i - t.j) < -3 ? ARBRES_OUEST : ARBRES_AUTRES; return l[t.vari % l.length]; }
+    if (t.obj === 'rocher') return t.sol === 'roche' ? ['nature/rochers', 120] : (t.vari % 2 ? ['nature/rocher-mousse', 100] : ['nature/pierres-plates', 90]);
+    if (t.obj === 'grotte') return ['nature/grotte', 320];
+    if (t.obj === 'souche') return ['nature/souche', 58];
+    return null;
+  }
+  function visible(x, y, marge) {
+    var p = E(x, y);
+    return p[0] > -marge && p[0] < V.W + marge && p[1] > -marge * 0.5 && p[1] < V.H + marge * 1.5;
+  }
+  function dessinerTuileObjet(t) {
+    var sp = spriteObjet(t); if (!sp) return;
+    var im = IMG[sp[0]]; if (!im) return;
+    var c = TR.centre(t.i, t.j), w = sp[1] * V.s, h = w * im.height / im.width;
+    var p = E(c[0] + ((t.vari % 7) - 3) * 3, c[1] + 16);
+    var balance = t.obj === 'arbre' && t.reserve ? Math.sin(T * 14) * 0.03 : Math.sin(T * 1.3 + t.vari) * 0.012;
+    if (t.obj === 'arbre') {
+      ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(balance); ctx.drawImage(im, -w / 2, -h * 0.93, w, h); ctx.restore();
+    } else dessinerSprite(im, p[0], p[1], w, h);
+  }
+  function dessinerDeco(t) {
+    var sp = DECO[t.deco]; if (!sp) return;
+    var im = IMG[sp[0]]; if (!im) return;
+    var c = TR.centre(t.i, t.j), w = sp[1] * V.s, h = w * im.height / im.width;
+    var p = E(c[0] + ((t.vari % 9) - 4) * 6, c[1] + ((t.vari % 5) - 2) * 4);
+    dessinerSprite(im, p[0], p[1], w, h);
+  }
+  function dessinerEau() {
+    var T0 = monde.terrain;
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = Math.max(1, 2 * V.s); ctx.lineCap = 'round';
+    T0.tuiles.forEach(function (t) {
+      if (t.sol !== 'eau' || !TR.surIle(T0, t)) return;
+      var c = TR.centre(t.i, t.j);
+      if (!visible(c[0], c[1], 80)) return;
+      var ph = (T * 0.4 + t.vari * 0.013) % 1;
+      var a = Math.sin(ph * Math.PI);
+      ctx.globalAlpha = a * 0.7;
+      var p = E(c[0] + ((t.vari % 11) - 5) * 6 + ph * 18, c[1] + ((t.vari % 7) - 3) * 4);
+      ctx.beginPath(); ctx.moveTo(p[0] - 9 * V.s, p[1]); ctx.lineTo(p[0] + 9 * V.s, p[1]); ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+    // les pierres du gué (avant la passerelle)
+    if (!T0.passerelle && T0.gues) T0.gues.forEach(function (g, k) {
+      var c = TR.centre(g[0], g[1]);
+      [[-20, -8], [8, 4], [30, -12], [-36, 10]].forEach(function (o, n) {
+        var p = E(c[0] + o[0], c[1] + o[1] + (k % 2) * 6);
+        ctx.fillStyle = '#8f8a86'; ctx.beginPath(); ctx.ellipse(p[0], p[1], 13 * V.s, 7 * V.s, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = '#b4afaa'; ctx.beginPath(); ctx.ellipse(p[0] - 2 * V.s, p[1] - 3 * V.s, 9 * V.s, 4 * V.s, 0, 0, 7); ctx.fill();
+      });
+    });
   }
 
   var bulles = [];
@@ -268,8 +455,8 @@
     monde.batiments.forEach(function (b) {
       if (b.stock <= 0 || b.etat !== 'fini') return;
       var tr = D.batiments[b.type].travail;
-      var t = tailleBat(b), p = E(b.x, b.y);
-      var r = Math.max(15, Math.min(26, 30 * V.s));
+      var t = tailleBat(b), p = E(b.x, basBat(b));
+      var r = Math.max(15, Math.min(24, 30 * V.s));
       var x = p[0], y = p[1] - t.h * 0.93 - r * 0.6 + Math.sin(T * 3 + b.id) * 4;
       bulles.push({ bat: b.id, x: x, y: y, r: r * 1.4 });
       ctx.fillStyle = 'rgba(60,40,20,.18)'; ctx.beginPath(); ctx.arc(x, y + 5, r, 0, 7); ctx.fill();
@@ -302,18 +489,31 @@
     });
   }
 
+  var valides = [], validesT = 0;
+  function majValides(forcer) {
+    if (!choix) { valides = []; return; }
+    if (!forcer && T - validesT < 1) return;
+    validesT = T;
+    valides = M.emplacementsLibres(monde, choix);
+  }
   function dessinerEmplacements() {
     if (!choix) return;
-    var libres = M.emplacementsLibres(monde, choix);
-    var puls = 1 + Math.sin(T * 5) * 0.08;
-    libres.forEach(function (q) {
-      var p = E(q[0], q[1]);
-      var rx = D.batiments[choix].largeur * 0.4 * V.s * puls, ry = rx * 0.52;
-      ctx.fillStyle = 'rgba(255,248,220,.45)'; ctx.beginPath(); ctx.ellipse(p[0], p[1], rx, ry, 0, 0, 7); ctx.fill();
-      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke();
-      ctx.fillStyle = '#e9873b'; ctx.font = '700 ' + Math.round(Math.max(16, 36 * V.s)) + 'px Fredoka, system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('+', p[0], p[1] + 1);
+    majValides();
+    var k = D.batiments[choix].taille || 1;
+    var puls = 0.5 + Math.sin(T * 5) * 0.12;
+    ctx.save();
+    ctx.beginPath();
+    valides.forEach(function (a) {
+      for (var di = 0; di < k; di++) for (var dj = 0; dj < k; dj++) {
+        var c = TR.centre(a[0] + di, a[1] + dj);
+        if (!visible(c[0], c[1], 100)) continue;
+        var p = E(c[0], c[1]), tw = TR.TW * V.s * 0.96, th = TR.TH * V.s * 0.96;
+        ctx.moveTo(p[0], p[1] - th); ctx.lineTo(p[0] + tw, p[1]); ctx.lineTo(p[0], p[1] + th); ctx.lineTo(p[0] - tw, p[1]); ctx.closePath();
+      }
     });
+    ctx.fillStyle = 'rgba(255,238,150,' + puls + ')'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
   }
 
   var dernierFumee = 0;
@@ -328,7 +528,7 @@
       if (!feu && !(d.lits && Math.random() < 0.18)) return;
       var t = tailleBat(b);
       var haut = feu ? 0.55 : 0.85;
-      particule({ type: 'fumee', x: b.x + (feu ? 0 : t.w / V.s * 0.1), y: b.y - t.h / V.s * haut, vx: 6 + Math.random() * 8, vy: -28 - Math.random() * 10, max: 2.6, r: feu ? 9 : 11, c: '250,248,245' });
+      particule({ type: 'fumee', x: b.x + (feu ? 0 : t.w / V.s * 0.1), y: basBat(b) - t.h / V.s * haut, vx: 6 + Math.random() * 8, vy: -28 - Math.random() * 10, max: 2.6, r: feu ? 9 : 11, c: '250,248,245' });
     });
   }
 
@@ -374,7 +574,7 @@
     // fenêtres éclairées des maisons
     monde.batiments.forEach(function (b) {
       if (b.etat !== 'fini' || !D.batiments[b.type].lits || monde.epoque < 2) return;
-      var t = tailleBat(b), p = E(b.x, b.y);
+      var t = tailleBat(b), p = E(b.x, basBat(b));
       trou(p[0], p[1] - t.h * 0.35, 80 * V.s, 0.7, 0.8);
     });
     nctx.globalCompositeOperation = 'source-over';
@@ -393,21 +593,29 @@
   function dessiner(dt) {
     ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
     ctx.imageSmoothingQuality = 'high';
-    dessinerFond();
-    dessinerGue();
-    var liste = [];
+    dessinerFond(dt);
+    dessinerEau();
+    dessinerEmplacements();
+    var T0 = monde.terrain, liste = [];
+    T0.tuiles.forEach(function (t) {
+      if (!TR.surIle(T0, t)) return;
+      if (!t.obj && !t.deco) return;
+      var c = TR.centre(t.i, t.j);
+      if (!visible(c[0], c[1], 260)) return;
+      if (t.deco) dessinerDeco(t);
+      if (t.obj) liste.push({ y: c[1] + 16, f: dessinerTuileObjet, o: t });
+    });
     monde.batiments.forEach(function (b) {
       var plat = b.type === 'champ-ble' || b.type === 'passerelle';
-      liste.push({ y: plat ? b.y - 400 : b.y, f: dessinerBat, o: b });
+      liste.push({ y: plat ? b.y - 200 : basBat(b) - 6, f: dessinerBat, o: b });
     });
-    monde.habitants.forEach(function (h) { liste.push({ y: h.y, f: dessinerHab, o: h }); });
+    monde.habitants.forEach(function (h) { if (visible(h.x, h.y, 120)) liste.push({ y: h.y, f: dessinerHab, o: h }); });
     monde.animaux.forEach(function (a) { liste.push({ y: a.y, f: dessinerAnimal, o: a }); });
     liste.sort(function (a, b) { return a.y - b.y; });
     liste.forEach(function (e) { e.f(e.o); });
     fumees(dt);
     dessinerParts(dt);
     dessinerNuit();
-    dessinerEmplacements();
     dessinerBulles();
     dessinerParoles();
   }
@@ -468,9 +676,12 @@
     var pl = $('placement');
     if (type) {
       son('clic');
-      $('placement-texte').textContent = 'Où poser ' + D.batiments[type].nom.toLowerCase() + ' ?';
+      $('placement-texte').textContent = 'Touche la zone claire pour poser ' + D.batiments[type].nom.toLowerCase();
       pl.style.display = 'flex';
-    } else pl.style.display = 'none';
+      var d = D.batiments[type];
+      montrerInfo({ img: d.sprite, titre: d.nom, texte: d.explication || '', statut: resumeType(type) });
+      majValides(true);
+    } else { pl.style.display = 'none'; valides = []; }
   }
   $('placement-annuler').addEventListener('pointerdown', function (e) { e.stopPropagation(); choisir(null); });
 
@@ -714,27 +925,74 @@
     zoomer(ev.deltaY < 0 ? 1.12 : 1 / 1.12, ev.clientX, ev.clientY);
   }, { passive: false });
 
+  // ---------- fiches d'explication (ADR-015) ----------
+  var METIERS = {
+    sage: 'le sage', bucheron: 'le bûcheron', cueilleur: 'la cueilleuse', tailleur: 'le tailleur de silex',
+    chasseur: 'le chasseur', pecheur: 'le pêcheur', peintre: 'la peintre', paysan: 'le paysan',
+    berger: 'le berger', porteur: 'le porteur', potier: 'la potière', meunier: 'la meunière'
+  };
+  var infoMinuteur = null;
+  function montrerInfo(o) {
+    $('info-img').src = ASSETS[o.img] || '';
+    $('info-img').hidden = !ASSETS[o.img];
+    $('info-titre').textContent = o.titre;
+    $('info-texte').textContent = o.texte;
+    $('info-statut').textContent = o.statut || '';
+    $('info-statut').hidden = !o.statut;
+    $('info-voix').onclick = function (e) { e.stopPropagation(); dire(o.texte); };
+    $('info').hidden = false;
+    dire(o.texte);
+    clearTimeout(infoMinuteur);
+    infoMinuteur = setTimeout(cacherInfo, 14000);
+  }
+  function cacherInfo() { $('info').hidden = true; }
+  $('info-fermer').addEventListener('click', function (e) { e.stopPropagation(); cacherInfo(); });
+  function resumeType(type) {
+    var d = D.batiments[type], l = [];
+    if (d.lits) l.push('👥 ' + d.lits + ' personnes y dorment');
+    if (d.travail) l.push((d.travail.produit === 'idees' ? '💡' : '🪙') + ' +' + d.travail.qte + ' à chaque fois · ' + METIERS[d.travail.metier]);
+    if (d.cout != null) l.push('Coûte 🪙 ' + d.cout);
+    return l.join(' · ');
+  }
+  function infoBatiment(b) {
+    var d = D.batiments[b.type], statut;
+    if (b.etat === 'chantier') statut = '🔨 Chantier : ' + b.livre + ' bois apporté' + (b.livre > 1 ? 's' : '') + ' sur ' + b.besoin;
+    else if (d.travail) {
+      var h = monde.habitants.filter(function (q) { return q.id === b.ouvrier; })[0];
+      statut = h ? 'Ici travaille ' + METIERS[d.travail.metier] + '. ' + resumeType(b.type).split(' · ')[0] : 'Personne n\'y travaille encore : il faut un nouvel habitant.';
+    } else if (d.lits) statut = '👥 ' + d.lits + ' personnes y dorment';
+    montrerInfo({ img: d.sprite, titre: d.nom, texte: d.explication || '', statut: statut });
+  }
+  var INFOS_NATURE = {
+    arbre: ['nature/sapin-grand', 'Un arbre', "Le bûcheron coupe les arbres pour avoir du bois. Petit à petit, la forêt recule et laisse de la place pour construire."],
+    souche: ['nature/souche', 'Une souche', 'Ici, le bûcheron a coupé un arbre. On peut construire à cet endroit.'],
+    rocher: ['nature/rochers', 'Des rochers', 'On ne peut pas construire sur les rochers.'],
+    grotte: ['nature/grotte', 'La grotte', "Les premiers humains s'y abritaient. C'est près d'elle qu'on trouve le silex, et qu'on peint sur la roche."],
+    mammouth: ['01-pierre/mammouth', 'Le mammouth', "Un éléphant géant couvert de longs poils, qui vivait quand il faisait très froid. Les chasseurs le suivaient pour sa viande, sa fourrure et ses os."],
+    chevre: ['02-neolithique/chevre', 'Une chèvre', "Les premiers paysans ont apprivoisé les chèvres : elles donnent du lait et de la laine."],
+    gue: ['nature/galets', 'Le gué', "Ici, la rivière est peu profonde : on traverse en marchant sur les pierres."],
+    sentier: ['nature/touffe', 'Un sentier', "À force de passer toujours au même endroit, les habitants ont usé l'herbe. Plus tard, on en fera de vraies routes !"]
+  };
+  function infoNature(cle) { var n = INFOS_NATURE[cle]; montrerInfo({ img: n[0], titre: n[1], texte: n[2] }); }
+
   function toucher(x, y) {
+    var w = W2(x, y);
     if (choix) {
-      var libres = M.emplacementsLibres(monde, choix), best = null, bd = 1e9;
-      libres.forEach(function (q) {
-        var p = E(q[0], q[1]);
-        var d = Math.hypot((x - p[0]) / 1.0, (y - p[1]) * 1.8);
-        if (d < bd) { bd = d; best = q; }
-      });
-      if (best && bd < Math.max(40, D.batiments[choix].largeur * 0.5 * V.s)) {
+      var tu = TR.tuileDe(w[0], w[1]);
+      var ancre = M.ancrePour(monde, choix, tu[0], tu[1]);
+      if (ancre) {
         var type = choix;
-        var b = M.construire(monde, type, best);
+        var b = M.construire(monde, type, ancre);
         if (b) {
           son('pose');
-          var p = E(b.x, b.y);
           ui.nouveaux = ui.nouveaux.filter(function (k) { return k !== type; });
           pouf(b.x, b.y, 8, '210,190,150');
           choisir(null);
+          cacherInfo();
           aideUneFois('chantier', 'Regarde : les habitants vont chercher du bois pour construire !');
           sauver();
         }
-      }
+      } else son('non');
       return;
     }
     for (var i = 0; i < bulles.length; i++) {
@@ -745,13 +1003,41 @@
         return;
       }
     }
+    // un habitant ?
     var best2 = null, bd2 = 1e9;
     monde.habitants.forEach(function (h) {
-      var p = E(h.x, h.y - 45);
+      if (h.dort) return;
+      var p = E(h.x, h.y - 30);
       var d = Math.hypot(x - p[0], y - p[1]);
       if (d < bd2) { bd2 = d; best2 = h; }
     });
-    if (best2 && bd2 < Math.max(28, 50 * V.s)) parler(best2);
+    if (best2 && bd2 < Math.max(24, 36 * V.s)) { parler(best2); return; }
+    // un animal ?
+    var an = monde.animaux.filter(function (a) {
+      var p = E(a.x, a.y), lw = (a.espece === 'mammouth' ? 165 : 50) * V.s;
+      return Math.abs(x - p[0]) < lw / 2 && y < p[1] + 6 && y > p[1] - lw * 0.8;
+    })[0];
+    if (an) { infoNature(an.espece); return; }
+    // un bâtiment ? (le plus en avant d'abord)
+    var bats = monde.batiments.slice().sort(function (a, b2) { return basBat(b2) - basBat(a); });
+    for (var n = 0; n < bats.length; n++) {
+      var bt = bats[n], t = tailleBat(bt), pb = E(bt.x, basBat(bt));
+      if (bt.type === 'passerelle') continue;
+      if (Math.abs(x - pb[0]) < t.w * 0.45 && y < pb[1] + 6 && y > pb[1] - t.h * 0.85) { infoBatiment(bt); return; }
+    }
+    // la nature
+    var T0 = monde.terrain, tc = TR.tuileDe(w[0], w[1]);
+    for (var dj = 0; dj <= 2; dj++) for (var di = 0; di <= 2; di++) {
+      var tt = TR.tuile(T0, tc[0] + di, tc[1] + dj);
+      if (!tt || !tt.obj || !TR.surIle(T0, tt)) continue;
+      var sp = spriteObjet(tt), im = sp && IMG[sp[0]]; if (!im) continue;
+      var c = TR.centre(tt.i, tt.j), pw = sp[1] * V.s, ph = pw * im.height / im.width, po = E(c[0], c[1] + 16);
+      if (Math.abs(x - po[0]) < pw * 0.42 && y < po[1] + 6 && y > po[1] - ph * 0.9) { infoNature(tt.obj); return; }
+    }
+    var ici = TR.tuile(T0, tc[0], tc[1]);
+    if (ici && ici.gue && !T0.passerelle) { infoNature('gue'); return; }
+    if (ici && ici.sol === 'herbe' && ici.usure >= 0.4) { infoNature('sentier'); return; }
+    cacherInfo();
   }
 
   function voler(emoji, x, y, cible, n) {
