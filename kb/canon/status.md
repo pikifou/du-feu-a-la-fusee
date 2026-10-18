@@ -18,13 +18,21 @@ updated: 2026-10-18
 - 32 sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants.
 - Test d'intégration des sprites sur le plateau concluant (`assets/raw/test-integration.jpg`).
 
+- **Prototype jouable v0.1** (époques 1 et 2) publié en artefact : habitants qui travaillent et construisent, chantiers, bulles à récolter, 10 découvertes avec voix, changement d'époque avec rénovation automatique des huttes et passerelle (cf. `domains/tech/tech.md`).
+
 ## En cours
 - Game design en brouillon : proposition de Claude, pas encore validée par Julien (`domains/game-design/gd.md`).
 
 ## Prochaine étape
+- Test du prototype avec Joshua sur tablette.
 - Valider les questions ouvertes restantes du GD (titre, voix off).
-- Prototype jouable des époques 1 et 2.
+
+## Mesures (joueur automatique)
+- Âge de pierre ~6 min, néolithique ~5 min, même pour un joueur qui ne récolte que toutes les 20 s : le rythme est donné par les idées du sage. La cible du GD est 10 à 15 min par époque : à juger avec Joshua.
+- Une partie complète finit vers 45 habitants et 27 bâtiments.
 
 ## Points connus
 - Les sprites gardent un léger halo clair sous les objets (ombre douce de la planche). Acceptable pour le prototype.
 - Le dépôt n'a pas encore de remote GitHub : il doit être créé par Julien.
+- Pas encore de Frise du temps ni de Musée, pas de petits problèmes, pas de déplacement des bâtiments posés (prévus au GD).
+- Les pièces s'accumulent vite en fin d'époque : à rééquilibrer après le test.

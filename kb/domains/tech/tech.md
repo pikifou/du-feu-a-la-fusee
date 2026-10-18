@@ -25,5 +25,15 @@ La Tour aux Aimants et Chasseur de Dragons tournent sur la même recette, éprou
 - **Sauvegarde** : localStorage, une seule partie.
 - **Tests** : `node --test`, avec une simulation qui joue une partie entière pour vérifier que chaque époque est finissable en 10 à 15 minutes.
 
+## Le prototype (v0.1, 18/10/2026)
+- `src/data.js` : **source unique** des chiffres et des textes en jeu (coûts, temps, découvertes, textes avant / après). `kb/domains/contenu-historique/epoques.md` reste le document de conception du contenu ; en cas d'écart, c'est `data.js` qui dit ce qui est en jeu.
+- `src/carte.js` : coordonnées de la vallée (pré, autre rive, rivière, gué, points de travail), en pixels de `assets/raw/plateau-vide.png`.
+- `src/monde.js` : la simulation, pure et sans DOM. Chaque habitant suit une file d'étapes (aller, travailler, prendre, déposer, livrer, produire). Dans le pré, les emplacements sont calculés librement selon la taille des bâtiments ; ailleurs ils sont fixes.
+- `src/jeu.js` : rendu canvas, interface, voix (synthèse vocale du navigateur, en attendant la décision sur les voix), sons, sauvegarde localStorage.
+- `build.py` : `dist/index.html` (page complète) et `dist/artifact.html` (version artefact), images intégrées en webp.
+- `tests/monde.test.js` : un joueur automatique joue des parties entières (rapide et lent), vérifie la fin des chantiers et la sauvegarde. `node --test tests/monde.test.js`.
+- Adresse de test : `?x=8` accélère le temps, `?neuf` repart de zéro, `?test` saute l'intro.
+- Artefact (miroir jouable) : https://claude.ai/artifact/34a6HNKDV74sB5XmyFX4wX
+
 ## Questions ouvertes
 - [ ] Voix off : fichiers audio ou synthèse vocale du navigateur
