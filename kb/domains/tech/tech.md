@@ -32,7 +32,10 @@ La Tour aux Aimants et Chasseur de Dragons tournent sur la même recette, éprou
 - `src/monde.js` : la simulation, pure et sans DOM. Chaque habitant suit une file d'étapes (aller, travailler, couper, prendre, déposer, livrer, produire, dormir). Les bâtiments occupent 1 × 1 ou 2 × 2 tuiles, avec une tuile libre autour ; zones particulières : bord de l'eau, plage, abords de la grotte.
 - `src/jeu.js` : rendu canvas, interface, voix (synthèse vocale du navigateur, en attendant la décision sur les voix), sons, sauvegarde localStorage.
 - `build.py` : `dist/index.html` (page complète) et `dist/artifact.html` (version artefact), images intégrées en webp.
-- `tests/monde.test.js` : un joueur automatique joue des parties entières (rapide et lent), vérifie la fin des chantiers et la sauvegarde. `node --test tests/monde.test.js`.
+- Nuit (ADR-016) : `monde.cycle` = phase (jour 150 s, soir 25 s, nuit 45 s, aube 4 s) ; `reveiller()` passe directement à l'aube, `toutLeMondeDort()` dit quand montrer le coq ; `m.jour` compte les jours (pour ranimer le feu une fois par soir). Chaque habitant a `maison` (attribuée chaque seconde) et `dortChez` quand il dort.
+- Poses (ADR-017) : `Donnees.poses[époque][métier]` ; l'étape « attendre » du travail porte la pose, dessinée au lieu de l'allure tant que l'habitant ne marche pas. Les vignettes vivent dans `Donnees.batiments[x].vignettes` (image + phrase).
+- `build.py` garde les images converties en webp dans `.cache/webp.json` (non versionné) : une reconstruction passe de ~2 min à ~1 s.
+- `tests/monde.test.js` : un joueur automatique joue des parties entières (rapide et lent), vérifie la fin des chantiers et la sauvegarde ; il appuie sur le coq dès que tout le monde dort. Un test dédié vérifie la séquence de nuit. `node --test tests/monde.test.js`.
 - Adresse de test (page locale seulement, l'artefact ignore les paramètres) : `?x=8` accélère le temps, `?neuf` repart de zéro, `?test` saute l'intro.
 - Artefact (miroir jouable) : https://claude.ai/artifact/34a6HNKDV74sB5XmyFX4wX
 - Appli GitHub Pages : `python3 build.py --pwa docs` produit `docs/` (page, manifest plein écran paysage, service worker versionné, icônes). Dépôt https://github.com/pikifou/du-feu-a-la-fusee, Pages sur la branche main, dossier `/docs` (à activer à la main par Julien) ; adresse attendue https://pikifou.github.io/du-feu-a-la-fusee/

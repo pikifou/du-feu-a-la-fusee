@@ -20,10 +20,24 @@ SPRITES = RACINE / "assets" / "sprites"
 PLATEAU = RACINE / "assets" / "raw" / "plateau-vide.png"
 
 
+_CACHE_F = RACINE / ".cache" / "webp.json"
+try:
+    _CACHE = json.loads(_CACHE_F.read_text())
+except Exception:
+    _CACHE = {}
+
+
 def webp(im: Image.Image, q: int = 82) -> str:
+    import hashlib
+    cle = hashlib.sha1(im.tobytes() + f"{im.size}{im.mode}{q}".encode()).hexdigest()
+    if cle in _CACHE:
+        return _CACHE[cle]
     buf = io.BytesIO()
     im.save(buf, "WEBP", quality=q, method=6)
-    return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+    _CACHE[cle] = "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+    _CACHE_F.parent.mkdir(exist_ok=True)
+    _CACHE_F.write_text(json.dumps(_CACHE))
+    return _CACHE[cle]
 
 
 def largeurs() -> dict:
@@ -44,6 +58,10 @@ def assets() -> dict:
         if f.parent.name == "habitants":
             cible_h = min(im.height, 280)
             im = im.resize((round(im.width * cible_h / im.height), cible_h), Image.LANCZOS)
+        elif f.parent.name in ("poses", "nuit"):
+            # facteur unique : les tailles relatives de la planche sont gardées
+            k = 0.45 if f.parent.name == "poses" else 0.4
+            im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
         else:
             cible_l = min(im.width, round(larg.get(cle, 160) * 2.6))
             if cle.endswith("mammouth"):
@@ -54,6 +72,11 @@ def assets() -> dict:
                 cible_l = min(im.width, 420 if cle.endswith("grotte") else 300)
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
         res[cle] = webp(im, 85)
+    # vignettes illustrées des fiches (ADR-017), avec leur propre fond
+    for f in sorted((SPRITES / "vignettes").glob("*.jpg")):
+        im = Image.open(f).convert("RGB")
+        im.thumbnail((300, 300), Image.LANCZOS)
+        res[f"vignettes/{f.stem}"] = webp(im, 80)
     return res
 
 

@@ -205,6 +205,7 @@
       var notes = type === 'pop' ? [[880, 0, .08], [1320, .05, .1]]
         : type === 'fini' ? [[523, 0, .15], [659, .1, .15], [784, .2, .25]]
         : type === 'decouverte' ? [[523, 0, .2], [659, .15, .2], [784, .3, .2], [1047, .45, .4]]
+        : type === 'coq' ? [[660, 0, .1], [880, .12, .1], [990, .24, .12], [1320, .38, .4]]
         : type === 'pose' ? [[330, 0, .12], [440, .06, .12]] : [[600, 0, .08]];
       notes.forEach(function (n) {
         var o = audio.createOscillator(), g = audio.createGain();
@@ -257,6 +258,10 @@
   function dessinerBat(b) {
     var p = E(b.x, basBat(b)), t = tailleBat(b);
     if (b.type === 'passerelle') return dessinerPasserelle(b, t);
+    if (b.etat === 'fini' && b.type === 'feu' && M.phase(monde) === 'nuit') {
+      var ic = IMG[monde.cycle.t < 10 ? 'nuit/feu-braises' : 'nuit/feu-cendres'];
+      if (ic) { var wc = t.w * 0.82; dessinerSprite(ic, p[0], p[1], wc, wc * ic.height / ic.width); return; }
+    }
     if (b.etat === 'fini') {
       var k = 1, age = monde.t - (b.apparu || -10);
       if (age < 0.7) k = 1 + Math.sin(age / 0.7 * Math.PI) * 0.18 * (1 - age / 0.7) - (age < 0.1 ? 0.3 * (1 - age / 0.1) : 0);
@@ -343,23 +348,72 @@
 
 
 
+  // les dormeurs d'une même maison se rangent côte à côte devant la porte (ADR-017)
+  var LITS = { 'tete-adulte': 60, 'tete-enfant': 48, 'deux-tetes': 70, 'tete-sage': 62 };
+  var couchage = {};
+  function rangerDormeurs() {
+    couchage = {};
+    var groupes = {};
+    monde.habitants.forEach(function (h) {
+      if (!h.dort) return;
+      var k = h.dortChez || ('dehors' + h.id);
+      (groupes[k] = groupes[k] || []).push(h);
+    });
+    Object.keys(groupes).forEach(function (k) {
+      var g = groupes[k].sort(function (a, b) { return a.id - b.id; });
+      var enfants = g.filter(function (h) { return h.enfant; });
+      var lits = [];
+      g.forEach(function (h) {
+        if (h.enfant && h.couche) return;
+        if (h.allure === 'sage') { lits.push({ sp: 'tete-sage', h: h }); return; }
+        if (h.enfant) { lits.push({ sp: 'tete-enfant', h: h }); return; }
+        var e = enfants.filter(function (c) { return !c.couche; })[0];
+        if (e) { e.couche = true; lits.push({ sp: 'deux-tetes', h: h, avec: e }); }
+        else lits.push({ sp: 'tete-adulte', h: h });
+      });
+      g.forEach(function (h) { h.couche = false; });
+      var b = M.bat(monde, g[0].dortChez);
+      lits.forEach(function (l, i) {
+        couchage[l.h.id] = { sp: l.sp, i: i, n: lits.length, b: b };
+        if (l.avec) couchage[l.avec.id] = { cache: true };
+      });
+    });
+  }
+  function dessinerDormeur(h) {
+    var c = couchage[h.id];
+    if (!c || c.cache) return;
+    var im = IMG['nuit/' + c.sp];
+    var p = E(h.x, h.y);
+    if (c.b) {
+      var pb = E(c.b.x, basBat(c.b)), ecart = Math.min(48, tailleBat(c.b).w / V.s / Math.max(1, c.n)) * V.s;
+      p = [pb[0] + (c.i - (c.n - 1) / 2) * ecart, Math.max(p[1], pb[1] + 6 * V.s) + (c.i % 2) * 6 * V.s];
+    }
+    if (im) {
+      var w = LITS[c.sp] * V.s, H = w * im.height / im.width;
+      var souffle = 1 + Math.sin(T * 1.6 + h.id) * 0.015;
+      ctx.drawImage(im, p[0] - w / 2, p[1] - H * 0.8 * souffle, w, H * souffle);
+    }
+    var k = (T * 0.5 + h.id * 0.37) % 1;
+    ctx.font = '700 ' + Math.round(11 + 7 * k) + 'px Fredoka, system-ui';
+    ctx.fillStyle = 'rgba(235,240,255,' + (1 - k) + ')';
+    ctx.textAlign = 'center';
+    ctx.fillText('z', p[0] + 10 * V.s + k * 14, p[1] - 26 * V.s - k * 30 * V.s);
+  }
+
+  var POSE_REF = 220; // hauteur d'un habitant debout sur la planche des poses, une fois réduite
   function dessinerHab(h) {
+    if (h.dort) { dessinerDormeur(h); return; }
     var im = IMG['habitants/' + h.allure];
     if (!im) return;
-    if (h.dort) {
-      var pz = E(h.x, h.y - 60);
-      var k = (T * 0.5 + h.id * 0.37) % 1;
-      ctx.font = '700 ' + Math.round(12 + 8 * k) + 'px Fredoka, system-ui';
-      ctx.fillStyle = 'rgba(235,240,255,' + (1 - k) + ')';
-      ctx.textAlign = 'center';
-      ctx.fillText('z', pz[0] + k * 14, pz[1] - k * 34 * V.s);
-      return;
-    }
-    var H = (h.enfant ? TAILLE_HAB.enfant : h.allure === 'sage' ? TAILLE_HAB.sage : TAILLE_HAB.adulte) * V.s;
+    var base = (h.enfant ? TAILLE_HAB.enfant : h.allure === 'sage' ? TAILLE_HAB.sage : TAILLE_HAB.adulte) * V.s;
+    var H = base;
+    var pim = !h.marche && h.pose ? IMG['poses/' + h.pose] : null;
+    if (pim) { im = pim; H = base * pim.height / POSE_REF; }
     var w = H * im.width / im.height;
     var p = E(h.x, h.y), ph = h.id * 1.7;
     var bob = 0, rot = 0, sy = 1;
     if (h.marche) { bob = Math.abs(Math.sin(T * 11 + ph)) * 5 * V.s; rot = Math.sin(T * 11 + ph) * 0.05; }
+    else if (pim) { rot = Math.sin(T * 6 + ph) * 0.035; bob = Math.abs(Math.sin(T * 6 + ph)) * 1.5 * V.s; }
     else if (h.anim === 'travail') { rot = Math.sin(T * 7 + ph) * 0.11; bob = Math.abs(Math.sin(T * 7 + ph)) * 2 * V.s; }
     else if (h.anim === 'marteau') { rot = Math.sin(T * 15 + ph) * 0.14; bob = Math.abs(Math.sin(T * 15 + ph)) * 4 * V.s; }
     else if (h.anim === 'jeu') { bob = Math.abs(Math.sin(T * 9 + ph)) * 10 * V.s; }
@@ -369,7 +423,7 @@
     ctx.translate(p[0], p[1] - bob);
     ctx.rotate(rot);
     ctx.scale(h.dir < 0 ? -1 : 1, sy);
-    ctx.drawImage(im, -w / 2, -H * 0.97, w, H);
+    ctx.drawImage(im, -w / 2, -H * (pim ? 0.93 : 0.97), w, H);
     ctx.restore();
     if (h.porte) dessinerObjet(h.porte, p[0], p[1] - H - bob + 3 * V.s, V.s * 0.75);
     if (h.pouf > 0) {
@@ -525,6 +579,7 @@
       if (b.etat !== 'fini') return;
       var d = D.batiments[b.type];
       var feu = b.type === 'feu';
+      if (feu && M.phase(monde) === 'nuit') return;
       if (!feu && !(d.lits && Math.random() < 0.18)) return;
       var t = tailleBat(b);
       var haut = feu ? 0.55 : 0.85;
@@ -570,10 +625,20 @@
       nctx.fillStyle = g; nctx.beginPath(); nctx.arc(0, 0, r, 0, 7); nctx.fill(); nctx.restore();
     }
     var vacille = 1 + Math.sin(T * 9) * 0.03 + Math.sin(T * 23) * 0.02;
-    feux.forEach(function (f) { var p = E(f.x, f.y - 20); trou(p[0], p[1], M.RAYON_FEU * V.s * vacille, 1, 0.62); });
-    // fenêtres éclairées des maisons
+    // en pleine nuit les feux s'éteignent : il ne reste que des braises qui rougeoient un moment
+    var braises = M.phase(monde) === 'nuit' ? Math.max(0, 1 - monde.cycle.t / 10) : 1;
+    if (braises < 1) vacille *= 0.3 + 0.12 * braises;
+    if (braises > 0) feux.forEach(function (f) { var p = E(f.x, f.y - 20); trou(p[0], p[1], M.RAYON_FEU * V.s * vacille, braises, 0.62); });
+    // un peu de clair de lune sur les dormeurs, pour bien les voir
+    monde.habitants.forEach(function (h) {
+      var c = couchage[h.id]; if (!h.dort || !c || c.cache) return;
+      var p = E(h.x, h.y);
+      if (c.b) { var pb = E(c.b.x, basBat(c.b)), ec = Math.min(48, tailleBat(c.b).w / V.s / Math.max(1, c.n)) * V.s; p = [pb[0] + (c.i - (c.n - 1) / 2) * ec, Math.max(p[1], pb[1] + 6 * V.s)]; }
+      trou(p[0], p[1] - 10 * V.s, 46 * V.s, 0.45, 0.7);
+    });
+    // fenêtres éclairées des maisons (éteintes quand tout le monde dort)
     monde.batiments.forEach(function (b) {
-      if (b.etat !== 'fini' || !D.batiments[b.type].lits || monde.epoque < 2) return;
+      if (b.etat !== 'fini' || !D.batiments[b.type].lits || monde.epoque < 2 || M.phase(monde) === 'nuit') return;
       var t = tailleBat(b), p = E(b.x, basBat(b));
       trou(p[0], p[1] - t.h * 0.35, 80 * V.s, 0.7, 0.8);
     });
@@ -584,7 +649,7 @@
     feux.forEach(function (f) {
       var p = E(f.x, f.y - 20), r = M.RAYON_FEU * V.s * 0.55 * vacille;
       var g = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], r);
-      g.addColorStop(0, 'rgba(255,130,50,' + (0.26 * d) + ')'); g.addColorStop(1, 'rgba(255,110,40,0)');
+      g.addColorStop(0, 'rgba(255,130,50,' + (0.26 * d * braises) + ')'); g.addColorStop(1, 'rgba(255,110,40,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fill();
     });
     ctx.restore();
@@ -592,6 +657,7 @@
 
   function dessiner(dt) {
     ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
+    rangerDormeurs();
     ctx.imageSmoothingQuality = 'high';
     dessinerFond(dt);
     dessinerEau();
@@ -607,9 +673,14 @@
     });
     monde.batiments.forEach(function (b) {
       var plat = b.type === 'champ-ble' || b.type === 'passerelle';
-      liste.push({ y: plat ? b.y - 200 : basBat(b) - 6, f: dessinerBat, o: b });
+      // le champ est bas mais ses épis sont hauts : il passe devant ce qui est derrière lui
+      liste.push({ y: b.type === 'champ-ble' ? b.y - b.k * TR.TH * 0.5 : plat ? b.y - 200 : basBat(b) - 6, f: dessinerBat, o: b });
     });
-    monde.habitants.forEach(function (h) { if (visible(h.x, h.y, 120)) liste.push({ y: h.y, f: dessinerHab, o: h }); });
+    monde.habitants.forEach(function (h) {
+      if (!visible(h.x, h.y, 120)) return;
+      var c = h.dort && couchage[h.id], y = c && c.b ? Math.max(h.y, basBat(c.b) + 6) : h.y; // devant la porte, pas derrière
+      liste.push({ y: y, f: dessinerHab, o: h });
+    });
     monde.animaux.forEach(function (a) { liste.push({ y: a.y, f: dessinerAnimal, o: a }); });
     liste.sort(function (a, b) { return a.y - b.y; });
     liste.forEach(function (e) { e.f(e.o); });
@@ -925,6 +996,17 @@
     zoomer(ev.deltaY < 0 ? 1.12 : 1 / 1.12, ev.clientX, ev.clientY);
   }, { passive: false });
 
+  // ---------- le réveil ----------
+  $('reveil-img').src = ASSETS['nuit/coq'] || '';
+  $('btn-reveil').addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (!M.reveiller(monde)) return;
+    $('btn-reveil').hidden = true;
+    son('coq');
+    dire('Cocorico ! Le soleil se lève, tout le monde au travail !');
+    sauver();
+  });
+
   // ---------- fiches d'explication (ADR-015) ----------
   var METIERS = {
     sage: 'le sage', bucheron: 'le bûcheron', cueilleur: 'la cueilleuse', tailleur: 'le tailleur de silex',
@@ -939,11 +1021,24 @@
     $('info-texte').textContent = o.texte;
     $('info-statut').textContent = o.statut || '';
     $('info-statut').hidden = !o.statut;
+    var vg = $('info-vignettes'), vs = (o.vignettes || []).filter(function (v) { return ASSETS['vignettes/' + v.img]; });
+    vg.innerHTML = '';
+    vg.className = vs.length === 1 ? 'une' : '';
+    vs.forEach(function (v) {
+      var f = document.createElement('figure');
+      var im = document.createElement('img'); im.src = ASSETS['vignettes/' + v.img]; im.alt = '';
+      var c = document.createElement('figcaption'); c.textContent = v.texte;
+      f.appendChild(im); f.appendChild(c);
+      f.addEventListener('click', function (e) { e.stopPropagation(); dire(v.texte); });
+      vg.appendChild(f);
+    });
+    vg.hidden = !vs.length;
+    $('info').classList.toggle('large', vs.length > 0);
     $('info-voix').onclick = function (e) { e.stopPropagation(); dire(o.texte); };
     $('info').hidden = false;
     dire(o.texte);
     clearTimeout(infoMinuteur);
-    infoMinuteur = setTimeout(cacherInfo, 14000);
+    infoMinuteur = setTimeout(cacherInfo, o.vignettes && o.vignettes.length ? 22000 : 14000);
   }
   function cacherInfo() { $('info').hidden = true; }
   $('info-fermer').addEventListener('click', function (e) { e.stopPropagation(); cacherInfo(); });
@@ -961,7 +1056,7 @@
       var h = monde.habitants.filter(function (q) { return q.id === b.ouvrier; })[0];
       statut = h ? 'Ici travaille ' + METIERS[d.travail.metier] + '. ' + resumeType(b.type).split(' · ')[0] : 'Personne n\'y travaille encore : il faut un nouvel habitant.';
     } else if (d.lits) statut = '👥 ' + d.lits + ' personnes y dorment';
-    montrerInfo({ img: d.sprite, titre: d.nom, texte: d.explication || '', statut: statut });
+    montrerInfo({ img: d.sprite, titre: d.nom, texte: d.explication || '', statut: statut, vignettes: d.vignettes });
   }
   var INFOS_NATURE = {
     arbre: ['nature/sapin-grand', 'Un arbre', "Le bûcheron coupe les arbres pour avoir du bois. Petit à petit, la forêt recule et laisse de la place pour construire."],
@@ -1012,6 +1107,20 @@
       if (d < bd2) { bd2 = d; best2 = h; }
     });
     if (best2 && bd2 < Math.max(24, 36 * V.s)) { parler(best2); return; }
+    // un dormeur ?
+    var dormeur = monde.habitants.filter(function (h) {
+      var c = couchage[h.id]; if (!h.dort || !c || c.cache) return false;
+      var p = E(h.x, h.y);
+      if (c.b) { var pb = E(c.b.x, basBat(c.b)), ec = Math.min(48, tailleBat(c.b).w / V.s / Math.max(1, c.n)) * V.s; p = [pb[0] + (c.i - (c.n - 1) / 2) * ec, Math.max(p[1], pb[1] + 6 * V.s)]; }
+      return Math.abs(x - p[0]) < 26 * V.s && y < p[1] + 8 * V.s && y > p[1] - 34 * V.s;
+    })[0];
+    if (dormeur) {
+      var cm = couchage[dormeur.id], mais = cm.b && D.batiments[cm.b.type];
+      montrerInfo({ img: 'nuit/' + cm.sp, titre: 'Chut… on dort !',
+        texte: (mais ? 'On dort bien au chaud dans ' + mais.nom.charAt(0).toLowerCase() + mais.nom.slice(1) + '.' : 'Pas de maison : on dort dehors, à la belle étoile.') +
+          (M.toutLeMondeDort(monde) ? ' Appuie sur le coq pour réveiller le village !' : '') });
+      return;
+    }
     // un animal ?
     var an = monde.animaux.filter(function (a) {
       var p = E(a.x, a.y), lw = (a.espece === 'mammouth' ? 165 : 50) * V.s;
@@ -1077,6 +1186,12 @@
       else aideUneFois('nuit2', 'Encore la nuit… Avec le feu, on pourrait continuer à travailler. Regarde dans les découvertes !');
     }
     etaitNuit = nuit;
+    // tout le monde dort : le coq attend que Joshua fasse lever le soleil (ADR-016)
+    var coq = M.toutLeMondeDort(monde) && !enScene;
+    if (coq !== !$('btn-reveil').hidden) {
+      $('btn-reveil').hidden = !coq;
+      if (coq) aideUneFois('reveil', 'Tout le monde dort… Quand tu veux, appuie sur le coq pour faire lever le soleil !');
+    }
     if (!ui.aide.idee && monde.idees >= 4 && !Object.keys(monde.decouvertes).length && !enScene) {
       aideUneFois('idee', 'Tu as assez d\'idées ! Touche l\'ampoule pour faire une découverte.');
     }

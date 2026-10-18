@@ -1,6 +1,9 @@
 """Découpe une planche de sprites sur fond blanc en PNG détourés.
 
-Usage : python3 -I scripts/decoupe_planche.py <planche.png> <dossier_sortie> <nom1,nom2,...>
+Usage : python3 -I scripts/decoupe_planche.py <planche.png> <dossier_sortie> <nom1,nom2,...> [CxL]
+
+Avec CxL (ex. 4x3), la planche est vue comme une grille : tous les morceaux
+d'une case (éclats de silex, fumée, ampoule) restent avec leur objet.
 
 Les objets sont repérés par composantes connexes (fond blanc retiré),
 triés en lignes puis colonnes, et nommés dans l'ordre de la liste.
@@ -21,7 +24,7 @@ def alpha_depuis_blanc(rgb: np.ndarray) -> np.ndarray:
     return (a * 255).astype(np.uint8)
 
 
-def decoupe(src: Path, out: Path, noms: list[str], marge: int = 12) -> None:
+def decoupe(src: Path, out: Path, noms: list[str], marge: int = 12, grille=None) -> None:
     im = Image.open(src).convert("RGB")
     rgb = np.asarray(im)
     alpha = alpha_depuis_blanc(rgb)
@@ -33,6 +36,23 @@ def decoupe(src: Path, out: Path, noms: list[str], marge: int = 12) -> None:
     tailles = ndimage.sum(np.ones_like(etiquettes), etiquettes, range(1, n + 1))
     seuil = max(tailles) * 0.02
     objets = [(b, i + 1) for i, (b, t) in enumerate(zip(boites, tailles)) if t >= seuil]
+    if grille:
+        c, l = grille
+        H, W = rgb.shape[:2]
+        cases = {}
+        for i, b in enumerate(boites):
+            if b is None or tailles[i] < 40:
+                continue
+            cy = (b[0].start + b[0].stop) / 2
+            cx = (b[1].start + b[1].stop) / 2
+            cases.setdefault((int(cy * l / H), int(cx * c / W)), []).append(i + 1)
+        nouv = np.zeros_like(etiquettes)
+        objets = []
+        for k, (cle, labs) in enumerate(sorted(cases.items())):
+            nouv[np.isin(etiquettes, labs)] = k + 1
+        etiquettes = nouv
+        boites = ndimage.find_objects(etiquettes)
+        objets = [(b, i + 1) for i, b in enumerate(boites) if b is not None]
 
     # tri en lignes (centres verticaux proches) puis colonnes
     objets.sort(key=lambda o: (o[0][0].start + o[0][0].stop) / 2)
@@ -81,4 +101,5 @@ def decoupe(src: Path, out: Path, noms: list[str], marge: int = 12) -> None:
 
 
 if __name__ == "__main__":
-    decoupe(Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3].split(","))
+    g = tuple(int(v) for v in sys.argv[4].split("x")) if len(sys.argv) > 4 else None
+    decoupe(Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3].split(","), grille=g)

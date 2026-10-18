@@ -48,6 +48,16 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 - La forêt recule là où le bûcheron travaille : on gagne de la place en défrichant.
 - Les habitants usent l'herbe là où ils passent : herbe tassée, sentier, chemin de terre. Un réseau de sentiers apparaît tout seul. Les vraies routes viendront plus tard comme découverte (chevaux, charrettes, marchandises).
 
+## La journée et la nuit (ADR-011, ADR-016)
+- Le jour dure environ 2 min 30. Au soir, ceux qui ont un feu s'y rassemblent : le premier adulte arrivé le ranime, les enfants jouent autour, et on peut encore travailler dans la lumière.
+- Puis vient la nuit : chacun rentre dans sa maison et s'endort, les feux s'éteignent (braises, puis cendres). Sans maison, on dort dehors.
+- Quand tout le village dort, un coq « Réveil ! » apparaît : Joshua le touche et le soleil se lève. S'il ne fait rien, le jour revient tout seul au bout d'environ 45 s.
+
+## Qui fait quoi, et où (ADR-017)
+- Chaque habitant a sa maison (la plus proche qui a de la place). La nuit, on voit les dormeurs devant leur porte, la tête qui dépasse de la couverture (un parent et un enfant partagent la même).
+- Au travail, chacun est montré en plein geste à son poste, avec une pose qui dit ce qu'il fabrique.
+- La fiche d'un bâtiment montre une ou deux vignettes illustrées de l'activité ; toucher une vignette la lit à voix haute.
+
 ## Comprendre ce qu'on voit (ADR-015)
 Toucher un bâtiment, un arbre, la grotte, le mammouth, le gué ou un sentier ouvre une petite fiche lue à voix haute : à quoi ça sert, qui y travaille, ce que ça change. Choisir un bâtiment à construire montre la même fiche.
 

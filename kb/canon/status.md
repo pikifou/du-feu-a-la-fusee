@@ -11,13 +11,14 @@ updated: 2026-10-18
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 15 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 17 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.
-- 32 sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants.
+- Sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants, 24 éléments de nature, 12 poses de travail, 8 éléments de nuit ; 16 vignettes illustrées pour les fiches.
 - Test d'intégration des sprites sur le plateau concluant (`assets/raw/test-integration.jpg`).
 
+- **v0.6** : la nuit en séquence (ADR-016) : à la tombée du jour, on se rassemble au feu (le premier arrivé le ranime), on veille et on travaille dans sa lumière, puis tout le monde rentre dormir dans sa maison et les feux s'éteignent (braises puis cendres) ; quand tout le village dort, un coq « Réveil ! » fait lever le soleil. On voit qui fait quoi (ADR-017) : chaque habitant a sa maison, les dormeurs sont couchés devant leur porte, la tête qui dépasse de la couverture ; au travail, chacun est en plein geste (tailleur, bûcheron, pêcheur, sage assis, paysan à la faucille, berger, potière, meunière…) ; la fiche d'un bâtiment montre une ou deux vignettes illustrées de l'activité, lues à voix haute quand on les touche.
 - **v0.5** : la grande refonte. Île en tuiles qui s'agrandit au néolithique (ADR-012) ; forêt d'arbres que les bûcherons abattent (la forêt recule, des souches restent) ; l'herbe s'use en sentiers puis en chemins de terre, et les habitants préfèrent les chemins tracés (ADR-013) ; habitants bien plus petits que les huttes et un espace libre autour de chaque bâtiment (ADR-014) ; fiche d'explication lue à voix haute pour chaque bâtiment, et aussi pour les arbres, la grotte, le mammouth, le gué et les sentiers (ADR-015) ; zone constructible en surbrillance.
 - **v0.4** : cycle jour / nuit (ADR-011) : sans feu tout le monde dort, la lumière du feu permet de continuer à travailler ; le mammouth vit sur l'autre rive (plus dans les arbres) et les chasseurs vont le chasser ; l'autre rive ne devient constructible qu'au néolithique, quand le mammouth est parti.
 - **v0.3** : bouton plein écran, écran « tourne ton téléphone », appli installable pour GitHub Pages (`docs/`, poussé).
@@ -28,12 +29,13 @@ updated: 2026-10-18
 - Game design en brouillon : proposition de Claude, pas encore validée par Julien (`domains/game-design/gd.md`).
 
 ## Prochaine étape
+- Valider le rôle du mammouth (autre rive, chassé, part au néolithique) : proposition de Claude, pas encore validée.
 - Test du prototype avec Joshua sur tablette.
 - Valider les questions ouvertes restantes du GD (titre, voix off).
 
 ## Mesures (joueur automatique)
-- Âge de pierre ~6 min, néolithique ~5 min, même pour un joueur qui ne récolte que toutes les 20 s : le rythme est donné par les idées du sage. La cible du GD est 10 à 15 min par époque : à juger avec Joshua.
-- Une partie complète finit vers 45 habitants et 27 bâtiments.
+- v0.6, joueur qui appuie sur le coq dès que tout le monde dort : âge de pierre ~9 min, néolithique ~8 min (même pour un joueur qui ne récolte que toutes les 20 s). Le rythme est donné par les idées du sage et par les nuits. La cible du GD est 10 à 15 min par époque : à juger avec Joshua.
+- Une partie complète finit vers 55 habitants et 35 bâtiments ; ~110 tuiles de sentiers.
 
 ## Points connus
 - Code poussé sur https://github.com/pikifou/du-feu-a-la-fusee (push possible depuis Claude). Pages s'active à la main (branche main, dossier /docs) : l'API Pages est bloquée par le proxy.

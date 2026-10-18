@@ -110,3 +110,15 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée
 - **Décision** : chaque bâtiment a une courte explication, lue à voix haute : à quoi il sert, qui y travaille, ce que ça change pour le village. On l'entend en choisissant le bâtiment et en touchant un bâtiment déjà construit.
 - **Contexte** : Julien : « il faudrait expliquer à quoi ils servent et ce qu'ils font. Le but, c'est quand même d'être éducatif sur le sujet. »
+
+## ADR-016 : la nuit se joue en séquence, et c'est le joueur qui fait lever le soleil
+- **Date** : 2026-10-18
+- **Statut** : acceptée. Précise ADR-011.
+- **Décision** : à la tombée de la nuit, sans feu, tout le monde va se coucher. Avec un feu de camp, on veille un moment : on se réchauffe et on peut encore travailler dans la lumière. Puis tout le monde va dormir, et les feux s'éteignent. Quand le village dort, un bouton « Réveil » permet de faire lever le soleil, pour que la nuit ne traîne pas.
+- **Contexte** : Julien : « le cycle de la nuit est un petit peu long […] on appuie sur un bouton pour dire c'est le réveil, ça lance le soleil ».
+
+## ADR-017 : on voit qui fait quoi, et où
+- **Date** : 2026-10-18
+- **Statut** : acceptée. Précise ADR-010 et ADR-015.
+- **Décision** : (1) quand un habitant travaille à son poste, on le voit en plein geste (le tailleur qui frappe le silex, le pêcheur avec son harpon…) ; (2) la fiche d'un bâtiment montre une vignette illustrée de l'activité, avec l'explication ; (3) chaque habitant a sa maison : il y rentre dormir, et on voit sa tête qui dépasse de la couverture.
+- **Contexte** : Julien : « qu'on puisse voir le bonhomme qui s'occupe des silex, qu'on comprenne un peu ce qu'il construit et à quoi ça sert » ; « que les bonhommes soient liés à l'endroit où ils sont, genre dans la hutte ». Images générées avec Arcads (ADR-006).

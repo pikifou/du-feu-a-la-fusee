@@ -21,7 +21,8 @@ Style et outil : cf. ADR-005 (diorama 3D low-poly cosy) et ADR-006 (Arcads, Nano
 1. Envoyer la référence à Arcads : `arcads_get_upload_url` puis PUT du PNG. Attention : un fichier temporaire ne sert qu'à **une seule** génération, il faut le renvoyer pour chaque appel.
 2. Générer la planche (modèle `nano-banana-2-1`, 2K, 4:3 pour les objets, 16:9 pour les personnages).
 3. Ranger l'image brute dans `assets/raw/`.
-4. Découper : `python3 -I scripts/decoupe_planche.py <planche> <dossier> <noms séparés par des virgules>`. Les noms suivent l'ordre de lecture (lignes puis colonnes).
+4. Découper : `python3 -I scripts/decoupe_planche.py <planche> <dossier> <noms séparés par des virgules> [CxL]`. Les noms suivent l'ordre de lecture (lignes puis colonnes). Avec la grille `CxL` (ex. `4x3`), les petits morceaux d'une case (éclats, fumée, ampoule) restent avec leur objet.
+   Les vignettes (scènes avec fond, coins arrondis) se découpent à part : rectangle de chaque carte, rogné de 5 %, JPEG 420 px ; les coins arrondis sont refaits en CSS.
 5. Vérifier sur le plateau vide (montage de test).
 
 ## Modèle de prompt pour une planche d'objets
@@ -39,6 +40,10 @@ Style et outil : cf. ADR-005 (diorama 3D low-poly cosy) et ADR-006 (Arcads, Nano
 | `assets/sprites/02-neolithique/` | champ-ble, champ-pousses, maison-torchis, maison-longue, grenier, atelier-potier, enclos-moutons, chevre, meule, passerelle, puits, pirogue |
 | `assets/sprites/nature/` | sapin-grand, sapin-moyen, sapin-petit, sapins-double, chene, arbre-clair, bouleau, buisson-rond, souche, tronc, souche-hache, pousse, grotte, rocher-mousse, rochers, pierres-plates, touffe, fleurs, roseaux, nenuphar, arbuste, champignons, galets, buisson-fleuri |
 | `assets/sprites/habitants/` | porteur-bois, cueilleuse, enfant-pierre, chasseur, paysan, porteuse-jarre, berger, sage |
+| `assets/sprites/poses/` (ADR-017) | tailleur, bucheron, cueilleuse, chasseur, pecheur, peintre, sage-assis, allume-feu, paysan-faucille, berger-agneau, potiere, meuniere |
+| `assets/sprites/nuit/` (ADR-016) | feu-braises, feu-cendres, tete-adulte, tete-enfant, deux-tetes, tete-sage, coq, torche (pas encore utilisée) |
+| `assets/sprites/vignettes/` (ADR-017, JPEG avec leur fond) | âge de pierre : sage, bois, baies, silex, chasse, peche, veillee, peinture ; néolithique : semer, moisson, enclos, poterie, meule, grenier, torchis, pirogue |
+| `assets/raw/planche-poses.png`, `planche-nuit.png`, `vignettes-pierre.png`, `vignettes-neolithique.png` | Planches brutes de la v0.6 |
 
 ## Points connus
 - Le sol gris-bleu clair que le générateur dessine sous les objets est converti en ombre brune transparente par `decoupe_planche.py`. Il reste de petites taches claires à l'intérieur de certaines ouvertures (tentes).

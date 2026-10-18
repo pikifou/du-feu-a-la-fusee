@@ -7,8 +7,9 @@ var Monde = (function () {
   var BULLES_MAX = 3; // unités de production stockées par bâtiment
   var VITESSE = { adulte: 80, enfant: 110, sage: 50 };
   var DELAI_ARRIVEE = 25;
-  // Jour et nuit (ADR-011) : 150 s de jour, 60 s de nuit. La partie commence le matin.
-  var CYCLE = 210, DEBUT = 20;
+  // Jour et nuit (ADR-011, ADR-016) : le jour, la soirée (veillée au feu), la nuit (on dort,
+  // les feux sont éteints, le joueur fait lever le soleil), l'aube.
+  var DUREES = { jour: 150, soir: 25, nuit: 45, aube: 4 };
   var RAYON_FEU = 520;
 
   // ---------- outils ----------
@@ -45,6 +46,7 @@ var Monde = (function () {
       pieces: 12, idees: 0, epoque: 1, decouvertes: {},
       batiments: [], habitants: [], animaux: [],
       arrivee: 0, evenements: [], fini: false, repousse: 0,
+      cycle: { phase: 'jour', t: 20 },
       terrain: TR.generer()
     };
     var C = [TR.CI, TR.CJ];
@@ -263,18 +265,56 @@ var Monde = (function () {
     return { produit: tr.produit, n: n };
   }
 
-  // ---------- jour et nuit ----------
-  function heure(m) { return ((m.t + DEBUT) % CYCLE) / CYCLE; }
+  // ---------- jour et nuit (ADR-011, ADR-016) ----------
+  function phase(m) { return m.cycle.phase; }
   function obscurite(m) {
-    var h = heure(m), J = 150 / CYCLE;
-    if (h < J - 0.05) return 0;
-    if (h < J) return (h - (J - 0.05)) / 0.05;
-    if (h < 0.96) return 1;
-    return 1 - (h - 0.96) / 0.04;
+    var c = m.cycle;
+    if (c.phase === 'jour') return c.t > DUREES.jour - 5 ? (c.t - (DUREES.jour - 5)) / 5 * 0.4 : 0;
+    if (c.phase === 'soir') return Math.min(1, 0.4 + c.t / 5 * 0.6);
+    if (c.phase === 'nuit') return 1;
+    return Math.max(0, 1 - c.t / DUREES.aube);
   }
-  function estNuit(m) { return obscurite(m) > 0.5; }
+  function estNuit(m) { return m.cycle.phase === 'nuit' || (m.cycle.phase === 'soir' && m.cycle.t >= 1.5); }
+  // compatibilité avec l'interface : une heure de 0 à 1
+  function heure(m) {
+    var c = m.cycle, total = DUREES.jour + DUREES.soir + DUREES.nuit + DUREES.aube;
+    var avant = { jour: 0, soir: DUREES.jour, nuit: DUREES.jour + DUREES.soir, aube: DUREES.jour + DUREES.soir + DUREES.nuit }[c.phase];
+    return (avant + c.t) / total;
+  }
+  function changerPhase(m, ph) {
+    m.cycle = { phase: ph, t: 0 };
+    if (ph === 'aube') m.jour = (m.jour || 0) + 1;
+    m.evenements.push({ type: 'phase', phase: ph });
+    if (ph === 'nuit') {
+      // les feux s'éteignent : tout le monde va se coucher
+      m.habitants.forEach(function (h) { lacher(m, h); });
+    }
+  }
+  function lacher(m, h) {
+    if (h.reserve) { var c = bat(m, h.reserve); if (c) c.enRoute = Math.max(0, c.enRoute - 1); h.reserve = null; }
+    h.etapes.forEach(function (e) { if (e.fait === 'couper') { var t = TR.tuile(m.terrain, e.i, e.j); if (t) t.reserve = false; } });
+    h.etapes = []; h.porte = null;
+  }
+  function avancerCycle(m, dt) {
+    var c = m.cycle;
+    c.t += dt;
+    if (c.phase === 'jour' && c.t >= DUREES.jour) changerPhase(m, 'soir');
+    else if (c.phase === 'soir' && c.t >= DUREES.soir) changerPhase(m, 'nuit');
+    else if (c.phase === 'nuit' && c.t >= DUREES.nuit) changerPhase(m, 'aube');
+    else if (c.phase === 'aube' && c.t >= DUREES.aube) changerPhase(m, 'jour');
+  }
+  // tout le monde dort : le joueur peut faire lever le soleil
+  function toutLeMondeDort(m) {
+    return estNuit(m) && m.habitants.length > 0 && m.habitants.every(function (h) { return h.dort; });
+  }
+  function reveiller(m) {
+    if (!estNuit(m)) return false;
+    changerPhase(m, 'aube');
+    return true;
+  }
   function feux(m) { return m.batiments.filter(function (b) { return b.type === 'feu' && b.etat === 'fini'; }); }
   function eclaire(m, p) {
+    if (m.cycle.phase === 'nuit') return false; // les feux sont éteints
     return feux(m).some(function (f) { return Math.hypot(p[0] - f.x, (p[1] - f.y) / 0.6) < RAYON_FEU; });
   }
   function feuProche(m, p) {
@@ -323,6 +363,7 @@ var Monde = (function () {
   function planTravail(m, h, b) {
     var tr = D.batiments[b.type].travail;
     var et = [], lieu = null, arbre = null;
+    var pose = (D.poses[m.epoque] || {})[tr.metier] || null; // ADR-017 : on voit ce qu'il fait
     var depuis = [b.x, b.y];
     if (tr.aller === 'mammouth') {
       var mam = m.animaux.filter(function (a) { return a.espece === 'mammouth' && !a.part; })[0];
@@ -343,7 +384,7 @@ var Monde = (function () {
     }
     if (lieu) {
       et.push({ fait: 'aller', p: lieu });
-      et.push({ fait: 'attendre', d: tr.duree, anim: 'travail' });
+      et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose });
       if (arbre) et.push({ fait: 'couper', i: arbre.i, j: arbre.j });
       et.push({ fait: 'prendre', objet: tr.porte });
       et.push({ fait: 'aller', p: devant(m, b) });
@@ -353,7 +394,7 @@ var Monde = (function () {
       var p = b.type === 'champ-ble' || b.type === 'enclos-moutons'
         ? [b.x + (hasard(m) - 0.5) * 120, b.y + (hasard(m) - 0.5) * 40] : devant(m, b);
       et.push({ fait: 'aller', p: p });
-      et.push({ fait: 'attendre', d: tr.duree, anim: 'travail' });
+      et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose });
     }
     et.push({ fait: 'produire', bat: b.id });
     return et;
@@ -393,20 +434,47 @@ var Monde = (function () {
     return m.habitants.filter(function (h) { return !h.enfant && !h.travail && !h.reserve; });
   }
 
+  // chaque habitant a sa maison (ADR-017)
+  function attribuerMaisons(m) {
+    var occupants = {};
+    m.habitants.forEach(function (h) {
+      var b = h.maison ? bat(m, h.maison) : null;
+      var cap = b ? (b.etat === 'fini' ? (D.batiments[b.type].lits || 0) : (b.renove || 0)) : 0;
+      if (!b || cap <= 0) { h.maison = null; return; }
+      occupants[b.id] = (occupants[b.id] || 0) + 1;
+    });
+    m.habitants.forEach(function (h) {
+      if (h.maison) return;
+      var best = null, bd = 1e9;
+      m.batiments.forEach(function (b) {
+        var cap = b.etat === 'fini' ? (D.batiments[b.type].lits || 0) : (b.renove || 0);
+        if (cap <= (occupants[b.id] || 0)) return;
+        var d = dist([h.x, h.y], [b.x, b.y]); if (d < bd) { bd = d; best = b; }
+      });
+      if (best) { h.maison = best.id; occupants[best.id] = (occupants[best.id] || 0) + 1; }
+    });
+  }
   function planNuit(m, h) {
-    var f = feuProche(m, [h.x, h.y]);
+    var f = m.cycle.phase === 'soir' ? feuProche(m, [h.x, h.y]) : null;
     if (f) {
+      if (!h.enfant && f.ravive !== m.jour) {
+        // le premier adulte arrivé ranime le feu pour la veillée
+        f.ravive = m.jour;
+        h.etapes = [{ fait: 'aller', p: [f.x - 34, f.y + 14] }, { fait: 'attendre', d: 3, anim: 'travail', pose: 'allume-feu' }];
+        return;
+      }
       h.etapes = [{ fait: 'aller', p: pointLibre(m, [f.x, f.y], 1.5) }, { fait: 'attendre', d: 3 + hasard(m) * 4, anim: h.enfant ? 'jeu' : 'repos' }];
       return;
     }
-    var mai = maisonProche(m, [h.x, h.y]);
-    h.etapes = [{ fait: 'aller', p: mai ? devant(m, mai) : [h.x, h.y] }, { fait: 'dormir' }];
+    var mai = (h.maison && bat(m, h.maison)) || maisonProche(m, [h.x, h.y]);
+    h.etapes = [{ fait: 'aller', p: mai ? devant(m, mai) : [h.x, h.y] }, { fait: 'dormir', maison: mai ? mai.id : null }];
   }
 
   function decider(m, h) {
     var b = h.travail ? bat(m, h.travail) : null;
+    if (m.cycle.phase === 'nuit') { planNuit(m, h); return; }
     if (estNuit(m)) {
-      // la nuit, on ne travaille que dans la lumière d'un feu (ADR-011)
+      // pendant la veillée, on ne travaille que dans la lumière d'un feu (ADR-011, ADR-016)
       var ch0 = chantierEnAttente(m);
       var tas = m.batiments.filter(function (t) { return t.type === 'tas-bois' && t.etat === 'fini'; })[0];
       if (!h.enfant && !b && ch0 && eclaire(m, [ch0.x, ch0.y]) && (!tas || eclaire(m, [tas.x, tas.y]))) { h.etapes = planChantier(m, h, ch0); return; }
@@ -458,7 +526,7 @@ var Monde = (function () {
         var cible = e.route[0];
         var dx = cible[0] - h.x, dy = cible[1] - h.y, d = Math.hypot(dx, dy);
         var pas = h.vitesse * reste;
-        h.marche = true; h.anim = 'marche';
+        h.marche = true; h.anim = 'marche'; h.pose = null;
         if (Math.abs(dx) > 2) h.dir = dx > 0 ? 1 : -1;
         TR.user(m.terrain, h.x, h.y, Math.min(reste, d / h.vitesse)); // l'herbe s'use sous les pas (ADR-013)
         if (d <= pas) {
@@ -471,11 +539,12 @@ var Monde = (function () {
         }
       } else if (e.fait === 'dormir') {
         h.marche = false;
-        if (estNuit(m)) { h.dort = true; h.anim = 'dort'; reste = 0; }
-        else { h.dort = false; h.etapes.shift(); }
+        if (estNuit(m)) { h.dort = true; h.dortChez = e.maison; h.anim = 'dort'; reste = 0; }
+        else { h.dort = false; h.dortChez = null; h.etapes.shift(); }
       } else if (e.fait === 'attendre') {
         h.marche = false;
         h.anim = e.anim || 'repos';
+        h.pose = e.pose || null;
         if (e.reste == null) e.reste = e.d;
         if (e.reste > reste) { e.reste -= reste; reste = 0; } else { reste -= e.reste; h.etapes.shift(); }
       } else {
@@ -530,7 +599,7 @@ var Monde = (function () {
 
   function arrivees(m, dt) {
     if (m.habitants.length >= lits(m)) { m.arrivee = 0; return; }
-    if (estNuit(m) && !aFeu(m)) return;
+    if (estNuit(m) && (!aFeu(m) || m.cycle.phase === 'nuit')) return;
     m.arrivee += dt;
     var delai = aFeu(m) ? DELAI_ARRIVEE / 2 : DELAI_ARRIVEE;
     if (m.arrivee < delai) return;
@@ -560,6 +629,11 @@ var Monde = (function () {
 
   function pas(m, dt) {
     m.t += dt;
+    if (!m.cycle) m.cycle = { phase: 'jour', t: 0 };
+    if (m.jour == null) m.jour = 0;
+    avancerCycle(m, dt);
+    m.attribution = (m.attribution || 0) + dt;
+    if (m.attribution > 1) { m.attribution = 0; attribuerMaisons(m); }
     embaucher(m);
     m.habitants.forEach(function (h) { avancer(m, h, dt); });
     m.animaux.forEach(function (a) { bougerAnimal(m, a, dt); });
@@ -579,7 +653,8 @@ var Monde = (function () {
     decouvertesEpoque: decouvertesEpoque, etatDecouverte: etatDecouverte, decouvrir: decouvrir,
     epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter,
     lits: lits, bat: bat, exporter: exporter, importer: importer, BULLES_MAX: BULLES_MAX,
-    heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU
+    heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
+    phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES
   };
 })();
 if (typeof module !== 'undefined') module.exports = Monde;

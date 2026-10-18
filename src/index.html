@@ -58,7 +58,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 @keyframes pivote { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
 #tourner p { font-size: 22px; font-weight: 600; margin: 0; max-width: 300px; }
 @media (orientation: portrait) and (max-width: 900px) { #tourner { display: flex; } }
-@media (prefers-reduced-motion: reduce) { #tourner .tel, #btn-decouvertes.pret, .dec.possible, #scene-images img { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #btn-reveil, #tourner .tel, #btn-decouvertes.pret, .dec.possible, #scene-images img { animation: none; } }
 
 /* ---- barre de construction ---- */
 #barre { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px max(14px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
@@ -92,6 +92,25 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #info-texte { font-size: 15px; line-height: 1.35; margin-top: 2px; }
 #info-statut { font-size: 14px; font-weight: 600; color: var(--orange-fonce); margin-top: 5px; }
 #info .info-boutons { display: flex; flex-direction: column; gap: 6px; }
+#info.large { width: min(560px, calc(100vw - 28px)); }
+#info-vignettes { display: flex; gap: 8px; margin-top: 8px; }
+#info-vignettes figure { margin: 0; flex: 1 1 0; min-width: 0; cursor: pointer; }
+#info-vignettes img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 14px; display: block; }
+#info-vignettes figcaption { font-size: 13px; line-height: 1.25; margin-top: 4px; color: var(--encre-douce); }
+#info-vignettes.une figure { display: flex; gap: 10px; align-items: center; }
+#info-vignettes.une img { width: 132px; flex: 0 0 auto; }
+#info-vignettes.une figcaption { font-size: 14px; margin: 0; }
+@media (max-height: 480px) {
+  #info-vignettes img { max-width: 96px; }
+  #info-vignettes.une img { width: 96px; }
+  #info-texte { font-size: 14px; }
+}
+/* ---- le coq du réveil (ADR-016) ---- */
+#btn-reveil { position: fixed; z-index: 21; right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+  border: 0; border-radius: 26px; background: #fff1b8; box-shadow: var(--ombre); padding: 8px 18px 8px 8px; display: flex; align-items: center; gap: 6px;
+  font-family: inherit; font-size: 20px; font-weight: 700; color: var(--encre); cursor: pointer; animation: battre 1.4s ease-in-out infinite; }
+#btn-reveil img { width: 62px; height: 62px; object-fit: contain; }
+#btn-reveil:active { transform: translateY(3px); }
 #info .bouton-rond { width: 34px; height: 34px; font-size: 16px; box-shadow: none; background: var(--carte-2); }
 
 /* ---- fenêtres ---- */
@@ -157,12 +176,14 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
     <div id="info-titre"></div>
     <div id="info-texte"></div>
     <div id="info-statut"></div>
+    <div id="info-vignettes" hidden></div>
   </div>
   <div class="info-boutons">
     <button class="bouton-rond" id="info-fermer" aria-label="Fermer">✕</button>
     <button class="bouton-rond" id="info-voix" aria-label="Écouter">🔊</button>
   </div>
 </div>
+<button id="btn-reveil" hidden aria-label="Réveil"><img id="reveil-img" alt="">Réveil !</button>
 <div id="placement"><span id="placement-texte"></span><button id="placement-annuler" aria-label="Annuler">✕</button></div>
 
 <div class="voile" id="decouvertes"><div class="fenetre">
