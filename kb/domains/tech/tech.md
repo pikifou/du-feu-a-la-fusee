@@ -34,6 +34,8 @@ La Tour aux Aimants et Chasseur de Dragons tournent sur la même recette, éprou
 - `tests/monde.test.js` : un joueur automatique joue des parties entières (rapide et lent), vérifie la fin des chantiers et la sauvegarde. `node --test tests/monde.test.js`.
 - Adresse de test (page locale seulement, l'artefact ignore les paramètres) : `?x=8` accélère le temps, `?neuf` repart de zéro, `?test` saute l'intro.
 - Artefact (miroir jouable) : https://claude.ai/artifact/34a6HNKDV74sB5XmyFX4wX
+- Appli GitHub Pages : `python3 build.py --pwa docs` produit `docs/` (page, manifest plein écran paysage, service worker versionné, icônes). Dépôt https://github.com/pikifou/du-feu-a-la-fusee, Pages sur la branche main, dossier `/docs` (à activer à la main par Julien) ; adresse attendue https://pikifou.github.io/du-feu-a-la-fusee/
+- Plein écran : bouton ⛶ en haut (Android : plein écran et verrouillage en paysage ; iPhone : pas d'API, il faut ajouter le jeu à l'écran d'accueil). En portrait sur téléphone, un écran demande de tourner l'appareil.
 
 ## Questions ouvertes
 - [ ] Voix off : fichiers audio ou synthèse vocale du navigateur

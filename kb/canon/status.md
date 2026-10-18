@@ -18,6 +18,7 @@ updated: 2026-10-18
 - 32 sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants.
 - Test d'intégration des sprites sur le plateau concluant (`assets/raw/test-integration.jpg`).
 
+- **v0.3** : bouton plein écran, écran « tourne ton téléphone », appli installable pour GitHub Pages (build prêt dans `docs/`, pas encore poussé).
 - **v0.2 (retour de Julien : « caméra super loin, icônes immenses »)** : caméra rapprochée sur le village, glisser pour se déplacer, pincer pour zoomer ; interface réduite d'environ un tiers ; images en plus haute définition ; halo blanc sous les sprites remplacé par une ombre douce.
 - **Prototype jouable v0.1** (époques 1 et 2) publié en artefact : habitants qui travaillent et construisent, chantiers, bulles à récolter, 10 découvertes avec voix, changement d'époque avec rénovation automatique des huttes et passerelle (cf. `domains/tech/tech.md`).
 
@@ -33,6 +34,6 @@ updated: 2026-10-18
 - Une partie complète finit vers 45 habitants et 27 bâtiments.
 
 ## Points connus
-- Le dépôt n'a pas encore de remote GitHub : il doit être créé par Julien.
+- Dépôt GitHub créé par Julien, mais l'appli GitHub Claude n'y a pas encore accès : le push est refusé. Pages à activer ensuite (branche main, dossier /docs).
 - Pas encore de Frise du temps ni de Musée, pas de petits problèmes, pas de déplacement des bâtiments posés (prévus au GD).
 - Les pièces s'accumulent vite en fin d'époque : à rééquilibrer après le test.
