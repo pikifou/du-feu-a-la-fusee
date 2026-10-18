@@ -36,32 +36,45 @@
   var nouvellePartie = !monde;
   if (!monde) monde = M.nouveau((Date.now() % 100000) + 1);
 
-  // ---------- vue ----------
-  var V = { s: 1, ox: 0, oy: 0, W: 0, H: 0, dpr: 1 };
-  var fond = document.createElement('canvas');
+  // ---------- vue (caméra rapprochée, glisser pour se déplacer, pincer pour zoomer) ----------
+  var V = { s: 1, ox: 0, oy: 0, W: 0, H: 0, dpr: 1, cx: 1300, cy: 830, sMin: 0.3, sMax: 1.6, init: false };
   function redim() {
     V.dpr = Math.min(window.devicePixelRatio || 1, 2);
     V.W = innerWidth; V.H = innerHeight;
     cv.width = Math.round(V.W * V.dpr); cv.height = Math.round(V.H * V.dpr);
-    var bas = 120, haut = 30;
-    var dispo = V.H - bas + 40;
-    V.s = Math.min(V.W / C.cadre.l, dispo / C.cadre.h);
-    V.ox = (V.W - C.cadre.l * V.s) / 2 - C.cadre.x * V.s;
-    V.oy = haut / 2 + (dispo - C.cadre.h * V.s) / 2 - C.cadre.y * V.s;
-    fond.width = cv.width; fond.height = cv.height;
-    var f = fond.getContext('2d');
-    f.fillStyle = '#e2d4ba'; f.fillRect(0, 0, fond.width, fond.height);
+    V.sMin = Math.min(V.W / C.cadre.l, V.H / C.cadre.h);
+    V.sMax = Math.max(V.sMin, 1.5);
+    if (!V.init) { V.init = true; V.s = V.W / 1500; V.cx = 1240; V.cy = 830; }
+    V.s = Math.max(V.sMin, Math.min(V.sMax, V.s));
+    borner();
+  }
+  function borner() {
+    var dw = V.W / 2 / V.s, dh = V.H / 2 / V.s;
+    var x0 = C.cadre.x, x1 = C.cadre.x + C.cadre.l, y0 = C.cadre.y - 60, y1 = C.cadre.y + C.cadre.h + 60;
+    V.cx = x1 - x0 <= 2 * dw ? (x0 + x1) / 2 : Math.max(x0 + dw, Math.min(x1 - dw, V.cx));
+    V.cy = y1 - y0 <= 2 * dh ? (y0 + y1) / 2 : Math.max(y0 + dh, Math.min(y1 - dh, V.cy));
+    V.ox = V.W / 2 - V.cx * V.s;
+    V.oy = V.H / 2 - V.cy * V.s;
+  }
+  function zoomer(facteur, mx, my) {
+    var wx = (mx - V.ox) / V.s, wy = (my - V.oy) / V.s;
+    V.s = Math.max(V.sMin, Math.min(V.sMax, V.s * facteur));
+    V.cx = wx - (mx - V.W / 2) / V.s;
+    V.cy = wy - (my - V.H / 2) / V.s;
+    borner();
+  }
+  function dessinerFond() {
+    ctx.fillStyle = '#e2d4ba'; ctx.fillRect(0, 0, V.W, V.H);
     var im = IMG.plateau;
-    if (im) {
-      // on prolonge les bords du plateau pour que le fond soit continu
-      var iw = im.width, ih = im.height, d = V.dpr;
-      var bx = V.ox * d, by = V.oy * d, bw = C.largeur * V.s * d, bh = C.hauteur * V.s * d;
-      if (by + bh < fond.height) f.drawImage(im, 0, ih - 2, iw, 2, bx, by + bh - 1, bw, fond.height - by - bh + 1);
-      if (by > 0) f.drawImage(im, 0, 0, iw, 2, bx, 0, bw, by + 1);
-      if (bx > 0) f.drawImage(im, 0, 0, 2, ih, 0, by, bx + 1, bh);
-      if (bx + bw < fond.width) f.drawImage(im, iw - 2, 0, 2, ih, bx + bw - 1, by, fond.width - bx - bw + 1, bh);
-      f.drawImage(im, bx, by, bw, bh);
-    }
+    if (!im) return;
+    // on prolonge les bords du plateau pour que le fond soit continu
+    var iw = im.width, ih = im.height;
+    var bx = V.ox, by = V.oy, bw = C.largeur * V.s, bh = C.hauteur * V.s;
+    if (by + bh < V.H) ctx.drawImage(im, 0, ih - 2, iw, 2, bx, by + bh - 1, bw, V.H - by - bh + 1);
+    if (by > 0) ctx.drawImage(im, 0, 0, iw, 2, bx, 0, bw, by + 1);
+    if (bx > 0) ctx.drawImage(im, 0, 0, 2, ih, 0, Math.max(0, by), bx + 1, bh);
+    if (bx + bw < V.W) ctx.drawImage(im, iw - 2, 0, 2, ih, bx + bw - 1, Math.max(0, by), V.W - bx - bw + 1, bh);
+    ctx.drawImage(im, bx, by, bw, bh);
   }
   function E(x, y) { return [V.ox + x * V.s, V.oy + y * V.s]; }
 
@@ -246,19 +259,19 @@
       if (b.stock <= 0 || b.etat !== 'fini') return;
       var tr = D.batiments[b.type].travail;
       var t = tailleBat(b), p = E(b.x, b.y);
-      var r = Math.max(26, 34 * V.s);
+      var r = Math.max(15, Math.min(26, 30 * V.s));
       var x = p[0], y = p[1] - t.h * 0.93 - r * 0.6 + Math.sin(T * 3 + b.id) * 4;
       bulles.push({ bat: b.id, x: x, y: y, r: r * 1.4 });
       ctx.fillStyle = 'rgba(60,40,20,.18)'; ctx.beginPath(); ctx.arc(x, y + 5, r, 0, 7); ctx.fill();
       ctx.fillStyle = tr.produit === 'idees' ? '#fff6c9' : '#fffaf0';
       ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
-      ctx.lineWidth = 4; ctx.strokeStyle = tr.produit === 'idees' ? '#f2c94c' : '#e9873b'; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x - 8, y + r - 2); ctx.lineTo(x, y + r + 12); ctx.lineTo(x + 8, y + r - 2); ctx.fillStyle = tr.produit === 'idees' ? '#fff6c9' : '#fffaf0'; ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = tr.produit === 'idees' ? '#f2c94c' : '#e9873b'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 6, y + r - 2); ctx.lineTo(x, y + r + 9); ctx.lineTo(x + 6, y + r - 2); ctx.fillStyle = tr.produit === 'idees' ? '#fff6c9' : '#fffaf0'; ctx.fill();
       ctx.font = Math.round(r * 0.95) + 'px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(tr.produit === 'idees' ? '💡' : '🪙', x, y + 1);
       var n = b.stock * tr.qte;
       ctx.font = '700 ' + Math.round(r * 0.6) + 'px Fredoka, system-ui, sans-serif';
-      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#5b3c24'; ctx.lineWidth = 5;
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#5b3c24'; ctx.lineWidth = 4;
       ctx.strokeText('+' + n, x + r * 0.75, y - r * 0.7); ctx.fillText('+' + n, x + r * 0.75, y - r * 0.7);
     });
   }
@@ -270,11 +283,11 @@
       var h = monde.habitants.filter(function (q) { return q.id === pa.hab; })[0];
       if (!h) return;
       var p = E(h.x, h.y);
-      ctx.font = '600 20px Fredoka, system-ui, sans-serif';
-      var w = ctx.measureText(pa.texte).width + 28, x = p[0], y = p[1] - 120 * V.s - 20;
+      ctx.font = '600 16px Fredoka, system-ui, sans-serif';
+      var w = ctx.measureText(pa.texte).width + 24, x = p[0], y = p[1] - 115 * V.s - 18;
       ctx.fillStyle = '#fffaf0'; ctx.strokeStyle = 'rgba(91,60,36,.3)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.roundRect(x - w / 2, y - 22, w, 40, 20); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x - 7, y + 17); ctx.lineTo(x, y + 28); ctx.lineTo(x + 7, y + 17); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(x - w / 2, y - 17, w, 32, 16); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 6, y + 14); ctx.lineTo(x, y + 23); ctx.lineTo(x + 6, y + 14); ctx.fill();
       ctx.fillStyle = '#5b3c24'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(pa.texte, x, y - 1);
     });
   }
@@ -288,7 +301,7 @@
       var rx = D.batiments[choix].largeur * 0.4 * V.s * puls, ry = rx * 0.52;
       ctx.fillStyle = 'rgba(255,248,220,.45)'; ctx.beginPath(); ctx.ellipse(p[0], p[1], rx, ry, 0, 0, 7); ctx.fill();
       ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.stroke();
-      ctx.fillStyle = '#e9873b'; ctx.font = '700 ' + Math.round(40 * V.s + 10) + 'px Fredoka, system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#e9873b'; ctx.font = '700 ' + Math.round(Math.max(16, 36 * V.s)) + 'px Fredoka, system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('+', p[0], p[1] + 1);
     });
   }
@@ -324,9 +337,9 @@
   }
 
   function dessiner(dt) {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(fond, 0, 0);
     ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
+    ctx.imageSmoothingQuality = 'high';
+    dessinerFond();
     dessinerGue();
     var liste = [];
     monde.batiments.forEach(function (b) {
@@ -565,11 +578,58 @@
     dire(texte);
   }
 
-  // ---------- toucher ----------
+  // ---------- toucher : taper, glisser, pincer ----------
   var premierToucher = true;
+  var doigts = {}, geste = null;
+  function nbDoigts() { return Object.keys(doigts).length; }
+  function deuxDoigts() { var k = Object.keys(doigts); return [doigts[k[0]], doigts[k[1]]]; }
   cv.addEventListener('pointerdown', function (ev) {
     if (premierToucher) { premierToucher = false; if (!params.has('test')) pleinEcran(); }
-    var x = ev.clientX, y = ev.clientY;
+    try { cv.setPointerCapture(ev.pointerId); } catch (e) {}
+    doigts[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+    if (nbDoigts() === 1) geste = { type: 'tap', x0: ev.clientX, y0: ev.clientY, cx: V.cx, cy: V.cy };
+    else if (nbDoigts() === 2) {
+      var d = deuxDoigts();
+      geste = { type: 'pince', d0: Math.hypot(d[0].x - d[1].x, d[0].y - d[1].y) || 1, s0: V.s,
+        mx: (d[0].x + d[1].x) / 2, my: (d[0].y + d[1].y) / 2, cx: V.cx, cy: V.cy };
+    }
+  });
+  cv.addEventListener('pointermove', function (ev) {
+    if (!doigts[ev.pointerId]) return;
+    doigts[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+    if (!geste) return;
+    if (geste.type === 'tap' && Math.hypot(ev.clientX - geste.x0, ev.clientY - geste.y0) > 10) geste.type = 'glisse';
+    if (geste.type === 'glisse') {
+      V.cx = geste.cx - (ev.clientX - geste.x0) / V.s;
+      V.cy = geste.cy - (ev.clientY - geste.y0) / V.s;
+      borner();
+    } else if (geste.type === 'pince' && nbDoigts() >= 2) {
+      var d = deuxDoigts();
+      var dist = Math.hypot(d[0].x - d[1].x, d[0].y - d[1].y);
+      var mx = (d[0].x + d[1].x) / 2, my = (d[0].y + d[1].y) / 2;
+      // le point du monde sous les doigts au départ reste sous les doigts
+      var wx = geste.cx + (geste.mx - V.W / 2) / geste.s0, wy = geste.cy + (geste.my - V.H / 2) / geste.s0;
+      V.s = Math.max(V.sMin, Math.min(V.sMax, geste.s0 * dist / geste.d0));
+      V.cx = wx - (mx - V.W / 2) / V.s;
+      V.cy = wy - (my - V.H / 2) / V.s;
+      borner();
+    }
+  });
+  function finDoigt(ev) {
+    if (!doigts[ev.pointerId]) return;
+    delete doigts[ev.pointerId];
+    if (geste && geste.type === 'tap' && nbDoigts() === 0 && ev.type === 'pointerup') toucher(geste.x0, geste.y0);
+    if (nbDoigts() === 0) geste = null;
+    else if (geste && geste.type === 'pince') geste = null;
+  }
+  cv.addEventListener('pointerup', finDoigt);
+  cv.addEventListener('pointercancel', finDoigt);
+  cv.addEventListener('wheel', function (ev) {
+    ev.preventDefault();
+    zoomer(ev.deltaY < 0 ? 1.12 : 1 / 1.12, ev.clientX, ev.clientY);
+  }, { passive: false });
+
+  function toucher(x, y) {
     if (choix) {
       var libres = M.emplacementsLibres(monde, choix), best = null, bd = 1e9;
       libres.forEach(function (q) {
@@ -577,7 +637,7 @@
         var d = Math.hypot((x - p[0]) / 1.0, (y - p[1]) * 1.8);
         if (d < bd) { bd = d; best = q; }
       });
-      if (best && bd < Math.max(70, 110 * V.s)) {
+      if (best && bd < Math.max(40, D.batiments[choix].largeur * 0.5 * V.s)) {
         var type = choix;
         var b = M.construire(monde, type, best);
         if (b) {
@@ -589,7 +649,7 @@
           aideUneFois('chantier', 'Regarde : les habitants vont chercher du bois pour construire !');
           sauver();
         }
-      } else choisir(null);
+      }
       return;
     }
     for (var i = 0; i < bulles.length; i++) {
@@ -606,8 +666,8 @@
       var d = Math.hypot(x - p[0], y - p[1]);
       if (d < bd2) { bd2 = d; best2 = h; }
     });
-    if (best2 && bd2 < Math.max(36, 60 * V.s)) parler(best2);
-  });
+    if (best2 && bd2 < Math.max(28, 50 * V.s)) parler(best2);
+  }
 
   function voler(emoji, x, y, cible, n) {
     var el = document.createElement('div');
@@ -664,7 +724,7 @@
   addEventListener('resize', redim);
 
   // pour les tests automatiques
-  window.__jeu = { monde: function () { return monde; }, M: M, E: E, V: V, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes };
+  window.__jeu = { monde: function () { return monde; }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes };
 
   chargerImages(function () {
     redim();

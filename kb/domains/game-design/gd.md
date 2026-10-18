@@ -87,6 +87,9 @@ Des événements doux propres à chaque époque (un hiver froid, une crue, un in
 - Gros boutons, une seule action par geste (taper).
 - Pas d'échec, pas de game over.
 
+## Caméra
+Vue rapprochée par défaut sur le village (on doit lire les habitants et leurs gestes) ; glisser pour se promener dans la vallée, pincer pour zoomer ou dézoomer jusqu'à la vue d'ensemble. Retour de Julien sur la v0.1 : la vue d'ensemble seule rendait le jeu illisible.
+
 ## Écrans (première liste)
 1. La vallée (écran principal) avec les 3 compteurs et le bouton découvertes
 2. L'arbre des découvertes de l'époque en cours

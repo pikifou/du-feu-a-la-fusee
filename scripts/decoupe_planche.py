@@ -51,10 +51,21 @@ def decoupe(src: Path, out: Path, noms: list[str], marge: int = 12) -> None:
         print(f"ATTENTION {src.name} : {len(ordonnes)} objets trouvés pour {len(noms)} noms")
 
     out.mkdir(parents=True, exist_ok=True)
+    # le sol clair sous les objets (gris-bleu, relié au fond blanc) devient une ombre brune transparente
+    lum = rgb.mean(axis=2)
+    sat = rgb.max(axis=2).astype(np.int16) - rgb.min(axis=2).astype(np.int16)
+    clair = (sat < 14) & (lum > 160)
+    lab_c, _ = ndimage.label(clair)
+    bords = set(np.unique(np.concatenate([lab_c[0], lab_c[-1], lab_c[:, 0], lab_c[:, -1]]))) - {0}
+    sol = np.isin(lab_c, list(bords))
+    ombre_a = (np.clip((255.0 - lum) / 255.0 * 1.7, 0, 0.5) * 255).astype(np.uint8)
+
     # retire le liseré blanc : on "dé-mélange" la couleur du fond blanc
     a = alpha.astype(np.float32)[..., None] / 255.0
     propre = (rgb.astype(np.float32) - (1.0 - a) * 255.0) / np.maximum(a, 1e-3)
     propre = np.where(a > 0.02, np.clip(propre, 0, 255), 0).astype(np.uint8)
+    propre[sol] = (70, 48, 28)
+    alpha = np.where(sol, ombre_a, alpha).astype(np.uint8)
     rgba = np.dstack([propre, alpha])
     for (sl, lab), nom in zip(ordonnes, noms):
         y0 = max(sl[0].start - marge, 0)

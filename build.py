@@ -41,19 +41,18 @@ def assets() -> dict:
         cle = f"{f.parent.name}/{f.stem}"
         im = Image.open(f).convert("RGBA")
         if f.parent.name == "habitants":
-            cible_h = 190
+            cible_h = min(im.height, 280)
             im = im.resize((round(im.width * cible_h / im.height), cible_h), Image.LANCZOS)
         else:
-            cible_l = round(larg.get(cle, 160) * 1.6)
+            cible_l = min(im.width, round(larg.get(cle, 160) * 2.6))
             if cle.endswith("mammouth"):
-                cible_l = 300
+                cible_l = 420
             if cle.endswith("chevre"):
-                cible_l = 110
+                cible_l = 170
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
         res[cle] = webp(im, 85)
     board = Image.open(PLATEAU).convert("RGB")
-    board = board.resize((2200, round(board.height * 2200 / board.width)), Image.LANCZOS)
-    res["plateau"] = webp(board, 80)
+    res["plateau"] = webp(board, 78)
     return res
 
 

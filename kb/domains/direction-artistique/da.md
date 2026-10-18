@@ -40,5 +40,5 @@ Style et outil : cf. ADR-005 (diorama 3D low-poly cosy) et ADR-006 (Arcads, Nano
 | `assets/sprites/habitants/` | porteur-bois, cueilleuse, enfant-pierre, chasseur, paysan, porteuse-jarre, berger, sage |
 
 ## Points connus
-- Léger halo clair sous les objets (ombre douce de la planche). À corriger si ça se voit en jeu : regénérer avec « no cast shadow » ou durcir le seuil de détourage.
+- Le sol gris-bleu clair que le générateur dessine sous les objets est converti en ombre brune transparente par `decoupe_planche.py`. Il reste de petites taches claires à l'intérieur de certaines ouvertures (tentes).
 - Les sprites sont un peu plus clairs que le plateau : un léger assombrissement en jeu peut suffire.
