@@ -44,7 +44,7 @@
     cv.width = Math.round(V.W * V.dpr); cv.height = Math.round(V.H * V.dpr);
     V.sMin = Math.min(V.W / C.cadre.l, V.H / C.cadre.h);
     V.sMax = Math.max(V.sMin, 1.5);
-    if (!V.init) { V.init = true; V.s = V.W / 1500; V.cx = 1240; V.cy = 830; }
+    if (!V.init) { V.init = true; V.s = V.W / (V.W < 1000 ? 1200 : 1500); V.cx = 1240; V.cy = 830; }
     V.s = Math.max(V.sMin, Math.min(V.sMax, V.s));
     borner();
   }
@@ -523,7 +523,7 @@
   // menu
   $('btn-menu').addEventListener('click', function () { $('menu-voix').textContent = '🔊 Voix : ' + (ui.voix ? 'oui' : 'non'); ouvrir('menu'); });
   $('menu-voix').addEventListener('click', function () { ui.voix = !ui.voix; this.textContent = '🔊 Voix : ' + (ui.voix ? 'oui' : 'non'); sauver(); });
-  $('menu-plein').addEventListener('click', function () { pleinEcran(); fermer('menu'); });
+  $('menu-plein').addEventListener('click', function () { basculerPleinEcran(); fermer('menu'); });
   var confirmeA = 0;
   $('menu-recommencer').addEventListener('click', function () {
     var b = this;
@@ -543,13 +543,42 @@
     montrerEpoque();
     sauver();
   });
+  function estPleinEcran() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function verrouiller() {
+    try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {}
+  }
   function pleinEcran() {
+    var d = document.documentElement;
+    var f = d.requestFullscreen || d.webkitRequestFullscreen;
+    if (!f) return false;
     try {
-      var d = document.documentElement;
-      (d.requestFullscreen || d.webkitRequestFullscreen).call(d).then(function () {
-        if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {});
-      }).catch(function () {});
-    } catch (e) {}
+      var r = f.call(d);
+      if (r && r.then) r.then(verrouiller).catch(function () {}); else verrouiller();
+    } catch (e) { return false; }
+    return true;
+  }
+  function basculerPleinEcran() {
+    if (estPleinEcran()) {
+      try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
+      return;
+    }
+    if (!pleinEcran()) aide('Sur iPhone : touche Partager, puis « Sur l\'écran d\'accueil » pour jouer en plein écran.', true);
+  }
+  $('btn-plein').addEventListener('click', basculerPleinEcran);
+  $('tourner-plein').addEventListener('click', basculerPleinEcran);
+  document.addEventListener('fullscreenchange', function () { $('btn-plein').textContent = estPleinEcran() ? '✕' : '⛶'; });
+
+  // installation de l'appli (Android : invite du navigateur ; iPhone : consigne)
+  var invite = null;
+  addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); invite = e; $('menu-installer').hidden = false; });
+  $('menu-installer').addEventListener('click', function () {
+    if (!invite) return;
+    invite.prompt();
+    invite = null; this.hidden = true;
+  });
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone) $('menu-ios').hidden = false;
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !/claude\.ai|claudeusercontent/.test(location.host)) {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
   }
 
   // phrases des habitants

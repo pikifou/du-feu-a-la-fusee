@@ -1,11 +1,12 @@
 """Construit le jeu en une page autonome.
 
 python3 build.py            -> dist/index.html (images intégrées, pour l'artefact)
-python3 build.py --pwa docs -> appli installable (manifest, service worker), plus tard
+python3 build.py --pwa docs -> appli installable pour GitHub Pages (manifest, service worker, icônes)
 
 Les sprites et le plateau sont réduits et convertis en webp, puis intégrés en base64.
 """
 import base64
+import hashlib
 import io
 import json
 import re
@@ -63,6 +64,7 @@ def construire(sortie: Path) -> None:
         for n in ["data.js", "carte.js", "monde.js", "jeu.js"]
     )
     a = assets()
+    gabarit = gabarit.replace("<!--PWA-->\n", "")
     page = gabarit.replace("/*ASSETS*/", "var ASSETS = " + json.dumps(a) + ";").replace("/*SCRIPTS*/", scripts)
     sortie.parent.mkdir(parents=True, exist_ok=True)
     sortie.write_text(page, encoding="utf-8")
@@ -79,5 +81,62 @@ def construire(sortie: Path) -> None:
     print(f"{art} : {art.stat().st_size / 1e6:.2f} Mo")
 
 
+    return a
+
+
+def icone(taille: int) -> Image.Image:
+    fond = Image.new("RGBA", (taille, taille), (233, 220, 196, 255))
+    hutte = Image.open(SPRITES / "01-pierre" / "hutte-peaux.png").convert("RGBA")
+    feu = Image.open(SPRITES / "01-pierre" / "feu.png").convert("RGBA")
+    l = int(taille * 0.78)
+    hutte = hutte.resize((l, round(hutte.height * l / hutte.width)), Image.LANCZOS)
+    fond.alpha_composite(hutte, ((taille - l) // 2, int(taille * 0.12)))
+    lf = int(taille * 0.42)
+    feu = feu.resize((lf, round(feu.height * lf / feu.width)), Image.LANCZOS)
+    fond.alpha_composite(feu, (int(taille * 0.52), taille - feu.height - int(taille * 0.06)))
+    return fond.convert("RGB")
+
+
+def pwa(dossier: Path) -> None:
+    """Appli installable : la page complète + manifest + service worker versionné + icônes."""
+    page = (RACINE / "dist" / "index.html").read_text(encoding="utf-8")
+    version = hashlib.sha1(page.encode()).hexdigest()[:10]
+    tags = ('<link rel="manifest" href="manifest.webmanifest">\n'
+            '<link rel="apple-touch-icon" href="icone-192.png">\n'
+            '<meta name="apple-mobile-web-app-capable" content="yes">\n'
+            '<meta name="mobile-web-app-capable" content="yes">\n'
+            '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n'
+            '<meta name="apple-mobile-web-app-title" content="Feu à la Fusée">\n')
+    page = page.replace("<title>Du Feu à la Fusée</title>\n", "<title>Du Feu à la Fusée</title>\n" + tags)
+    dossier.mkdir(parents=True, exist_ok=True)
+    (dossier / "index.html").write_text(page, encoding="utf-8")
+    for t in (192, 512):
+        icone(t).save(dossier / f"icone-{t}.png")
+    manifest = {
+        "name": "Du Feu à la Fusée", "short_name": "Feu à la Fusée", "lang": "fr",
+        "start_url": "./", "scope": "./", "display": "fullscreen", "orientation": "landscape",
+        "background_color": "#e9dcc4", "theme_color": "#e9dcc4",
+        "icons": [{"src": f"icone-{t}.png", "sizes": f"{t}x{t}", "type": "image/png", "purpose": "any"} for t in (192, 512)],
+    }
+    (dossier / "manifest.webmanifest").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    fichiers = ["./", "index.html", "manifest.webmanifest", "icone-192.png", "icone-512.png"]
+    sw = f"""// service worker versionné : une nouvelle version du jeu remplace l'ancienne
+const CACHE = 'feu-fusee-{version}';
+const FICHIERS = {json.dumps(fichiers)};
+self.addEventListener('install', e => {{ e.waitUntil(caches.open(CACHE).then(c => c.addAll(FICHIERS))); self.skipWaiting(); }});
+self.addEventListener('activate', e => {{ e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); }});
+self.addEventListener('fetch', e => {{
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
+  // réseau d'abord (pour avoir la dernière version), cache si hors ligne
+  e.respondWith(fetch(e.request).then(r => {{ const c = r.clone(); caches.open(CACHE).then(k => k.put(e.request, c)); return r; }}).catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));
+}});
+"""
+    (dossier / "sw.js").write_text(sw, encoding="utf-8")
+    (dossier / ".nojekyll").write_text("")
+    print(f"{dossier} : appli version {version}")
+
+
 if __name__ == "__main__":
     construire(RACINE / "dist" / "index.html")
+    if "--pwa" in sys.argv:
+        pwa(RACINE / sys.argv[sys.argv.index("--pwa") + 1])
