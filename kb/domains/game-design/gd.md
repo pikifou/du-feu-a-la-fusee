@@ -31,18 +31,29 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 ## Boucle principale
 1. Les bâtiments produisent : une bulle 🪙 ou 💡 apparaît au-dessus.
 2. Joshua tape les bulles pour récolter.
-3. Il dépense ses pièces pour faire grandir le village.
-4. La ville pousse d'elle-même : une maison apparaît, de la fumée, un habitant sort (ADR-004).
+3. Il dépense ses pièces pour poser un bâtiment sur un emplacement de son choix (ADR-008).
+4. La ville fait le reste d'elle-même : chemins, habitants, fumée, détails, améliorations (ADR-004, ADR-008).
 5. Quand il a assez d'idées : **une découverte**. Nouveaux bâtiments, les anciens peuvent s'améliorer.
 6. Quand toutes les découvertes d'une époque sont faites : **changement d'époque**, grand moment de transformation de la vallée.
 
-## Le rôle de Joshua dans la construction (À ARBITRER)
-La ville pousse seule (ADR-004), mais il faut que Joshua ait la main sur quelque chose. Trois options :
-- **A. Il commande, la ville place** : il choisit quoi construire (« une maison », « un champ »), le village le pose tout seul au bon endroit. Simple, toujours joli.
-- **B. Il pose, la ville améliore** : il place les bâtiments sur des emplacements ; la ville ajoute seule les détails, les habitants, les chemins, et améliore ce qui existe.
-- **C. Entièrement autonome** : la ville grandit seule selon les découvertes ; Joshua ne fait que récolter et découvrir.
+## Le rôle de Joshua dans la construction
+Tranché par ADR-008 : **Joshua pose, la ville fait le reste.** Ce qui suit est la proposition d'application, à valider.
 
-Recommandation de Claude : **A**, qui garde le plaisir de choisir sans la frustration de mal placer à 6 ans.
+**Ce que fait Joshua**
+- Il choisit un bâtiment dans un bandeau d'icônes (seulement ceux débloqués et payables).
+- Les emplacements libres de la prairie s'allument ; il tape celui qu'il veut, ou glisse le bâtiment dessus.
+- Il peut déplacer un bâtiment déjà posé, gratuitement (appui long puis glisser).
+
+**Ce que fait la ville toute seule**
+- Elle trace les chemins entre les bâtiments.
+- Elle fait sortir les habitants et les fait vaquer (porter du bois, cueillir, aller au champ).
+- Elle ajoute les petits détails autour (tas de bois, jarres, fleurs, moutons).
+- Elle améliore d'elle-même ce qui existe quand une découverte le permet (la hutte devient maison en torchis), avec une petite animation.
+
+**Garde-fous pour un enfant de 6 ans**
+- Pas de mauvais placement possible : seuls les emplacements valides s'allument.
+- Certains bâtiments ont leur coin naturel (la pirogue sur la rive, le puits près des maisons, l'atelier de silex près de la grotte) : seuls ces emplacements-là s'allument pour eux.
+- Rien ne se démolit, rien ne se perd.
 
 ## Les découvertes : le moment pédagogique
 - Une grosse carte illustrée, avec ce qu'il faut pour la débloquer (💡 + les découvertes prérequises en icônes).
@@ -77,7 +88,7 @@ Des événements doux propres à chaque époque (un hiver froid, une crue, un in
 5. La frise du temps
 
 ## Questions ouvertes
-- [ ] Rôle de Joshua dans la construction : A, B ou C ?
+- [x] Rôle de Joshua dans la construction : B, il pose et la ville fait le reste (ADR-008)
 - [ ] Support principal : tablette en paysage ou téléphone en portrait ?
 - [ ] Titre : *Du Feu à la Fusée* (proposition) ?
 - [ ] Nombre d'époques : 7 proposées, à valider.

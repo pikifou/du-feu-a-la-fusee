@@ -58,3 +58,10 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée
 - **Décision** : le projet est documenté dans `kb/` selon la méthode KB incrémentale : canon curé, ADR à chaud, journal de sessions, réconciliation sur demande.
 - **Contexte** : Julien : le jeu « a quand même un peu d'ampleur », il faut poser le GD et les décisions dans des fichiers pour pouvoir travailler.
+
+## ADR-008 : Joshua pose les bâtiments, la ville fait le reste
+- **Date** : 2026-10-18
+- **Statut** : acceptée
+- **Décision** : Joshua place lui-même les bâtiments sur des emplacements de la vallée. La ville ajoute seule tout le reste : chemins, habitants, détails, et elle améliore d'elle-même ce qui existe. Précise ADR-004 sans la remplacer.
+- **Contexte** : il fallait concilier la ville qui pousse toute seule (ADR-004) et le plaisir SimCity de construire (ADR-003).
+- **Alternatives écartées** : A, il commande et la ville place (recommandation initiale de Claude) ; C, ville entièrement autonome.
