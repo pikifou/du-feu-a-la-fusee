@@ -69,6 +69,11 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 - De temps en temps, quelqu'un dit une petite phrase selon ce qu'il fait (au travail, en portant, à la veillée, en allant se coucher, au réveil).
 - Les gestes de travail alternent deux images ; ce qu'on rapporte se porte dans les bras.
 
+## Améliorer (ADR-021)
+- Dans la fiche courte d'un bâtiment : « ⬆ Améliorer · 🪙 prix » ou « ⬆ Agrandir en … ».
+- Bâtiments qui produisent : niveaux 1 à 3, +1 par récolte à chaque niveau ; prix = 1,5 puis 3 fois le prix du bâtiment (cercle des anciens : 45 puis 90).
+- Maisons : tente (10) ou hutte de branches (8) vers hutte en peaux après « Les huttes en peaux » ; maison en torchis vers maison longue (14) après « Le grenier ».
+
 ## Comprendre ce qu'on voit (ADR-015)
 Toucher un bâtiment, un arbre, la grotte, le mammouth, le gué ou un sentier ouvre une petite fiche lue à voix haute : à quoi ça sert, qui y travaille, ce que ça change. Choisir un bâtiment à construire montre la même fiche.
 
@@ -132,5 +137,5 @@ Vue rapprochée par défaut sur le village (on doit lire les habitants et leurs 
 - [x] Support principal : tablette en paysage (ADR-009)
 - [ ] Titre : *Du Feu à la Fusée* (proposition) ?
 - [ ] Nombre d'époques : 7 proposées, à valider.
-- [ ] Les voix off : enregistrées par Julien, ou synthèse vocale ?
+- [x] Les voix off : voix de narratrice générée avec Arcads (ADR-022)
 - [ ] La guerre : pas de politique (ADR-002), mais faut-il évoquer murs et défense, ou rien du tout ?

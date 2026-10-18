@@ -96,7 +96,7 @@ var Donnees = (function () {
       explication: "Le cercle des anciens. Le sage s'y assoit pour réfléchir. Ses idées servent à faire des découvertes.",
       vignettes: [{ img: 'sage', texte: "Le soir, le sage réfléchit près du cercle de pierres. Il a des idées !" }],
       nom: 'Le cercle des anciens', sprite: '01-pierre/cercle-pierres', epoque: 1, jusqua: 9,
-      zone: 'pre', cout: null, largeur: 210, taille: 2,
+      zone: 'pre', cout: null, prixNiveau: 30, largeur: 210, taille: 2,
       travail: { metier: 'sage', aller: null, duree: 12, produit: 'idees', qte: 1 }
     },
     'tas-bois': {
@@ -108,12 +108,14 @@ var Donnees = (function () {
       travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: 1 }
     },
     tente: {
+      evolue: { vers: 'hutte-peaux', cout: 10, decouverte: 'abri' },
       resume: "Une petite maison pour 2 personnes.", page: 'cueilleurs',
       explication: "Une tente en peaux tendues sur des bâtons. Deux personnes y dorment à l'abri du vent. Plus il y a de maisons, plus de familles viennent vivre au village.",
       nom: 'Une tente', sprite: '01-pierre/tente', epoque: 1, jusqua: 1,
       zone: 'pre', cout: 5, bois: 2, lits: 2, largeur: 200, taille: 2, ameliore: 'maison-torchis'
     },
     'hutte-branches': {
+      evolue: { vers: 'hutte-peaux', cout: 8, decouverte: 'abri' },
       resume: "Une maison de branches pour 3 personnes.", page: 'cueilleurs',
       explication: 'Une hutte de branches entrecroisées. Trois personnes peuvent y dormir.',
       nom: 'Une hutte de branches', sprite: '01-pierre/hutte-branches', epoque: 1, jusqua: 1,
@@ -173,6 +175,7 @@ var Donnees = (function () {
       travail: { metier: 'peintre', aller: null, duree: 14, produit: 'idees', qte: 2 }
     },
     'maison-torchis': {
+      evolue: { vers: 'maison-longue', cout: 14, decouverte: 'grenier' },
       resume: "Une maison en terre et en paille, pour 3 personnes.",
       explication: "Une maison en torchis : de la terre, de la paille et de l'eau collées sur des branches. Les paysans y vivent toute l'année, près de leurs champs.",
       vignettes: [{ img: 'torchis', texte: "On tresse des branches, puis on les couvre de terre mêlée de paille : c'est le torchis." }],
@@ -271,6 +274,62 @@ var Donnees = (function () {
     }
   };
 
-  return { epoques: epoques, decouvertes: decouvertes, pages: pages, batiments: batiments, allures: allures, poses: poses, porteurs: porteurs, femmes: femmes };
+  // Textes dits à voix haute en dehors des fiches (source unique : ils sont aussi enregistrés en voix, cf. scripts/voix.py)
+  var textes = {
+    phrases: {
+    sage: ['Hmm… je réfléchis…', 'J\'ai une idée !'],
+    bucheron: ['Je vais couper du bois !', 'Ce rondin est lourd !'],
+    cueilleur: ['Miam, des baies !', 'Je remplis mon panier.'],
+    tailleur: ['Je taille des silex.', 'Toc, toc, toc !'],
+    chasseur: ['Je pars chasser !', 'Chut, il ne faut pas faire de bruit.'],
+    pecheur: ['Je vais pêcher des poissons !', 'Ça mord !'],
+    peintre: ['Je peins un mammouth.', 'Regarde mes peintures !'],
+    paysan: ['Le blé pousse bien !', 'Je m\'occupe du champ.'],
+    berger: ['Je garde les moutons !', 'Bêêê !'],
+    porteur: ['Je rapporte le blé au grenier.'],
+    potier: ['Je vais chercher de l\'argile.', 'Je fais un joli pot.'],
+    meunier: ['J\'écrase le blé.', 'Bientôt du pain !'],
+    construit: ['J\'apporte du bois pour construire !', 'On construit une maison !'],
+    enfant: ['Youpi !', 'On joue à chat !', 'Tu ne m\'attraperas pas !'],
+    libre: ['Bonjour !', 'Il fait bon ici.', 'Quelle belle vallée !']
+  },
+    nature: {
+    arbre: ['nature/sapin-grand', 'Un arbre', "Le bûcheron coupe les arbres pour avoir du bois. Petit à petit, la forêt recule et laisse de la place pour construire."],
+    souche: ['nature/souche', 'Une souche', 'Ici, le bûcheron a coupé un arbre. On peut construire à cet endroit.'],
+    rocher: ['nature/rochers', 'Des rochers', 'On ne peut pas construire sur les rochers.'],
+    grotte: ['nature/grotte', 'La grotte', "Les premiers humains s'y abritaient. C'est près d'elle qu'on trouve le silex, et qu'on peint sur la roche."],
+    mammouth: ['01-pierre/mammouth', 'Le mammouth', "Un éléphant géant couvert de longs poils, qui vivait quand il faisait très froid. Les chasseurs le suivaient pour sa viande, sa fourrure et ses os."],
+    chevre: ['02-neolithique/chevre', 'Une chèvre', "Les premiers paysans ont apprivoisé les chèvres : elles donnent du lait et de la laine."],
+    gue: ['nature/galets', 'Le gué', "Ici, la rivière est peu profonde : on traverse en marchant sur les pierres."],
+    sentier: ['nature/touffe', 'Un sentier', "À force de passer toujours au même endroit, les habitants ont usé l'herbe. Plus tard, on en fera de vraies routes !"]
+  },
+    aides: {
+      plusDePlace: "Il n'y a plus de place pour ça !",
+      piecesManquent: 'Il te faut plus de pièces. Ramasse les bulles !',
+      ideesManquent: "Il te faut plus d'idées. Ramasse les bulles du cercle des anciens !",
+      epoque2: 'Regarde : les habitants transforment eux-mêmes leurs huttes en maisons !',
+      iphone: "Sur iPhone : touche Partager, puis « Sur l'écran d'accueil » pour jouer en plein écran.",
+      cocorico: 'Cocorico ! Le soleil se lève, tout le monde au travail !',
+      chantier: 'Regarde : les habitants vont chercher du bois pour construire !',
+      maison: 'Une nouvelle maison ! Une famille va bientôt arriver.',
+      bulle: 'Touche les bulles pour ramasser les pièces et les idées !',
+      arrivee: "Quelqu'un arrive dans la vallée !",
+      nuitFeu: 'La nuit tombe. Autour du feu, on a chaud et on y voit clair : le travail continue !',
+      nuitSansFeu: 'Il fait nuit et tout le monde dort… Construis un feu de camp près du village !',
+      nuit1: 'La nuit tombe ! Brrr, il fait froid et tout noir : tout le monde va dormir. Il faudrait découvrir le feu…',
+      nuit2: 'Encore la nuit… Avec le feu, on pourrait continuer à travailler. Regarde dans les découvertes !',
+      reveil: 'Tout le monde dort… Quand tu veux, appuie sur le coq pour faire lever le soleil !',
+      idee: "Tu as assez d'idées ! Touche l'ampoule pour faire une découverte.",
+      construire: "Tu as des pièces : choisis une construction en bas de l'écran !",
+      finEpoque: { 1: "Tu as fait toutes les découvertes de l'âge de pierre ! Ton village est prêt à changer d'époque." },
+      amelioration: "Les habitants vont chercher du bois pour améliorer le bâtiment. Regarde les étoiles !",
+      finJeu: "Tu as fait toutes les découvertes du néolithique ! La suite de l'histoire, l'âge des métaux, arrive bientôt."
+    },
+    prerequis: function (ids) {
+      return "Il faut d'abord découvrir : " + ids.map(function (p) { return decouvertes[p].nom.toLowerCase(); }).join(' et ') + '.';
+    }
+  };
+
+  return { epoques: epoques, decouvertes: decouvertes, pages: pages, batiments: batiments, allures: allures, poses: poses, porteurs: porteurs, femmes: femmes, textes: textes };
 })();
 if (typeof module !== 'undefined') module.exports = Donnees;

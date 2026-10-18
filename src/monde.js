@@ -255,11 +255,48 @@ var Monde = (function () {
     return true;
   }
 
+  // ---------- améliorations payantes (ADR-021) ----------
+  var NIVEAU_MAX = 3;
+  function amelioration(m, b) {
+    if (!b || b.etat !== 'fini') return null;
+    var d = D.batiments[b.type], ev = d.evolue;
+    if (ev) {
+      var cible = D.batiments[ev.vers];
+      if ((!ev.decouverte || m.decouvertes[ev.decouverte]) && cible.epoque <= m.epoque && (cible.jusqua || 9) >= m.epoque)
+        return { genre: 'maison', vers: ev.vers, cout: ev.cout };
+      return null;
+    }
+    var n = b.niveau || 1;
+    if (d.travail && n < NIVEAU_MAX) {
+      var base = d.prixNiveau || d.cout || 10;
+      return { genre: 'niveau', niveau: n + 1, cout: Math.round(base * (n === 1 ? 1.5 : 3)) };
+    }
+    return null;
+  }
+  function ameliorer(m, id) {
+    var b = bat(m, id), a = amelioration(m, b);
+    if (!a || m.pieces < a.cout) return null;
+    m.pieces -= a.cout;
+    if (a.genre === 'maison') {
+      b.renove = D.batiments[b.type].lits || 0;
+      b.ancien = b.type;
+      b.type = a.vers;
+      b.besoin = D.batiments[a.vers].bois;
+    } else {
+      b.niveauVise = a.niveau;
+      b.besoin = 1 + a.niveau;
+    }
+    b.etat = 'chantier'; b.livre = 0; b.enRoute = 0; b.cree = m.t;
+    m.evenements.push({ type: 'chantier', bat: b.id });
+    return a;
+  }
+  function quantite(b) { return D.batiments[b.type].travail.qte + (b.niveau || 1) - 1; }
+
   function recolter(m, id) {
     var b = bat(m, id);
     if (!b || b.stock <= 0) return null;
     var tr = D.batiments[b.type].travail;
-    var n = b.stock * tr.qte;
+    var n = b.stock * quantite(b);
     b.stock = 0;
     if (tr.produit === 'idees') m.idees += n; else m.pieces += n;
     return { produit: tr.produit, n: n };
@@ -568,6 +605,7 @@ var Monde = (function () {
             c.livre++;
             if (c.livre >= c.besoin) {
               c.etat = 'fini'; c.apparu = m.t; c.renove = 0;
+              if (c.niveauVise) { c.niveau = c.niveauVise; c.niveauVise = null; }
               if (c.type === 'passerelle') m.terrain.passerelle = true;
               m.evenements.push({ type: 'fini', bat: c.id });
             }
@@ -656,7 +694,8 @@ var Monde = (function () {
     epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter,
     lits: lits, bat: bat, exporter: exporter, importer: importer, BULLES_MAX: BULLES_MAX,
     heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
-    phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES
+    phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES,
+    amelioration: amelioration, ameliorer: ameliorer, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX
   };
 })();
 if (typeof module !== 'undefined') module.exports = Monde;

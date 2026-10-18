@@ -47,6 +47,8 @@ Style et outil : cf. ADR-005 (diorama 3D low-poly cosy) et ADR-006 (Arcads, Nano
 | `assets/sprites/coupe/` (ADR-019) | tente, hutte-branches, hutte-peaux, maison-torchis, maison-longue en vue en coupe, couchages vides ; les places des couchages sont dans `COUCHAGES` (`src/jeu.js`) |
 | `assets/sprites/poses/*-b.png` (ADR-020) | deuxième image de chaque pose de travail (planche `planche-poses-b.png`, retouche de la planche des poses) |
 | `assets/sprites/porteurs/` (ADR-020) | e1-bois-h, e1-bois-f, e1-viande, e1-poisson, e1-silex, e2-bois-h, e2-bois-f, e2-ble-h, e2-ble-f, e2-argile-f, e2-argile-h, e2-poisson |
+| `assets/sprites/eau/` | pont-bois (long pont de rondins), pirogue-a et pirogue-b (deux images de pagaie), pirogue-filet |
+| `assets/voix/` | textes.json (phrases), mp3/ (voix), arcads-ids.txt ; les wav bruts ne sont pas versionnés |
 | `assets/raw/planche-poses.png`, `planche-nuit.png`, `vignettes-pierre.png`, `vignettes-neolithique.png` | Planches brutes de la v0.6 |
 
 ## Animations en deux images

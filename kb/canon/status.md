@@ -11,7 +11,7 @@ updated: 2026-10-18
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 20 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 22 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.
@@ -19,6 +19,7 @@ updated: 2026-10-18
 - Sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants, 24 éléments de nature, 12 poses de travail, 8 éléments de nuit ; 16 vignettes illustrées pour les fiches.
 - Test d'intégration des sprites sur le plateau concluant (`assets/raw/test-integration.jpg`).
 
+- **v0.8** : nombre de bâtiments possédés en bas à droite de chaque carte du bandeau ; voix de narratrice enregistrée pour les 182 phrases du jeu (ADR-022) ; améliorations payantes (ADR-021) ; une vraie passerelle en bois sur le gué ; au néolithique, des pirogues vont et viennent sur la rivière et la mer ; les fenêtres s'ouvrent toujours en haut ; message de fin de démo dans les découvertes.
 - **v0.7** : deux niveaux d'explication (ADR-018) : la fiche courte (une phrase, les chiffres, un bouton « En savoir plus ») et la grande page illustrée (une scène en grand, avant / maintenant, 3 « Le savais-tu ? », ce que ça permet de construire avec les vignettes) ; découvrir une technologie ouvre sa grande page, qu'on peut relire depuis la liste des découvertes ou depuis la fiche courte. La nuit, les maisons s'ouvrent en coupe et on voit les dormeurs couchés dedans, éclairés par le foyer (ADR-019). Habitants plus vivants (ADR-020) : petites phrases dans des bulles, gestes de travail en deux images, objets portés dans les bras (bois, viande, poisson, silex, blé, argile).
 - **v0.6** : la nuit en séquence (ADR-016) : à la tombée du jour, on se rassemble au feu (le premier arrivé le ranime), on veille et on travaille dans sa lumière, puis tout le monde rentre dormir dans sa maison et les feux s'éteignent (braises puis cendres) ; quand tout le village dort, un coq « Réveil ! » fait lever le soleil. On voit qui fait quoi (ADR-017) : chaque habitant a sa maison, les dormeurs sont couchés devant leur porte, la tête qui dépasse de la couverture ; au travail, chacun est en plein geste (tailleur, bûcheron, pêcheur, sage assis, paysan à la faucille, berger, potière, meunière…) ; la fiche d'un bâtiment montre une ou deux vignettes illustrées de l'activité, lues à voix haute quand on les touche.
 - **v0.5** : la grande refonte. Île en tuiles qui s'agrandit au néolithique (ADR-012) ; forêt d'arbres que les bûcherons abattent (la forêt recule, des souches restent) ; l'herbe s'use en sentiers puis en chemins de terre, et les habitants préfèrent les chemins tracés (ADR-013) ; habitants bien plus petits que les huttes et un espace libre autour de chaque bâtiment (ADR-014) ; fiche d'explication lue à voix haute pour chaque bâtiment, et aussi pour les arbres, la grotte, le mammouth, le gué et les sentiers (ADR-015) ; zone constructible en surbrillance.
@@ -31,6 +32,7 @@ updated: 2026-10-18
 - Game design en brouillon : proposition de Claude, pas encore validée par Julien (`domains/game-design/gd.md`).
 
 ## Prochaine étape
+- Choisir avec Julien d'autres façons de dépenser (cf. journal, propositions de Claude) et régler les prix des améliorations.
 - Faire relire par Julien les « Le savais-tu ? » (proposition de Claude, dans `src/data.js`).
 - Valider le rôle du mammouth (autre rive, chassé, part au néolithique) : proposition de Claude, pas encore validée.
 - Test du prototype avec Joshua sur tablette.

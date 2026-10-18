@@ -32,6 +32,11 @@ function jouer(graine, reflexe, maxMin) {
     let choix = neufs.sort((a, b) => D.batiments[a].cout - D.batiments[b].cout)[0];
     if (!choix && pleins) choix = possibles.filter(t => D.batiments[t].lits).sort((a, b) => D.batiments[b].lits - D.batiments[a].lits)[0];
     if (choix) Monde.construire(m, choix, Monde.emplacementsLibres(m, choix)[0]);
+    // quand il est riche, le joueur améliore (ADR-021)
+    else if (m.pieces > 40) {
+      const ams = m.batiments.map(b => ({ b, a: Monde.amelioration(m, b) })).filter(x => x.a && x.a.cout <= m.pieces).sort((x, y) => x.a.cout - y.a.cout);
+      if (ams.length) Monde.ameliorer(m, ams[0].b.id);
+    }
   }
   return { m, jalons };
 }
@@ -107,4 +112,26 @@ test('la nuit : sans feu on dort tout de suite ; avec un feu on veille, puis on 
   for (let i = 0; i < 60; i++) Monde.pas(avecFeu, 0.1);
   assert.strictEqual(Monde.phase(avecFeu), 'jour');
   assert.strictEqual(avecFeu.habitants.filter(h => h.dort).length, 0, 'tout le monde est réveillé');
+});
+
+test('les améliorations : niveaux de production et maisons agrandies', () => {
+  const { m } = jouer(4, 5, 60);
+  const niv = m.batiments.filter(b => (b.niveau || 1) > 1).length;
+  const longues = m.batiments.filter(b => b.type === 'maison-longue').length;
+  console.log(`améliorés : ${niv} bâtiments de niveau 2 ou plus, ${longues} maisons longues`);
+  assert.ok(niv > 0, 'au moins un bâtiment amélioré');
+  assert.ok(m.batiments.every(b => (b.niveau || 1) <= Monde.NIVEAU_MAX));
+  // une amélioration coûte, puis le chantier se termine
+  const m2 = Monde.nouveau(5);
+  for (let i = 0; i < 300; i++) Monde.pas(m2, 0.1);
+  const cercle = m2.batiments.find(b => b.type === 'cercle-pierres');
+  m2.pieces = 100;
+  const a = Monde.amelioration(m2, cercle);
+  assert.ok(a && a.genre === 'niveau');
+  assert.ok(Monde.ameliorer(m2, cercle.id));
+  assert.strictEqual(m2.pieces, 100 - a.cout);
+  assert.strictEqual(cercle.etat, 'chantier');
+  for (let i = 0; i < 3000 && cercle.etat !== 'fini'; i++) Monde.pas(m2, 0.1);
+  assert.strictEqual(cercle.niveau, 2);
+  assert.strictEqual(Monde.quantite(cercle), 2);
 });

@@ -61,6 +61,9 @@ def assets() -> dict:
         elif f.parent.name == "porteurs":
             cible_h = min(im.height, 280)
             im = im.resize((round(im.width * cible_h / im.height), cible_h), Image.LANCZOS)
+        elif f.parent.name == "eau":
+            cible_l = min(im.width, 1000 if f.stem.startswith("pont") else 300)
+            im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
         elif f.parent.name == "coupe":
             cible_l = min(im.width, round(larg.get(cle.replace("coupe/", "01-pierre/"), larg.get(cle.replace("coupe/", "02-neolithique/"), 220)) * 2.6))
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
@@ -91,6 +94,20 @@ def assets() -> dict:
     return res
 
 
+def voix_enregistrees() -> dict:
+    """Phrases enregistrées en voix (scripts/textes_voix.js puis Arcads) : texte -> mp3 en data URL."""
+    dossier = RACINE / "assets" / "voix"
+    liste = dossier / "textes.json"
+    if not liste.exists():
+        return {}
+    res = {}
+    for x in json.loads(liste.read_text(encoding="utf-8")):
+        f = dossier / "mp3" / f"{x['id']}.mp3"
+        if f.exists():
+            res[x["texte"]] = "data:audio/mpeg;base64," + base64.b64encode(f.read_bytes()).decode()
+    return res
+
+
 def construire(sortie: Path) -> None:
     gabarit = (RACINE / "src" / "index.html").read_text(encoding="utf-8")
     scripts = "".join(
@@ -99,10 +116,11 @@ def construire(sortie: Path) -> None:
     )
     a = assets()
     gabarit = gabarit.replace("<!--PWA-->\n", "")
-    page = gabarit.replace("/*ASSETS*/", "var ASSETS = " + json.dumps(a) + ";").replace("/*SCRIPTS*/", scripts)
+    voix = voix_enregistrees()
+    page = gabarit.replace("/*ASSETS*/", "var ASSETS = " + json.dumps(a) + ";\nvar VOIX = " + json.dumps(voix, ensure_ascii=False) + ";").replace("/*SCRIPTS*/", scripts)
     sortie.parent.mkdir(parents=True, exist_ok=True)
     sortie.write_text(page, encoding="utf-8")
-    print(f"{sortie} : {len(page) / 1e6:.2f} Mo, {len(a)} images")
+    print(f"{sortie} : {len(page) / 1e6:.2f} Mo, {len(a)} images, {len(voix)} phrases en voix")
     # version artefact : sans doctype ni html/head/body (le squelette est ajouté à la publication)
     tete = re.search(r"<head>(.*)</head>", page, re.S).group(1)
     tete = re.sub(r'<meta charset="utf-8">\s*', "", tete)

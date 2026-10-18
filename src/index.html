@@ -68,6 +68,8 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   padding: 5px 4px 4px; text-align: center; position: relative; cursor: pointer; transition: transform .15s; border: 3px solid transparent; }
 .carte-bat img { width: 60px; height: 46px; object-fit: contain; display: block; margin: 0 auto; pointer-events: none; }
 .carte-bat .prix { font-size: 15px; font-weight: 700; margin-top: 2px; }
+.carte-bat .nombre { position: absolute; right: -6px; bottom: 22px; min-width: 24px; height: 24px; border-radius: 12px; padding: 0 6px;
+  background: var(--encre); color: #fff; font-size: 14px; font-weight: 700; display: grid; place-items: center; border: 2px solid var(--carte); }
 .carte-bat.non { filter: grayscale(.7); opacity: .6; }
 .carte-bat.choisie { border-color: var(--orange); transform: translateY(-6px); }
 .carte-bat .neuf { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: var(--vert); color: #fff;
@@ -189,6 +191,10 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 @media (max-width: 640px) { #page .fenetre { grid-template-columns: 1fr; grid-template-rows: 38% 1fr; } }
 #info-plus { border: 0; background: var(--orange); color: #fff; font-family: inherit; font-weight: 700; font-size: 15px; border-radius: 999px;
   padding: 6px 14px; margin-top: 7px; cursor: pointer; box-shadow: 0 3px 0 var(--orange-fonce); }
+.info-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#info-ameliorer { border: 0; background: var(--vert, #5a9a3c); color: #fff; font-family: inherit; font-weight: 700; font-size: 15px; border-radius: 999px;
+  padding: 6px 14px; margin-top: 7px; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.25); }
+#info-ameliorer.non { filter: grayscale(.8); opacity: .65; }
 #info-plus:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--orange-fonce); }
 .dec.faite { cursor: pointer; }
 #scene-illu { width: 100%; max-height: 42vh; object-fit: cover; border-radius: 18px; margin: 4px 0 8px; display: block; }
@@ -220,7 +226,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
     <div id="info-titre"></div>
     <div id="info-texte"></div>
     <div id="info-statut"></div>
-    <button id="info-plus" hidden>📖 En savoir plus</button>
+    <div class="info-actions"><button id="info-plus" hidden>📖 En savoir plus</button><button id="info-ameliorer" hidden></button></div>
   </div>
   <div class="info-boutons">
     <button class="bouton-rond" id="info-fermer" aria-label="Fermer">✕</button>

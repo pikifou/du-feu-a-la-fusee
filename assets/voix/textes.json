@@ -1,0 +1,730 @@
+[
+ {
+  "id": "a1a8305414",
+  "texte": "Les outils"
+ },
+ {
+  "id": "83a6104525",
+  "texte": "Avant, on n'arrivait pas à couper le bois ni la viande. Maintenant, on tape une pierre contre une autre pour faire des outils qui coupent !"
+ },
+ {
+  "id": "ba9d5f97d0",
+  "texte": "Les plus vieux outils de pierre connus ont plus de 3 millions d'années !"
+ },
+ {
+  "id": "2420ee84d3",
+  "texte": "Le silex se casse en éclats très tranchants : ça coupe aussi bien qu'un couteau."
+ },
+ {
+  "id": "366358b022",
+  "texte": "Pour tailler, on frappait le silex avec un galet ou avec un bois de cerf."
+ },
+ {
+  "id": "cbb2c1d160",
+  "texte": "Le feu"
+ },
+ {
+  "id": "7506369f15",
+  "texte": "Avant, il faisait froid et tout noir la nuit. Maintenant, grâce au feu, on a chaud, on y voit, et on cuit la viande !"
+ },
+ {
+  "id": "ab9de01d53",
+  "texte": "Pour allumer un feu, on frottait très vite deux morceaux de bois, ou on frappait deux pierres pour faire des étincelles."
+ },
+ {
+  "id": "113bbe263a",
+  "texte": "Les loups et les ours ont peur du feu : il protège le camp pendant la nuit."
+ },
+ {
+  "id": "54e46d1c48",
+  "texte": "La viande cuite est plus tendre et plus facile à manger."
+ },
+ {
+  "id": "5098a4e67e",
+  "texte": "La chasse et la pêche"
+ },
+ {
+  "id": "31518d6d23",
+  "texte": "Avant, on avait souvent faim. Maintenant, avec des lances, on chasse dans la forêt et on pêche dans la rivière !"
+ },
+ {
+  "id": "66832253a4",
+  "texte": "Les chasseurs partaient en groupe : à plusieurs, on est plus forts et plus malins."
+ },
+ {
+  "id": "22cffdcd3e",
+  "texte": "Avec un propulseur, un bâton spécial, on lance la sagaie bien plus loin."
+ },
+ {
+  "id": "e3db299be3",
+  "texte": "On ne gaspillait rien : la viande pour manger, la peau pour s'habiller, les os pour faire des outils."
+ },
+ {
+  "id": "36f6035b34",
+  "texte": "Les huttes en peaux"
+ },
+ {
+  "id": "f92568dcc3",
+  "texte": "Avant, on dormait sous des branches et le vent passait. Maintenant, on coud des peaux de bêtes pour faire des huttes bien chaudes !"
+ },
+ {
+  "id": "4ff9aa84df",
+  "texte": "Avec une aiguille en os, on cousait les peaux de bêtes pour faire des habits et des huttes."
+ },
+ {
+  "id": "75ccc0bc9d",
+  "texte": "Là où il n'y avait presque pas d'arbres, on a construit des huttes avec des os de mammouth !"
+ },
+ {
+  "id": "0b5526b1dd",
+  "texte": "Dans la hutte, bien au chaud, on dormait sur des fourrures."
+ },
+ {
+  "id": "89e1624399",
+  "texte": "La peinture"
+ },
+ {
+  "id": "6c0d6fe30e",
+  "texte": "Avant, on oubliait nos histoires. Maintenant, à la lumière du feu, on les peint sur les murs de la grotte !"
+ },
+ {
+  "id": "d24d0c1884",
+  "texte": "Dans la grotte Chauvet, en France, il y a des dessins de plus de 30 000 ans !"
+ },
+ {
+  "id": "30cf38327c",
+  "texte": "Les couleurs venaient de la terre (l'ocre, rouge ou jaune) et du charbon de bois (le noir)."
+ },
+ {
+  "id": "c20eb7ec68",
+  "texte": "Pour dessiner sa main, on soufflait de la couleur tout autour : ce sont des mains négatives."
+ },
+ {
+  "id": "f13385342d",
+  "texte": "L'agriculture"
+ },
+ {
+  "id": "2acc904669",
+  "texte": "Avant, il fallait marcher toute la journée pour trouver à manger. Maintenant, on plante des graines, le blé pousse, et on peut rester au même endroit !"
+ },
+ {
+  "id": "6212c057a3",
+  "texte": "Les premiers champs sont apparus il y a plus de 10 000 ans, au Proche-Orient."
+ },
+ {
+  "id": "f3c2d3d343",
+  "texte": "On cultivait le blé, l'orge, les lentilles et les pois."
+ },
+ {
+  "id": "247947df12",
+  "texte": "Avec les champs, on n'a plus besoin de voyager : les premiers villages sont nés."
+ },
+ {
+  "id": "094480c196",
+  "texte": "L'élevage"
+ },
+ {
+  "id": "152bd76c26",
+  "texte": "Avant, il fallait courir après les animaux. Maintenant, on garde des moutons dans un enclos : on a de la laine et du lait !"
+ },
+ {
+  "id": "35b64dc2c6",
+  "texte": "Les moutons et les chèvres sont parmi les tout premiers animaux apprivoisés, il y a environ 10 000 ans."
+ },
+ {
+  "id": "f250ae8284",
+  "texte": "Le chien, lui, était déjà l'ami des humains bien avant, au temps des chasseurs."
+ },
+ {
+  "id": "0592aa7fe1",
+  "texte": "Les animaux donnent du lait et de la viande, et plus tard de la laine pour tisser des habits."
+ },
+ {
+  "id": "8416f3fe22",
+  "texte": "Le grenier"
+ },
+ {
+  "id": "58e281d2ed",
+  "texte": "Avant, les souris mangeaient notre blé. Maintenant, on le range bien au sec, en hauteur, dans un grenier !"
+ },
+ {
+  "id": "0763b74887",
+  "texte": "Avec une réserve de grain, on peut manger même en hiver, quand rien ne pousse."
+ },
+ {
+  "id": "0516b2f2b4",
+  "texte": "Sur ses pilotis, le grenier reste au sec, et les souris ont bien du mal à y monter."
+ },
+ {
+  "id": "8bd44e9fc1",
+  "texte": "On garde aussi les plus belles graines, pour les semer l'année suivante."
+ },
+ {
+  "id": "416f154e64",
+  "texte": "La poterie"
+ },
+ {
+  "id": "f2243286b3",
+  "texte": "Avant, on ne pouvait rien garder ni transporter. Maintenant, on cuit de l'argile dans le feu pour faire des pots !"
+ },
+ {
+  "id": "e8bda2c399",
+  "texte": "L'argile molle devient dure comme la pierre quand on la cuit dans un four très chaud."
+ },
+ {
+  "id": "6dc3043f00",
+  "texte": "Les plus vieilles poteries connues ont été trouvées en Chine : elles ont environ 20 000 ans."
+ },
+ {
+  "id": "2358fb4dbf",
+  "texte": "Dans les pots, on garde l'eau et le grain, et on peut faire cuire la soupe."
+ },
+ {
+  "id": "b82a5ec8bd",
+  "texte": "La meule"
+ },
+ {
+  "id": "d9189719f0",
+  "texte": "Avant, on ne pouvait pas manger le blé tout dur. Maintenant, on l'écrase entre deux pierres : ça fait de la farine, et avec la farine, du pain !"
+ },
+ {
+  "id": "1547cb0023",
+  "texte": "La meule, c'est une pierre plate et une autre pierre qu'on fait glisser dessus, d'avant en arrière."
+ },
+ {
+  "id": "0878d13c7c",
+  "texte": "Il fallait des heures pour moudre la farine d'une seule journée !"
+ },
+ {
+  "id": "74c085276e",
+  "texte": "Avec la farine et un peu d'eau, on faisait des galettes cuites sur une pierre chaude."
+ },
+ {
+  "id": "8294c84c42",
+  "texte": "Les chasseurs-cueilleurs"
+ },
+ {
+  "id": "1f3e47e3ef",
+  "texte": "Au tout début, on vit de ce que donne la nature : on cueille des baies, on ramasse du bois, et le sage réfléchit pour trouver de nouvelles idées."
+ },
+ {
+  "id": "553223ddb5",
+  "texte": "Pendant très, très longtemps, les humains n'avaient ni champs ni animaux : ils cueillaient et chassaient pour manger."
+ },
+ {
+  "id": "b4df84f99e",
+  "texte": "Ils se déplaçaient souvent, en suivant les saisons et les troupeaux."
+ },
+ {
+  "id": "9674f0cf41",
+  "texte": "Les plus âgés apprenaient aux plus jeunes tout ce qu'ils savaient, en racontant des histoires."
+ },
+ {
+  "id": "3fcc098d1d",
+  "texte": "La pirogue"
+ },
+ {
+  "id": "fca93bf404",
+  "texte": "Avant, on ne pouvait pêcher que depuis la rive. Maintenant, on creuse un grand tronc d'arbre et on part sur l'eau !"
+ },
+ {
+  "id": "1d0dd49362",
+  "texte": "L'une des plus vieilles pirogues connues a été trouvée aux Pays-Bas : elle a environ 10 000 ans."
+ },
+ {
+  "id": "8a9578f8c1",
+  "texte": "Pour la creuser, on brûlait un peu le bois, puis on grattait avec des outils de pierre."
+ },
+ {
+  "id": "31cf73b18b",
+  "texte": "Avec la pirogue, on pêche plus loin et on transporte des choses sur l'eau."
+ },
+ {
+  "id": "bb784017e8",
+  "texte": "Le sage y réfléchit et trouve des idées."
+ },
+ {
+  "id": "2a4b7d6a3e",
+  "texte": "Le cercle des anciens. Le sage s'y assoit pour réfléchir. Ses idées servent à faire des découvertes."
+ },
+ {
+  "id": "dd34337099",
+  "texte": "Le soir, le sage réfléchit près du cercle de pierres. Il a des idées !"
+ },
+ {
+  "id": "24828e87a8",
+  "texte": "Le bûcheron y range le bois coupé dans la forêt."
+ },
+ {
+  "id": "93e155ac83",
+  "texte": "Le tas de bois. Le bûcheron coupe les arbres de la forêt et rapporte les bûches. Le bois sert à construire et à faire du feu."
+ },
+ {
+  "id": "0211ba752d",
+  "texte": "Avec sa hache de pierre, le bûcheron abat un arbre, puis il range les bûches."
+ },
+ {
+  "id": "ceb4a49b5e",
+  "texte": "Une petite maison pour 2 personnes."
+ },
+ {
+  "id": "c7c887cac0",
+  "texte": "Une tente en peaux tendues sur des bâtons. Deux personnes y dorment à l'abri du vent. Plus il y a de maisons, plus de familles viennent vivre au village."
+ },
+ {
+  "id": "29e896cec5",
+  "texte": "Une maison de branches pour 3 personnes."
+ },
+ {
+  "id": "557532a4a6",
+  "texte": "Une hutte de branches entrecroisées. Trois personnes peuvent y dormir."
+ },
+ {
+  "id": "4a2347b0f4",
+  "texte": "La cueilleuse y ramasse des baies."
+ },
+ {
+  "id": "a0f302fbae",
+  "texte": "Un buisson de baies. La cueilleuse ramasse les fruits sauvages : c'était une grande partie de la nourriture des premiers humains."
+ },
+ {
+  "id": "561852339c",
+  "texte": "La cueilleuse remplit son panier de baies sauvages."
+ },
+ {
+  "id": "a61ec4799d",
+  "texte": "On y taille le silex pour faire des outils."
+ },
+ {
+  "id": "d6ea8e75ba",
+  "texte": "L'atelier du tailleur, près de la grotte. Il frappe le silex avec un caillou pour faire des lames, des grattoirs et des pointes bien tranchantes."
+ },
+ {
+  "id": "57daae5b2d",
+  "texte": "Le tailleur frappe le silex avec un caillou : les éclats tranchants deviennent des pointes de lance et des couteaux."
+ },
+ {
+  "id": "b1a7cf00b4",
+  "texte": "Il chauffe et éclaire : on peut veiller le soir."
+ },
+ {
+  "id": "92c0b30ce8",
+  "texte": "Le feu de camp. Il réchauffe, il éclaire la nuit, il éloigne les bêtes sauvages et il permet de cuire la viande."
+ },
+ {
+  "id": "35bce6868c",
+  "texte": "Le soir, autour du feu, on se réchauffe, on y voit clair et on fait cuire la viande."
+ },
+ {
+  "id": "cb5a3fa9e3",
+  "texte": "Les chasseurs y prennent leurs lances."
+ },
+ {
+  "id": "79bdb08666",
+  "texte": "Le râtelier des chasseurs. On y range les lances. Les chasseurs traversent la rivière pour suivre le mammouth et rapportent de la viande et des peaux."
+ },
+ {
+  "id": "340ddfbfa3",
+  "texte": "Les chasseurs avancent ensemble, cachés dans les hautes herbes, vers le mammouth."
+ },
+ {
+  "id": "7dbfc9cdea",
+  "texte": "On y fait sécher les poissons du pêcheur."
+ },
+ {
+  "id": "d163eabfc3",
+  "texte": "Le séchoir à poissons, au bord de l'eau. Le pêcheur attrape les poissons, puis on les fait sécher pour pouvoir les garder longtemps."
+ },
+ {
+  "id": "6a63b00377",
+  "texte": "Le pêcheur attrape les poissons avec sa lance, puis on les fait sécher sur des bâtons."
+ },
+ {
+  "id": "cf83917349",
+  "texte": "Une maison chaude en peaux, pour 3 personnes."
+ },
+ {
+  "id": "2dd67eb2ad",
+  "texte": "Une grande hutte couverte de peaux cousues entre elles. Bien chaude, elle accueille trois personnes, même en hiver."
+ },
+ {
+  "id": "c95b85f3d8",
+  "texte": "On peint nos histoires sur la roche."
+ },
+ {
+  "id": "b4f2f42ee6",
+  "texte": "La grotte peinte. À la lumière du feu, on peint les animaux et les chasses sur la roche. Ces dessins racontent nos histoires et donnent des idées."
+ },
+ {
+  "id": "0ee22f252f",
+  "texte": "À la lumière d'une torche, on peint les animaux sur la paroi de la grotte."
+ },
+ {
+  "id": "f9cc1c35d7",
+  "texte": "Une maison en terre et en paille, pour 3 personnes."
+ },
+ {
+  "id": "e6d2492db5",
+  "texte": "Une maison en torchis : de la terre, de la paille et de l'eau collées sur des branches. Les paysans y vivent toute l'année, près de leurs champs."
+ },
+ {
+  "id": "f3708a8600",
+  "texte": "On tresse des branches, puis on les couvre de terre mêlée de paille : c'est le torchis."
+ },
+ {
+  "id": "61efb350ab",
+  "texte": "Le paysan y sème et récolte le blé."
+ },
+ {
+  "id": "0a67b95986",
+  "texte": "Un champ de blé. Le paysan sème les graines, puis récolte les épis. Avec les champs, on n'a plus besoin de partir chercher à manger."
+ },
+ {
+  "id": "84bffe4d49",
+  "texte": "Le paysan sème les graines de blé dans la terre."
+ },
+ {
+  "id": "054455a3bb",
+  "texte": "Quand le blé est doré, on le coupe avec une faucille et on fait des gerbes."
+ },
+ {
+  "id": "a5d050c748",
+  "texte": "Le berger y garde les moutons et les chèvres."
+ },
+ {
+  "id": "3b54369bab",
+  "texte": "L'enclos à moutons. Le berger garde les moutons : ils donnent de la laine pour les vêtements, et du lait."
+ },
+ {
+  "id": "3b7d068aa6",
+  "texte": "Le berger garde les moutons dans l'enclos."
+ },
+ {
+  "id": "fef91d8558",
+  "texte": "On y garde le blé au sec, loin des souris."
+ },
+ {
+  "id": "e9ac80f42f",
+  "texte": "Le grenier sur pilotis. On y range le blé en hauteur, au sec et loin des souris, pour en avoir tout l'hiver."
+ },
+ {
+  "id": "299a0f66a8",
+  "texte": "Le grenier est sur pilotis : les souris ne peuvent pas monter manger le blé."
+ },
+ {
+  "id": "183ccf1cf0",
+  "texte": "Une grande maison pour 5 personnes."
+ },
+ {
+  "id": "29f4067025",
+  "texte": "Une maison longue. Plusieurs familles vivent ensemble sous le même toit : jusqu'à cinq personnes."
+ },
+ {
+  "id": "468969191a",
+  "texte": "Tout le monde aide à construire la maison : branches tressées, terre et toit de paille."
+ },
+ {
+  "id": "a5505e16a7",
+  "texte": "La potière y fait des pots en terre cuite."
+ },
+ {
+  "id": "ed00013b0d",
+  "texte": "L'atelier du potier. Il prend de l'argile au bord de la rivière, façonne des pots et les cuit dans le four pour qu'ils deviennent durs."
+ },
+ {
+  "id": "29e792cec1",
+  "texte": "La potière façonne l'argile, puis elle cuit les pots dans le four."
+ },
+ {
+  "id": "176987c8ec",
+  "texte": "On y écrase le blé pour faire de la farine."
+ },
+ {
+  "id": "cee87ce08d",
+  "texte": "La meule. On écrase les grains de blé entre deux pierres pour faire de la farine. Avec la farine, on fait du pain."
+ },
+ {
+  "id": "1e272011a9",
+  "texte": "On écrase les grains entre deux pierres : ça fait de la farine pour le pain."
+ },
+ {
+  "id": "1bfde3e333",
+  "texte": "Le pêcheur part sur l'eau dans un tronc creusé."
+ },
+ {
+  "id": "77090d06b8",
+  "texte": "Une pirogue, creusée dans un seul tronc d'arbre. Le pêcheur part pêcher en mer."
+ },
+ {
+  "id": "ab8bfea2e1",
+  "texte": "En pirogue, le pêcheur part en mer et remonte son filet plein de poissons."
+ },
+ {
+  "id": "07998f5e0f",
+  "texte": "Un pont de bois pour traverser la rivière."
+ },
+ {
+  "id": "0cc3675728",
+  "texte": "La passerelle en bois. Plus besoin de se mouiller les pieds pour traverser la rivière !"
+ },
+ {
+  "id": "a86f0e20c7",
+  "texte": "Il y a très, très longtemps, une petite tribu arrive dans la vallée. Aide-la à grandir !"
+ },
+ {
+  "id": "901539f451",
+  "texte": "Des milliers d'années ont passé. Les gens ont appris à planter des graines : c'est le temps des premiers paysans !"
+ },
+ {
+  "id": "92147fc59c",
+  "texte": "Hmm… je réfléchis…"
+ },
+ {
+  "id": "8e9c923243",
+  "texte": "J'ai une idée !"
+ },
+ {
+  "id": "3da6f84ee8",
+  "texte": "Je vais couper du bois !"
+ },
+ {
+  "id": "cf77dbe8c9",
+  "texte": "Ce rondin est lourd !"
+ },
+ {
+  "id": "d6b26addf4",
+  "texte": "Miam, des baies !"
+ },
+ {
+  "id": "a50bc95e8c",
+  "texte": "Je remplis mon panier."
+ },
+ {
+  "id": "4d76252fac",
+  "texte": "Je taille des silex."
+ },
+ {
+  "id": "4f2ec63d85",
+  "texte": "Toc, toc, toc !"
+ },
+ {
+  "id": "0c5023df04",
+  "texte": "Je pars chasser !"
+ },
+ {
+  "id": "fd183d0621",
+  "texte": "Chut, il ne faut pas faire de bruit."
+ },
+ {
+  "id": "dc13734b33",
+  "texte": "Je vais pêcher des poissons !"
+ },
+ {
+  "id": "0332cce1c0",
+  "texte": "Ça mord !"
+ },
+ {
+  "id": "bd968febd1",
+  "texte": "Je peins un mammouth."
+ },
+ {
+  "id": "48214cc778",
+  "texte": "Regarde mes peintures !"
+ },
+ {
+  "id": "79d4273a0a",
+  "texte": "Le blé pousse bien !"
+ },
+ {
+  "id": "1050e6dfb1",
+  "texte": "Je m'occupe du champ."
+ },
+ {
+  "id": "0633caa268",
+  "texte": "Je garde les moutons !"
+ },
+ {
+  "id": "7ba843e6ed",
+  "texte": "Bêêê !"
+ },
+ {
+  "id": "e41da891aa",
+  "texte": "Je rapporte le blé au grenier."
+ },
+ {
+  "id": "4ca3fef241",
+  "texte": "Je vais chercher de l'argile."
+ },
+ {
+  "id": "e49126f1bd",
+  "texte": "Je fais un joli pot."
+ },
+ {
+  "id": "ebbad87879",
+  "texte": "J'écrase le blé."
+ },
+ {
+  "id": "5de24afde5",
+  "texte": "Bientôt du pain !"
+ },
+ {
+  "id": "9d96640317",
+  "texte": "J'apporte du bois pour construire !"
+ },
+ {
+  "id": "91bfd7f2ac",
+  "texte": "On construit une maison !"
+ },
+ {
+  "id": "ad3db0bc01",
+  "texte": "Youpi !"
+ },
+ {
+  "id": "529de3fe26",
+  "texte": "On joue à chat !"
+ },
+ {
+  "id": "012b40707e",
+  "texte": "Tu ne m'attraperas pas !"
+ },
+ {
+  "id": "245469f3c4",
+  "texte": "Bonjour !"
+ },
+ {
+  "id": "205ca57beb",
+  "texte": "Il fait bon ici."
+ },
+ {
+  "id": "f672eedc00",
+  "texte": "Quelle belle vallée !"
+ },
+ {
+  "id": "f42190f05e",
+  "texte": "Le bûcheron coupe les arbres pour avoir du bois. Petit à petit, la forêt recule et laisse de la place pour construire."
+ },
+ {
+  "id": "993ea28106",
+  "texte": "Ici, le bûcheron a coupé un arbre. On peut construire à cet endroit."
+ },
+ {
+  "id": "ab3cfd6cc4",
+  "texte": "On ne peut pas construire sur les rochers."
+ },
+ {
+  "id": "bdb6b1ed1d",
+  "texte": "Les premiers humains s'y abritaient. C'est près d'elle qu'on trouve le silex, et qu'on peint sur la roche."
+ },
+ {
+  "id": "1dfd38b001",
+  "texte": "Un éléphant géant couvert de longs poils, qui vivait quand il faisait très froid. Les chasseurs le suivaient pour sa viande, sa fourrure et ses os."
+ },
+ {
+  "id": "92b263dda1",
+  "texte": "Les premiers paysans ont apprivoisé les chèvres : elles donnent du lait et de la laine."
+ },
+ {
+  "id": "a7d3f5d015",
+  "texte": "Ici, la rivière est peu profonde : on traverse en marchant sur les pierres."
+ },
+ {
+  "id": "012de4caab",
+  "texte": "À force de passer toujours au même endroit, les habitants ont usé l'herbe. Plus tard, on en fera de vraies routes !"
+ },
+ {
+  "id": "968d54c2e7",
+  "texte": "Il n'y a plus de place pour ça !"
+ },
+ {
+  "id": "7f9149a531",
+  "texte": "Il te faut plus de pièces. Ramasse les bulles !"
+ },
+ {
+  "id": "b1519b713f",
+  "texte": "Il te faut plus d'idées. Ramasse les bulles du cercle des anciens !"
+ },
+ {
+  "id": "4bc65f9384",
+  "texte": "Regarde : les habitants transforment eux-mêmes leurs huttes en maisons !"
+ },
+ {
+  "id": "ed0a39f44c",
+  "texte": "Sur iPhone : touche Partager, puis « Sur l'écran d'accueil » pour jouer en plein écran."
+ },
+ {
+  "id": "2789c9af19",
+  "texte": "Cocorico ! Le soleil se lève, tout le monde au travail !"
+ },
+ {
+  "id": "593e26b196",
+  "texte": "Regarde : les habitants vont chercher du bois pour construire !"
+ },
+ {
+  "id": "751049e11b",
+  "texte": "Une nouvelle maison ! Une famille va bientôt arriver."
+ },
+ {
+  "id": "dc035352fc",
+  "texte": "Touche les bulles pour ramasser les pièces et les idées !"
+ },
+ {
+  "id": "3c3d118e93",
+  "texte": "Quelqu'un arrive dans la vallée !"
+ },
+ {
+  "id": "968b54a0fe",
+  "texte": "La nuit tombe. Autour du feu, on a chaud et on y voit clair : le travail continue !"
+ },
+ {
+  "id": "adb7c27b61",
+  "texte": "Il fait nuit et tout le monde dort… Construis un feu de camp près du village !"
+ },
+ {
+  "id": "baa6e64022",
+  "texte": "La nuit tombe ! Brrr, il fait froid et tout noir : tout le monde va dormir. Il faudrait découvrir le feu…"
+ },
+ {
+  "id": "5e3228dd98",
+  "texte": "Encore la nuit… Avec le feu, on pourrait continuer à travailler. Regarde dans les découvertes !"
+ },
+ {
+  "id": "d5407de1fc",
+  "texte": "Tout le monde dort… Quand tu veux, appuie sur le coq pour faire lever le soleil !"
+ },
+ {
+  "id": "f819e58e18",
+  "texte": "Tu as assez d'idées ! Touche l'ampoule pour faire une découverte."
+ },
+ {
+  "id": "346868af2c",
+  "texte": "Tu as des pièces : choisis une construction en bas de l'écran !"
+ },
+ {
+  "id": "4fa753beec",
+  "texte": "Tu as fait toutes les découvertes de l'âge de pierre ! Ton village est prêt à changer d'époque."
+ },
+ {
+  "id": "e2ff00f28e",
+  "texte": "Tu as fait toutes les découvertes du néolithique ! La suite de l'histoire, l'âge des métaux, arrive bientôt."
+ },
+ {
+  "id": "367a6c7ef3",
+  "texte": "Il faut d'abord découvrir : les outils."
+ },
+ {
+  "id": "01315e112c",
+  "texte": "Il faut d'abord découvrir : la chasse et la pêche."
+ },
+ {
+  "id": "d9c432df09",
+  "texte": "Il faut d'abord découvrir : le feu."
+ },
+ {
+  "id": "68249ce77a",
+  "texte": "Il faut d'abord découvrir : l'agriculture."
+ },
+ {
+  "id": "a9871fc2e5",
+  "texte": "Il faut d'abord découvrir : le feu et l'agriculture."
+ }
+]

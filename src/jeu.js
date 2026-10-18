@@ -218,17 +218,34 @@
       });
     } catch (e) {}
   }
+  // la voix : phrases enregistrées (Arcads, voix de narratrice), sinon synthèse du navigateur
+  function cleVoix(t) { return String(t || '').replace(/<[^>]+>/g, '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').replace(/\s+/g, ' ').replace(/ ([.,])/g, '$1').trim(); }
+  var lecteur = new Audio(), fileVoix = [], jeton = 0;
+  lecteur.addEventListener('ended', function () { var j = jeton; setTimeout(function () { if (j === jeton) suivante(); }, 220); });
   function dire(texte) {
-    if (!ui.voix || !window.speechSynthesis) return;
+    if (!ui.voix) return;
+    jeton++;
+    fileVoix = (Array.isArray(texte) ? texte : [texte]).map(cleVoix).filter(Boolean);
+    try { lecteur.pause(); } catch (e) {}
+    try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}
+    suivante();
+  }
+  function suivante() {
+    var t = fileVoix.shift();
+    if (!t) return;
+    var v = typeof VOIX !== 'undefined' && VOIX[t];
+    if (v) { lecteur.src = v; var p = lecteur.play(); if (p && p.catch) p.catch(function () {}); return; }
+    if (!window.speechSynthesis) return suivante();
     try {
-      speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(texte.replace(/<[^>]+>/g, ''));
+      var j = jeton, u = new SpeechSynthesisUtterance(t);
       u.lang = 'fr-FR'; u.rate = 0.95; u.pitch = 1.1;
-      var v = speechSynthesis.getVoices().filter(function (v) { return /^fr/i.test(v.lang); });
-      if (v.length) u.voice = v[0];
+      var vs = speechSynthesis.getVoices().filter(function (x) { return /^fr/i.test(x.lang); });
+      if (vs.length) u.voice = vs[0];
+      u.onend = function () { if (j === jeton) suivante(); };
       speechSynthesis.speak(u);
     } catch (e) {}
   }
+
 
   // ---------- particules ----------
   var parts = [];
@@ -267,9 +284,21 @@
       var k = 1, age = monde.t - (b.apparu || -10);
       if (age < 0.7) k = 1 + Math.sin(age / 0.7 * Math.PI) * 0.18 * (1 - age / 0.7) - (age < 0.1 ? 0.3 * (1 - age / 0.1) : 0);
       dessinerSprite(t.im, p[0], p[1], t.w * k, t.h * (2 - k));
+      if ((b.niveau || 1) > 1) dessinerEtoiles(b, p, t, b.niveau, 0);
       return;
     }
     var prog = b.besoin ? b.livre / b.besoin : 1;
+    if (b.niveauVise) {
+      dessinerSprite(t.im, p[0], p[1], t.w, t.h);
+      var c0 = E(b.x, b.y), rx0 = b.k * TR.TW * V.s * 0.7, ry0 = b.k * TR.TH * V.s * 0.7;
+      ctx.strokeStyle = '#8a5a32'; ctx.lineWidth = Math.max(2, 4 * V.s); ctx.lineCap = 'round';
+      [[-rx0, 0], [rx0, 0], [0, ry0]].forEach(function (q) {
+        ctx.beginPath(); ctx.moveTo(c0[0] + q[0], c0[1] + q[1]); ctx.lineTo(c0[0] + q[0], c0[1] + q[1] - t.h * 0.55); ctx.stroke();
+      });
+      ctx.beginPath(); ctx.moveTo(c0[0] - rx0, c0[1] - t.h * 0.4); ctx.lineTo(c0[0], c0[1] + ry0 - t.h * 0.4); ctx.lineTo(c0[0] + rx0, c0[1] - t.h * 0.4); ctx.stroke();
+      dessinerEtoiles(b, p, t, b.niveau || 1, prog);
+      return;
+    }
     if (b.ancien) {
       var da = D.batiments[b.ancien], ia = IMG[da.sprite], wa = da.largeur * V.s;
       dessinerSprite(ia, p[0], p[1], wa, wa * ia.height / ia.width, 1 - prog * 0.9);
@@ -292,30 +321,62 @@
       ctx.restore();
     }
   }
-  function dessinerPasserelle(b, t) {
-    var g = monde.terrain.gues, a = TR.centre(g[0][0], g[0][1]), z = TR.centre(g[g.length - 1][0], g[g.length - 1][1]);
-    var prog = b.etat === 'fini' ? 1 : (b.besoin ? b.livre / b.besoin : 0);
-    var n = 7, pa = E(a[0], a[1]), pz = E(z[0], z[1]);
-    var dx = pz[0] - pa[0], dy = pz[1] - pa[1], L = Math.hypot(dx, dy) + 130 * V.s;
-    var ux = dx / Math.hypot(dx, dy), uy = dy / Math.hypot(dx, dy);
-    var cx = (pa[0] + pz[0]) / 2, cy = (pa[1] + pz[1]) / 2;
-    // planches posées une à une
-    for (var k = 0; k < n; k++) {
-      if (k / n >= prog) break;
-      var s = -L / 2 + (k + 0.5) * L / n;
-      var x = cx + ux * s, y = cy + uy * s;
-      ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(uy, ux) + Math.PI / 2);
-      ctx.fillStyle = k % 2 ? '#9b6a3f' : '#a87648'; ctx.fillRect(-34 * V.s, -L / n / 2 + 1, 68 * V.s, L / n - 2);
+  // les étoiles du niveau, sous le bâtiment (ADR-021)
+  function dessinerEtoiles(b, p, t, n, prog) {
+    var total = prog ? n + 1 : n, r = Math.max(6, 9 * V.s), y = p[1] + 8 * V.s;
+    for (var i = 0; i < total; i++) {
+      var x = p[0] + (i - (total - 1) / 2) * r * 2.3;
+      var plein = i < n || (prog && i === n && prog >= 1);
+      ctx.save(); ctx.translate(x, y);
+      ctx.beginPath();
+      for (var k = 0; k < 10; k++) { var a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+      ctx.closePath();
+      ctx.fillStyle = plein ? '#ffd23f' : 'rgba(255,255,255,.55)'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#8a5a32'; ctx.stroke();
+      if (!plein && prog && i === n) { ctx.save(); ctx.clip(); ctx.fillStyle = '#ffd23f'; ctx.fillRect(-r, r - 2 * r * prog, 2 * r, 2 * r * prog); ctx.restore(); }
       ctx.restore();
     }
-    if (prog >= 1) {
-      ctx.strokeStyle = '#7a4f2c'; ctx.lineWidth = Math.max(2, 5 * V.s);
-      [-1, 1].forEach(function (cote) {
-        var ox = -uy * 34 * V.s * cote, oy = ux * 34 * V.s * cote;
-        ctx.beginPath(); ctx.moveTo(cx - ux * L / 2 + ox, cy - uy * L / 2 + oy - 18 * V.s); ctx.lineTo(cx + ux * L / 2 + ox, cy + uy * L / 2 + oy - 18 * V.s); ctx.stroke();
-      });
-    }
   }
+  // la passerelle : une vraie image de pont en bois, posée sur l'axe du gué (déformée en biais pour suivre la grille)
+  var PONT = { ax: 0.0475, ay: 0.80, bx: 0.9907, by: 0.20 }; // les deux bouts du tablier dans l'image
+  function dessinerPasserelle(b, t) {
+    var g = monde.terrain.gues, im = IMG['eau/pont-bois'];
+    var a = TR.centre(g[0][0], g[0][1]), z = TR.centre(g[g.length - 1][0], g[g.length - 1][1]);
+    var pa = E(a[0], a[1]), pz = E(z[0], z[1]);
+    if (pa[0] > pz[0]) { var tmp = pa; pa = pz; pz = tmp; } // de gauche à droite
+    // on prolonge d'une demi-tuile de chaque côté pour poser les bouts sur les berges
+    var ux = pz[0] - pa[0], uy = pz[1] - pa[1], L = Math.hypot(ux, uy);
+    var ext = Math.max(TR.TW * 0.75 * V.s, (400 * V.s - L) / 2) / L; // assez long pour que le pont ait de l'allure
+    pa = [pa[0] - ux * ext, pa[1] - uy * ext]; pz = [pz[0] + ux * ext, pz[1] + uy * ext];
+    var prog = b.etat === 'fini' ? 1 : (b.besoin ? b.livre / b.besoin : 0);
+    if (!im) return;
+    var W = im.width, H = im.height;
+    var monte = pz[1] < pa[1]; // le pont monte vers la droite comme l'image ; sinon on la retourne
+    var Ax = (PONT.bx - PONT.ax) * W, Ay = (PONT.by - PONT.ay) * H;
+    var dx = pz[0] - pa[0], dy = pz[1] - pa[1];
+    var sx = dx / Ax, k;
+    ctx.save();
+    ctx.translate(pa[0], pa[1]);
+    if (monte) {
+      k = (dy - Ay * sx) / dx; // biais vertical : les poteaux restent droits
+      ctx.transform(1, k, 0, 1, 0, 0);
+      ctx.scale(sx, sx);
+      ctx.translate(-PONT.ax * W, -PONT.ay * H);
+    } else {
+      // image retournée : son bout droit (bx, by) devient le bout gauche
+      k = (dy + Ay * sx) / dx;
+      ctx.transform(1, k, 0, 1, 0, 0);
+      ctx.scale(-sx, sx);
+      ctx.translate(-PONT.bx * W, -PONT.by * H);
+    }
+    if (prog < 1) {
+      ctx.globalAlpha = 0.25; ctx.drawImage(im, 0, 0); ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.rect(0, 0, W * prog, H); ctx.clip();
+    }
+    ctx.drawImage(im, 0, 0);
+    ctx.restore();
+  }
+
 
   // hauteur des pieds dans l'image (dernière ligne bien opaque), pour poser l'ombre juste dessous
   function pied(im) {
@@ -591,7 +652,7 @@
       ctx.beginPath(); ctx.moveTo(x - 6, y + r - 2); ctx.lineTo(x, y + r + 9); ctx.lineTo(x + 6, y + r - 2); ctx.fillStyle = tr.produit === 'idees' ? '#fff6c9' : '#fffaf0'; ctx.fill();
       ctx.font = Math.round(r * 0.95) + 'px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(tr.produit === 'idees' ? '💡' : '🪙', x, y + 1);
-      var n = b.stock * tr.qte;
+      var n = b.stock * M.quantite(b);
       ctx.font = '700 ' + Math.round(r * 0.6) + 'px Fredoka, system-ui, sans-serif';
       ctx.fillStyle = '#fff'; ctx.strokeStyle = '#5b3c24'; ctx.lineWidth = 4;
       ctx.strokeText('+' + n, x + r * 0.75, y - r * 0.7); ctx.fillText('+' + n, x + r * 0.75, y - r * 0.7);
@@ -798,6 +859,68 @@
     ctx.restore();
   }
 
+  // ---------- les pirogues du néolithique : elles vont et viennent sur l'eau ----------
+  var pirogues = [], eauxCle = '', eaux = [];
+  function majEaux() {
+    var T0 = monde.terrain, cle = T0.epoque + ':' + T0.tuiles.length;
+    if (cle === eauxCle) return;
+    eauxCle = cle;
+    eaux = T0.tuiles.filter(function (t) { return t.sol === 'eau' && TR.surIle(T0, t); });
+  }
+  function cheminEau(de, vers) {
+    var T0 = monde.terrain, cle = function (t) { return t.i * 1000 + t.j; }, venu = {}, file = [de];
+    venu[cle(de)] = de;
+    while (file.length) {
+      var c = file.shift();
+      if (c === vers) break;
+      for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) {
+        var n = TR.tuile(T0, c.i + di, c.j + dj);
+        if (!n || n.sol !== 'eau' || !TR.surIle(T0, n) || venu[cle(n)]) continue;
+        venu[cle(n)] = c; file.push(n);
+      }
+    }
+    if (!venu[cle(vers)]) return [];
+    var l = [], x = vers;
+    while (x && x !== de) { var q = TR.centre(x.i, x.j); l.unshift([q[0] + (x.vari % 9 - 4) * 3, q[1] + (x.vari % 7 - 3) * 2]); x = venu[cle(x)]; }
+    return l;
+  }
+  function majPirogues(dt) {
+    if (monde.epoque < 2) { pirogues = []; return; }
+    majEaux();
+    if (!eaux.length) return;
+    while (pirogues.length < 3) {
+      var t0 = eaux[Math.floor(Math.random() * eaux.length)], c0 = TR.centre(t0.i, t0.j);
+      pirogues.push({ x: c0[0], y: c0[1], route: [], attente: Math.random() * 3, dir: -1, filet: pirogues.length === 2, id: pirogues.length });
+    }
+    var nuit = M.phase(monde) === 'nuit';
+    pirogues.forEach(function (p) {
+      p.marche = false;
+      if (!p.route.length) {
+        if (p.attente > 0 || nuit) { p.attente -= dt; return; }
+        var ici = TR.tuile(monde.terrain, TR.tuileDe(p.x, p.y)[0], TR.tuileDe(p.x, p.y)[1]);
+        var proches = eaux.filter(function (t) { var d = Math.hypot(t.i - (ici ? ici.i : 0), t.j - (ici ? ici.j : 0)); return d > 3 && d < 12; });
+        var cible = proches.length ? proches[Math.floor(Math.random() * proches.length)] : null;
+        if (ici && cible) p.route = cheminEau(ici, cible);
+        p.attente = p.filet ? 5 + Math.random() * 6 : 1 + Math.random() * 3;
+        if (!p.route.length) { p.attente = 2; return; }
+      }
+      var q = p.route[0], dx = q[0] - p.x, dy = q[1] - p.y, d = Math.hypot(dx, dy), v = (p.filet ? 16 : 30) * dt;
+      if (Math.abs(dx) > 1) p.dir = dx > 0 ? 1 : -1;
+      p.marche = true;
+      if (d <= v) { p.x = q[0]; p.y = q[1]; p.route.shift(); } else { p.x += dx / d * v; p.y += dy / d * v; }
+    });
+  }
+  function dessinerPirogue(p) {
+    var nom = p.filet ? 'pirogue-filet' : (p.marche && Math.floor(T * 2.6 + p.id) % 2 ? 'pirogue-b' : 'pirogue-a');
+    var im = IMG['eau/' + nom]; if (!im) return;
+    var w = 92 * V.s, h = w * im.height / im.width, e = E(p.x, p.y), bob = Math.sin(T * 2 + p.id * 2) * 1.5 * V.s;
+    // remous sur l'eau
+    ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = Math.max(1, 2 * V.s);
+    if (p.marche) { ctx.beginPath(); ctx.ellipse(e[0] - p.dir * w * 0.45, e[1] + 2 * V.s, w * 0.18, 3 * V.s, 0, 0, 7); ctx.stroke(); }
+    ctx.save(); ctx.translate(e[0], e[1] + bob); ctx.scale(p.dir > 0 ? -1 : 1, 1);
+    ctx.drawImage(im, -w / 2, -h * 0.8, w, h); ctx.restore();
+  }
+
   function dessiner(dt) {
     ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
     rangerDormeurs();
@@ -826,6 +949,8 @@
       liste.push({ y: y, f: dessinerHab, o: h });
     });
     monde.animaux.forEach(function (a) { liste.push({ y: a.y, f: dessinerAnimal, o: a }); });
+    majPirogues(Math.min(dt || 0, 0.1) * VITESSE);
+    pirogues.forEach(function (p) { if (visible(p.x, p.y, 120)) liste.push({ y: p.y, f: dessinerPirogue, o: p }); });
     liste.sort(function (a, b) { return a.y - b.y; });
     liste.forEach(function (e) { e.f(e.o); });
     fumees(dt);
@@ -870,15 +995,18 @@
       var d = D.batiments[type];
       var el = document.createElement('div');
       el.className = 'carte-bat' + (M.peutConstruire(monde, type) ? '' : ' non') + (choix === type ? ' choisie' : '');
+      // combien on en a déjà (chantiers compris), en bas à droite de l'icône
+      var n = monde.batiments.filter(function (b) { return b.type === type; }).length;
       el.innerHTML = '<img src="' + ASSETS[d.sprite] + '" alt=""><div class="prix">🪙 ' + d.cout + '</div>' +
+        (n ? '<div class="nombre">' + n + '</div>' : '') +
         (ui.nouveaux.indexOf(type) >= 0 ? '<div class="neuf">Nouveau !</div>' : '');
       el.addEventListener('pointerdown', function (ev) {
         ev.stopPropagation();
         if (!M.peutConstruire(monde, type)) {
           son('non');
           montrerInfo({ img: d.sprite, titre: d.nom, texte: d.resume || '', statut: resumeType(type), page: pageDuBat(type), type: type });
-          if (M.emplacementsLibres(monde, type).length === 0) aide('Il n\'y a plus de place pour ça !', true);
-          else aide('Il faut ' + d.cout + ' pièces. Ramasse les bulles 🪙 !', true);
+          if (M.emplacementsLibres(monde, type).length === 0) aide(A.plusDePlace, true);
+          else aide(A.piecesManquent, true);
           return;
         }
         choisir(choix === type ? null : type);
@@ -942,7 +1070,10 @@
 
   function ouvrirDecouvertes() {
     var e = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0];
-    $('dec-sous').textContent = e.nom + ' · tu as ' + monde.idees + ' 💡';
+    var derniere = !D.epoques.some(function (x) { return x.id === monde.epoque + 1; });
+    $('dec-sous').textContent = derniere && M.epoqueTerminee(monde)
+      ? 'Tu as tout découvert ! Fin de la démo : la suite, l\'âge des métaux, arrive bientôt.'
+      : e.nom + ' · tu as ' + monde.idees + ' 💡';
     var g = $('grille-dec');
     g.innerHTML = '';
     M.decouvertesEpoque(monde).forEach(function (id) {
@@ -956,12 +1087,14 @@
       el.addEventListener('click', function () {
         if (etat === 'faite') ouvrirPage(id);
         else if (etat === 'possible') faireDecouverte(id);
-        else if (etat === 'attente') aide('Il te faut ' + d.idees + ' idées. Ramasse les bulles 💡 du cercle des anciens !', true);
-        else if (etat === 'bloquee') aide('Il faut d\'abord découvrir : ' + d.prerequis.filter(function (p) { return !monde.decouvertes[p]; }).map(function (p) { return D.decouvertes[p].nom.toLowerCase(); }).join(' et ') + '.', true);
+        else if (etat === 'attente') aide(A.ideesManquent, true);
+        else if (etat === 'bloquee') aide(D.textes.prerequis(d.prerequis.filter(function (p) { return !monde.decouvertes[p]; })), true);
       });
       g.appendChild(el);
     });
     ouvrir('decouvertes');
+    var fen = document.querySelector('#decouvertes .fenetre');
+    fen.scrollTop = 0; requestAnimationFrame(function () { fen.scrollTop = 0; });
   }
   $('btn-decouvertes').addEventListener('click', function () { son('clic'); ouvrirDecouvertes(); });
 
@@ -982,12 +1115,12 @@
     var suiv = D.epoques.filter(function (x) { return x.id === monde.epoque + 1; })[0];
     if (!suiv) {
       scene({ titre: 'Bravo !', images: ['02-neolithique/maison-longue', 'habitants/sage'],
-        texte: 'Tu as fait toutes les découvertes du néolithique ! La suite de l\'histoire, l\'âge des métaux, arrive bientôt.', bouton: 'À bientôt !' });
+        texte: A.finJeu, bouton: 'À bientôt !' });
       return;
     }
     scene({
       titre: 'Bravo !', images: ['habitants/sage', '01-pierre/peintures-rupestres'],
-      texte: 'Tu as fait toutes les découvertes de ' + e.nom.toLowerCase() + ' ! Ton village est prêt à changer d\'époque.',
+      texte: A.finEpoque[monde.epoque],
       bouton: 'En avant !',
       ensuite: function () {
         M.passerEpoque(monde);
@@ -1002,7 +1135,7 @@
     $('epoque-nom').textContent = e.nom;
     var images = monde.epoque === 1 ? ['01-pierre/hutte-peaux', 'habitants/chasseur'] : ['02-neolithique/champ-ble', 'habitants/paysan'];
     scene({ titre: e.nom, images: images, illustration: monde.epoque === 1 ? 'scenes/cueilleurs' : 'scenes/agriculture', texte: e.intro, bouton: 'C\'est parti !', ensuite: function () {
-      if (monde.epoque === 2) aideUneFois('epoque2', 'Regarde : les habitants transforment eux-mêmes leurs huttes en maisons !');
+      if (monde.epoque === 2) aideUneFois('epoque2', A.epoque2);
     } });
   }
 
@@ -1048,7 +1181,7 @@
       try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
       return;
     }
-    if (!pleinEcran()) aide('Sur iPhone : touche Partager, puis « Sur l\'écran d\'accueil » pour jouer en plein écran.', true);
+    if (!pleinEcran()) aide(A.iphone, true);
   }
   $('btn-plein').addEventListener('click', basculerPleinEcran);
   $('tourner-plein').addEventListener('click', basculerPleinEcran);
@@ -1068,23 +1201,7 @@
   }
 
   // phrases des habitants
-  var phrases = {
-    sage: ['Hmm… je réfléchis…', 'J\'ai une idée !'],
-    bucheron: ['Je vais couper du bois !', 'Ce rondin est lourd !'],
-    cueilleur: ['Miam, des baies !', 'Je remplis mon panier.'],
-    tailleur: ['Je taille des silex.', 'Toc, toc, toc !'],
-    chasseur: ['Je pars chasser !', 'Chut, il ne faut pas faire de bruit.'],
-    pecheur: ['Je vais pêcher des poissons !', 'Ça mord !'],
-    peintre: ['Je peins un mammouth.', 'Regarde mes peintures !'],
-    paysan: ['Le blé pousse bien !', 'Je m\'occupe du champ.'],
-    berger: ['Je garde les moutons !', 'Bêêê !'],
-    porteur: ['Je rapporte le blé au grenier.'],
-    potier: ['Je vais chercher de l\'argile.', 'Je fais un joli pot.'],
-    meunier: ['J\'écrase le blé.', 'Bientôt du pain !'],
-    construit: ['J\'apporte du bois pour construire !', 'On construit une maison !'],
-    enfant: ['Youpi !', 'On joue à chat !', 'Tu ne m\'attraperas pas !'],
-    libre: ['Bonjour !', 'Il fait bon ici.', 'Quelle belle vallée !']
-  };
+  var phrases = D.textes.phrases, A = D.textes.aides;
   function parler(h) {
     var cat = h.enfant ? 'enfant' : h.reserve ? 'construit' : (h.metier && phrases[h.metier]) ? h.metier : 'libre';
     var l = phrases[cat], texte = l[Math.floor(Math.random() * l.length)];
@@ -1151,7 +1268,7 @@
     if (!M.reveiller(monde)) return;
     $('btn-reveil').hidden = true;
     son('coq');
-    dire('Cocorico ! Le soleil se lève, tout le monde au travail !');
+    dire(A.cocorico);
     setTimeout(function () {
       monde.habitants.slice().sort(function () { return Math.random() - 0.5; }).slice(0, 3)
         .forEach(function (h, i) { setTimeout(function () { bark(h, auHasard(BARKS.reveil)); }, i * 500); });
@@ -1175,6 +1292,21 @@
     $('info-statut').hidden = !o.statut;
     // le bouton qui ouvre la grande page (ADR-018)
     $('info-plus').hidden = !o.page;
+    var am = o.bat ? M.amelioration(monde, o.bat) : null, ba = $('info-ameliorer');
+    ba.hidden = !am;
+    if (am) {
+      ba.innerHTML = '⬆ ' + (am.genre === 'maison' ? 'Agrandir en ' + D.batiments[am.vers].nom.replace(/^Une? /, '').toLowerCase() : 'Améliorer') + ' · 🪙 ' + am.cout;
+      ba.classList.toggle('non', monde.pieces < am.cout);
+      ba.onclick = function (e) {
+        e.stopPropagation();
+        if (monde.pieces < am.cout) { son('non'); aide(A.piecesManquent, true); return; }
+        if (M.ameliorer(monde, o.bat.id)) {
+          son('pose'); cacherInfo();
+          aideUneFois('ameliorer', A.amelioration);
+          signatureBarre = ''; sauver();
+        }
+      };
+    }
     $('info-plus').onclick = function (e) { e.stopPropagation(); cacherInfo(); ouvrirPage(o.page, { ici: o.type }); };
     $('info-voix').onclick = function (e) { e.stopPropagation(); dire(o.texte); };
     $('info').hidden = false;
@@ -1230,11 +1362,12 @@
     function finir() { fermer('page'); enScene = false; if (o.ensuite) o.ensuite(); }
     $('page-ok').onclick = finir;
     $('page-fermer').onclick = finir;
-    $('page-voix').onclick = function () { dire(d.nom + '. ' + d.texte + ' ' + (d.faits || []).join(' ')); };
-    $('page-corps').scrollTop = 0;
+    $('page-voix').onclick = function () { dire([d.nom, d.texte].concat(d.faits || [])); };
     enScene = true;
     ouvrir('page');
-    setTimeout(function () { dire(d.nom + '. ' + d.texte); }, 250);
+    $('page-corps').scrollTop = 0;
+    requestAnimationFrame(function () { $('page-corps').scrollTop = 0; });
+    setTimeout(function () { dire([d.nom, d.texte]); }, 250);
   }
   $('info-fermer').addEventListener('click', function (e) { e.stopPropagation(); cacherInfo(); });
   function resumeType(type) {
@@ -1249,23 +1382,14 @@
     if (b.etat === 'chantier') statut = '🔨 Chantier : ' + b.livre + ' bois apporté' + (b.livre > 1 ? 's' : '') + ' sur ' + b.besoin;
     else if (d.travail) {
       var h = monde.habitants.filter(function (q) { return q.id === b.ouvrier; })[0];
-      statut = h ? 'Ici travaille ' + METIERS[d.travail.metier] + '. ' + resumeType(b.type).split(' · ')[0] : 'Personne n\'y travaille encore : il faut un nouvel habitant.';
+      statut = h ? 'Ici travaille ' + METIERS[d.travail.metier] + '.' : 'Personne n\'y travaille encore : il faut un nouvel habitant.';
     } else if (d.lits) statut = '👥 ' + d.lits + ' personnes y dorment';
     var n = monde.habitants.filter(function (q) { return q.dort && q.dortChez === b.id; }).length;
     if (n) statut = '😴 Chut… ' + (n > 1 ? n + ' personnes dorment' : 'quelqu\'un dort') + ' ici.';
-    montrerInfo({ img: d.sprite, titre: d.nom, texte: d.resume || d.explication || '', statut: statut, page: pageDuBat(b.type), type: b.type });
+    if (d.travail && b.etat === 'fini') statut = (statut ? statut + ' · ' : '') + '⭐ Niveau ' + (b.niveau || 1) + ' : ' + (d.travail.produit === 'idees' ? '💡' : '🪙') + ' +' + M.quantite(b) + ' à chaque fois';
+    montrerInfo({ img: d.sprite, titre: d.nom, texte: d.resume || d.explication || '', statut: statut, page: pageDuBat(b.type), type: b.type, bat: b });
   }
-  var INFOS_NATURE = {
-    arbre: ['nature/sapin-grand', 'Un arbre', "Le bûcheron coupe les arbres pour avoir du bois. Petit à petit, la forêt recule et laisse de la place pour construire."],
-    souche: ['nature/souche', 'Une souche', 'Ici, le bûcheron a coupé un arbre. On peut construire à cet endroit.'],
-    rocher: ['nature/rochers', 'Des rochers', 'On ne peut pas construire sur les rochers.'],
-    grotte: ['nature/grotte', 'La grotte', "Les premiers humains s'y abritaient. C'est près d'elle qu'on trouve le silex, et qu'on peint sur la roche."],
-    mammouth: ['01-pierre/mammouth', 'Le mammouth', "Un éléphant géant couvert de longs poils, qui vivait quand il faisait très froid. Les chasseurs le suivaient pour sa viande, sa fourrure et ses os."],
-    chevre: ['02-neolithique/chevre', 'Une chèvre', "Les premiers paysans ont apprivoisé les chèvres : elles donnent du lait et de la laine."],
-    gue: ['nature/galets', 'Le gué', "Ici, la rivière est peu profonde : on traverse en marchant sur les pierres."],
-    sentier: ['nature/touffe', 'Un sentier', "À force de passer toujours au même endroit, les habitants ont usé l'herbe. Plus tard, on en fera de vraies routes !"]
-  };
-  function infoNature(cle) { var n = INFOS_NATURE[cle]; montrerInfo({ img: n[0], titre: n[1], texte: n[2] }); }
+  function infoNature(cle) { var n = D.textes.nature[cle]; montrerInfo({ img: n[0], titre: n[1], texte: n[2] }); }
 
   function toucher(x, y) {
     var w = W2(x, y);
@@ -1281,7 +1405,7 @@
           pouf(b.x, b.y, 8, '210,190,150');
           choisir(null);
           cacherInfo();
-          aideUneFois('chantier', 'Regarde : les habitants vont chercher du bois pour construire !');
+          aideUneFois('chantier', A.chantier);
           sauver();
         }
       } else son('non');
@@ -1353,33 +1477,33 @@
       if (e.type === 'fini') {
         var b = M.bat(monde, e.bat);
         if (b) { var t = tailleBat(b); pouf(b.x, b.y - t.h / V.s * 0.3, 14); son('fini'); }
-        if (b && D.batiments[b.type].lits) aideUneFois('maison', 'Une nouvelle maison ! Une famille va bientôt arriver.');
+        if (b && D.batiments[b.type].lits) aideUneFois('maison', A.maison);
       } else if (e.type === 'bulle') {
-        aideUneFois('bulle', 'Touche les bulles pour ramasser les pièces et les idées !');
+        aideUneFois('bulle', A.bulle);
       } else if (e.type === 'arrivee') {
-        aideUneFois('arrivee', 'Quelqu\'un arrive dans la vallée !');
+        aideUneFois('arrivee', A.arrivee);
       }
     });
     var nuit = M.estNuit(monde);
     if (nuit && !etaitNuit && !enScene) {
       var aFeu = monde.batiments.some(function (b) { return b.type === 'feu' && b.etat === 'fini'; });
-      if (aFeu) aideUneFois('nuit-feu', 'La nuit tombe. Autour du feu, on a chaud et on y voit clair : le travail continue !');
-      else if (monde.decouvertes.feu) aide('Il fait nuit et tout le monde dort… Construis un feu de camp près du village !');
-      else if (!ui.aide['nuit1']) aideUneFois('nuit1', 'La nuit tombe ! Brrr, il fait froid et tout noir : tout le monde va dormir. Il faudrait découvrir le feu…');
-      else aideUneFois('nuit2', 'Encore la nuit… Avec le feu, on pourrait continuer à travailler. Regarde dans les découvertes !');
+      if (aFeu) aideUneFois('nuit-feu', A.nuitFeu);
+      else if (monde.decouvertes.feu) aide(A.nuitSansFeu);
+      else if (!ui.aide['nuit1']) aideUneFois('nuit1', A.nuit1);
+      else aideUneFois('nuit2', A.nuit2);
     }
     etaitNuit = nuit;
     // tout le monde dort : le coq attend que Joshua fasse lever le soleil (ADR-016)
     var coq = M.toutLeMondeDort(monde) && !enScene;
     if (coq !== !$('btn-reveil').hidden) {
       $('btn-reveil').hidden = !coq;
-      if (coq) aideUneFois('reveil', 'Tout le monde dort… Quand tu veux, appuie sur le coq pour faire lever le soleil !');
+      if (coq) aideUneFois('reveil', A.reveil);
     }
     if (!ui.aide.idee && monde.idees >= 4 && !Object.keys(monde.decouvertes).length && !enScene) {
-      aideUneFois('idee', 'Tu as assez d\'idées ! Touche l\'ampoule pour faire une découverte.');
+      aideUneFois('idee', A.idee);
     }
     if (!ui.aide.construire && monde.pieces >= 6 && monde.t > 25 && !enScene) {
-      aideUneFois('construire', 'Tu as des pièces : choisis une construction en bas de l\'écran !');
+      aideUneFois('construire', A.construire);
     }
   }
 

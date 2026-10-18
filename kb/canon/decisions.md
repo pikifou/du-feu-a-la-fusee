@@ -140,3 +140,15 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée. Précise ADR-010 et ADR-017.
 - **Décision** : (1) les habitants disent de temps en temps une petite phrase dans une bulle, avec une police ronde et grasse façon jeu mobile (type Clash Royale) ; (2) les gestes de travail sont animés en deux images (ex. le bûcheron qui lève puis abat sa hache) ; (3) ce qu'on transporte se porte dans les bras (le bûcheron et ses bûches), plutôt qu'au-dessus de la tête, même si cela demande plus d'images de personnages.
 - **Contexte** : Julien, sur la v0.6 : « des petites bulles pour les gens qui parlent », « des animations (genre pour le bûcheron en 2 frames) », « les personnages qui portent dans les mains plutôt qu'au-dessus de leurs têtes ».
+
+## ADR-021 : des améliorations payantes pour dépenser ses pièces
+- **Date** : 2026-10-18
+- **Statut** : acceptée sur le principe (Julien : « ce serait peut-être bien de mettre en upgrade »). Le détail chiffré est une proposition de Claude, à régler en test.
+- **Décision** : les bâtiments s'améliorent contre des pièces : les maisons s'agrandissent sur place (tente ou hutte de branches vers hutte en peaux, maison en torchis vers maison longue) et les bâtiments qui produisent montent de niveau (jusqu'au niveau 3, +1 par récolte à chaque niveau). L'amélioration est un petit chantier visible ; des étoiles sous le bâtiment montrent son niveau.
+- **Contexte** : retour de Julien sur la v0.7 : trop d'argent, peu de place, rien à dépenser à part les bâtiments ; « une économie trop vertueuse ».
+
+## ADR-022 : les voix sont enregistrées, voix de narratrice
+- **Date** : 2026-10-18
+- **Statut** : acceptée. Tranche la question ouverte des voix off (GD).
+- **Décision** : toutes les phrases dites à voix haute sont générées avec Arcads, voix de femme narrative (Margaux, « Narrative & Story »), et intégrées au jeu. La synthèse du navigateur ne reste qu'en secours pour une phrase absente.
+- **Contexte** : Julien : « utilise Arcads pour générer les voix avec une voix de femme narrative ».
