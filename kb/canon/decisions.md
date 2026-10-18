@@ -158,3 +158,9 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée. Complète ADR-021 (dépenser ses pièces).
 - **Décision** : on peut embellir le village avec des monuments et des décorations fidèles à l'époque et historiquement vrais, de prix variés, comme les merveilles de Civilization. Certains ont plusieurs variantes au choix (par exemple les peintures rupestres). Chacun a sa grande page qui raconte sa vraie histoire.
 - **Contexte** : Julien : « des décorations, c'est une bonne idée, tant que c'est fidèle aux époques. Dans Civilization, il y avait les wonders […] Ou les peintures par exemple, on pourrait en avoir plusieurs au choix. »
+
+## ADR-024 : les merveilles ne donnent pas de bonus ; elles restent d'une époque à l'autre
+- **Date** : 2026-10-19
+- **Statut** : acceptée. Précise ADR-023.
+- **Décision** : (1) une merveille ou une décoration ne donne aucun bonus de jeu : elle embellit le village et raconte sa vraie histoire. (2) Au changement d'époque, les monuments déjà posés restent dans la vallée, mais ceux de l'époque précédente ne peuvent plus être construits.
+- **Contexte** : Julien : « Non, pas de bonus quand on fait une merveille. OK pour le changement d'époque. »

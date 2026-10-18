@@ -11,7 +11,7 @@ updated: 2026-10-18
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 23 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 24 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.

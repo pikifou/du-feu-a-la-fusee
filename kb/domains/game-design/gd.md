@@ -73,7 +73,8 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 - Onglet ✨ du bandeau. Uniquement des monuments réels de l'époque, avec leur grande page (vraie histoire, 2 « Le savais-tu ? »).
 - Âge de pierre : les chevaux de Chauvet (15), le taureau de Lascaux (18), les bisons d'Altamira (18), les mains de Gargas (12), merveille : la hutte en os de mammouth (45).
 - Néolithique : menhir (10, plusieurs possibles), Dame de Saint-Sernin (18), dolmen (25, plusieurs possibles), merveilles : alignements de Carnac (50), cairn de Barnenez (70), Göbekli Tepe (100), Stonehenge (150).
-- Les peintures et les merveilles sont uniques. Les décorations ne produisent rien : elles embellissent et elles racontent (proposition de Claude, à discuter : un petit bonus pour les merveilles ?).
+- Les peintures et les merveilles sont uniques. Aucun bonus de jeu : elles embellissent et elles racontent (ADR-024).
+- Au changement d'époque, les monuments posés restent ; ceux de l'époque passée ne se construisent plus (ADR-024).
 
 ## Améliorer (ADR-021)
 - Dans la fiche courte d'un bâtiment : « ⬆ Améliorer · 🪙 prix » ou « ⬆ Agrandir en … ».
