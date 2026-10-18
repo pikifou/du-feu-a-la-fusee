@@ -984,28 +984,54 @@
   }
 
   var signatureBarre = '';
+  // le bandeau : deux onglets, construire et embellir (ADR-023)
   function majBarre() {
-    var liste = M.construisibles(monde);
-    var sig = liste.join() + '|' + monde.pieces + '|' + choix + '|' + ui.nouveaux.join() + '|' + monde.batiments.length;
+    var tout = M.construisibles(monde);
+    var onglet = ui.onglet || 'construire';
+    var decos = tout.filter(function (k) { return D.batiments[k].deco; });
+    if (!decos.length) onglet = 'construire';
+    var liste = tout.filter(function (k) { return !!D.batiments[k].deco === (onglet === 'embellir'); });
+    var sig = tout.join() + '|' + onglet + '|' + monde.pieces + '|' + choix + '|' + ui.nouveaux.join() + '|' + monde.batiments.length;
     if (sig === signatureBarre) return;
     signatureBarre = sig;
     var barre = $('barre');
     barre.innerHTML = '';
+    // les onglets
+    var og = document.createElement('div'); og.className = 'onglets';
+    [['construire', '🏠', 'Construire'], ['embellir', '✨', 'Embellir']].forEach(function (o) {
+      if (o[0] === 'embellir' && !decos.length) return;
+      var b = document.createElement('button');
+      b.className = 'onglet' + (onglet === o[0] ? ' on' : '');
+      b.setAttribute('aria-label', o[2]);
+      var neufs = tout.filter(function (k) { return !!D.batiments[k].deco === (o[0] === 'embellir') && ui.nouveaux.indexOf(k) >= 0; }).length;
+      b.innerHTML = o[1] + (neufs && onglet !== o[0] ? '<span class="point"></span>' : '');
+      b.addEventListener('pointerdown', function (ev) {
+        ev.stopPropagation();
+        if (ui.onglet === o[0]) return;
+        ui.onglet = o[0]; choisir(null); son('clic'); signatureBarre = '';
+        if (o[0] === 'embellir') aideUneFois('embellir', A.embellir);
+        barre.scrollLeft = 0;
+      });
+      og.appendChild(b);
+    });
+    barre.appendChild(og);
     liste.forEach(function (type) {
       var d = D.batiments[type];
-      var el = document.createElement('div');
-      el.className = 'carte-bat' + (M.peutConstruire(monde, type) ? '' : ' non') + (choix === type ? ' choisie' : '');
-      // combien on en a déjà (chantiers compris), en bas à droite de l'icône
       var n = monde.batiments.filter(function (b) { return b.type === type; }).length;
-      el.innerHTML = '<img src="' + ASSETS[d.sprite] + '" alt=""><div class="prix">🪙 ' + d.cout + '</div>' +
-        (n ? '<div class="nombre">' + n + '</div>' : '') +
-        (ui.nouveaux.indexOf(type) >= 0 ? '<div class="neuf">Nouveau !</div>' : '');
+      var fait = d.unique && n > 0;
+      var el = document.createElement('div');
+      el.className = 'carte-bat' + (fait ? ' fait' : M.peutConstruire(monde, type) ? '' : ' non') + (choix === type ? ' choisie' : '') + (d.merveille ? ' merveille' : '');
+      el.innerHTML = '<div class="socle"><img src="' + ASSETS[d.sprite] + '" alt=""></div>' +
+        (fait ? '<div class="prix fait">✓</div>' : '<div class="prix"><span class="piece">🪙</span>' + d.cout + '</div>') +
+        (n && !fait ? '<div class="nombre">' + n + '</div>' : '') +
+        (ui.nouveaux.indexOf(type) >= 0 ? '<div class="neuf">Nouveau</div>' : '');
       el.addEventListener('pointerdown', function (ev) {
         ev.stopPropagation();
         if (!M.peutConstruire(monde, type)) {
           son('non');
-          montrerInfo({ img: d.sprite, titre: d.nom, texte: d.resume || '', statut: resumeType(type), page: pageDuBat(type), type: type });
-          if (M.emplacementsLibres(monde, type).length === 0) aide(A.plusDePlace, true);
+          montrerInfo({ img: d.sprite, titre: d.nom, texte: d.resume || '', statut: fait ? '' : resumeType(type), page: pageDuBat(type), type: type });
+          if (fait) aide(A.dejaConstruit, true);
+          else if (M.emplacementsLibres(monde, type).length === 0) aide(A.plusDePlace, true);
           else aide(A.piecesManquent, true);
           return;
         }
@@ -1106,7 +1132,7 @@
     var d = D.decouvertes[id];
     var debloques = Object.keys(D.batiments).filter(function (k) { return D.batiments[k].debloque === id; });
     debloques.forEach(function (k) { if (ui.nouveaux.indexOf(k) < 0) ui.nouveaux.push(k); });
-    ouvrirPage(id, { nouveau: true, ensuite: apresDecouverte });
+    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); apresDecouverte(); } });
     sauver();
   }
   function apresDecouverte() {
@@ -1325,9 +1351,11 @@
     var d = D.decouvertes[id] || D.pages[id];
     if (!d) return;
     var ep = D.epoques.filter(function (e) { return e.id === d.epoque; })[0];
-    $('page-img').src = ASSETS[d.scene] || ASSETS[d.icone] || '';
+    $('page-img').src = ASSETS[d.scene] || ASSETS[d.image] || ASSETS[d.icone] || '';
+    $('page-image').classList.toggle('objet', !ASSETS[d.scene]);
     $('page-bandeau').hidden = !o.nouveau;
-    $('page-epoque').textContent = (ep ? ep.nom : '') + (D.decouvertes[id] ? ' · Découverte' : '');
+    var bd = Object.keys(D.batiments).map(function (k) { return D.batiments[k]; }).filter(function (b) { return b.page === id; })[0];
+    $('page-epoque').textContent = (ep ? ep.nom : '') + (D.decouvertes[id] ? ' · Découverte' : bd && bd.merveille ? ' · Merveille' : d.deco ? ' · Décoration' : '');
     $('page-titre').textContent = d.nom;
     $('page-texte').textContent = nb(d.texte);
     var ul = $('page-faits'); ul.innerHTML = '';
@@ -1357,6 +1385,7 @@
       el.appendChild(imgs); el.appendChild(txt);
       zone.appendChild(el);
     });
+    if (d.deco) { zone.innerHTML = ''; bats = []; }
     $('page-bats-titre').hidden = !bats.length;
     $('page-ok').textContent = o.nouveau ? 'Super !' : 'J\'ai compris !';
     function finir() { fermer('page'); enScene = false; if (o.ensuite) o.ensuite(); }

@@ -62,19 +62,37 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
 /* ---- barre de construction ---- */
 #barre { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px max(14px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
-  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; }
+  display: flex; gap: 9px; align-items: flex-end; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; padding-top: 14px; }
 #barre::-webkit-scrollbar { display: none; }
-.carte-bat { flex: 0 0 auto; width: 76px; background: var(--carte); border-radius: 16px; box-shadow: var(--ombre);
-  padding: 5px 4px 4px; text-align: center; position: relative; cursor: pointer; transition: transform .15s; border: 3px solid transparent; }
-.carte-bat img { width: 60px; height: 46px; object-fit: contain; display: block; margin: 0 auto; pointer-events: none; }
-.carte-bat .prix { font-size: 15px; font-weight: 700; margin-top: 2px; }
-.carte-bat .nombre { position: absolute; right: -6px; bottom: 22px; min-width: 24px; height: 24px; border-radius: 12px; padding: 0 6px;
-  background: var(--encre); color: #fff; font-size: 14px; font-weight: 700; display: grid; place-items: center; border: 2px solid var(--carte); }
-.carte-bat.non { filter: grayscale(.7); opacity: .6; }
-.carte-bat.choisie { border-color: var(--orange); transform: translateY(-6px); }
-.carte-bat .neuf { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: var(--vert); color: #fff;
-  font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+.carte-bat { flex: 0 0 auto; width: 80px; position: relative; cursor: pointer; text-align: center;
+  padding: 6px 5px 7px; border-radius: 18px; border: 2px solid rgba(255,255,255,.9);
+  background: linear-gradient(180deg, #fffaf0 0%, #f5e8d2 100%);
+  box-shadow: 0 3px 0 rgba(120,80,40,.22), 0 8px 16px rgba(60,40,20,.16); transition: transform .15s, box-shadow .15s; }
+.carte-bat .socle { height: 50px; display: grid; place-items: end center; position: relative; }
+.carte-bat .socle::before { content: ''; position: absolute; left: 14%; right: 14%; bottom: 0; height: 12px; border-radius: 50%; background: rgba(120,85,45,.16); }
+.carte-bat img { position: relative; width: 62px; height: 50px; object-fit: contain; display: block; pointer-events: none; }
+.carte-bat .prix { display: inline-flex; align-items: center; gap: 3px; margin-top: 5px; padding: 1px 9px 1px 4px; border-radius: 999px;
+  background: #fff; font-size: 15px; font-weight: 700; color: var(--encre); box-shadow: inset 0 0 0 1.5px rgba(233,135,59,.35); font-variant-numeric: tabular-nums; }
+.carte-bat .prix .piece { font-size: 13px; }
+.carte-bat .prix.fait { color: var(--vert-fonce); padding: 1px 12px; box-shadow: inset 0 0 0 1.5px rgba(79,140,53,.35); }
+.carte-bat .nombre { position: absolute; top: -7px; right: -7px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px;
+  background: #5b3c24; color: #fff; font-size: 13px; font-weight: 700; display: grid; place-items: center;
+  border: 2px solid #fffaf0; box-shadow: 0 2px 4px rgba(60,40,20,.25); font-variant-numeric: tabular-nums; }
+.carte-bat .neuf { position: absolute; top: -8px; left: -5px; background: var(--vert); color: #fff; font-size: 10.5px; font-weight: 700;
+  padding: 2px 6px; border-radius: 8px; transform: rotate(-8deg); box-shadow: 0 2px 4px rgba(60,40,20,.2); }
+.carte-bat.non .socle img { filter: grayscale(.65); opacity: .55; }
+.carte-bat.non .prix { color: #9c8a78; box-shadow: inset 0 0 0 1.5px rgba(156,138,120,.3); }
+.carte-bat.fait .socle img { opacity: .75; }
+.carte-bat.merveille { background: linear-gradient(180deg, #fff9e3 0%, #f6e3a8 100%); border-color: #f5d76e; }
+.carte-bat.choisie { border-color: var(--orange); transform: translateY(-6px); box-shadow: 0 3px 0 var(--orange-fonce), 0 10px 18px rgba(60,40,20,.22); }
 .carte-bat:active { transform: translateY(2px); }
+.onglets { position: sticky; left: 0; z-index: 3; display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; margin-right: 2px; }
+.onglet { width: 44px; height: 41px; border: 0; border-radius: 14px; font-size: 20px; cursor: pointer; position: relative;
+  background: rgba(255,250,240,.92); box-shadow: 0 2px 0 rgba(120,80,40,.2), 0 4px 10px rgba(60,40,20,.14); }
+.onglet.on { background: var(--orange); box-shadow: 0 2px 0 var(--orange-fonce), 0 4px 10px rgba(60,40,20,.18); }
+.onglet .point { position: absolute; top: 3px; right: 4px; width: 9px; height: 9px; border-radius: 50%; background: var(--vert); border: 2px solid #fff; }
+#page-image.objet { background: radial-gradient(circle at 50% 60%, #fff6e4 0%, #ead8b6 100%); }
+#page-image.objet img { object-fit: contain; padding: 8%; }
 
 /* ---- messages ---- */
 #bulle-aide { position: fixed; left: 50%; top: calc(66px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--carte); border-radius: 18px;
@@ -85,7 +103,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
 [hidden] { display: none !important; }
 /* ---- fiche d'explication (ADR-015) ---- */
-#info { position: fixed; z-index: 20; left: max(14px, env(safe-area-inset-left, 0px)); bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+#info { position: fixed; z-index: 20; left: max(14px, env(safe-area-inset-left, 0px)); bottom: calc(124px + env(safe-area-inset-bottom, 0px));
   width: min(440px, calc(100vw - 28px)); background: var(--carte); border-radius: 20px; box-shadow: var(--ombre);
   display: flex; gap: 10px; padding: 10px; align-items: flex-start; animation: monte .25s ease; }
 #info img { width: 70px; height: 62px; object-fit: contain; flex: 0 0 auto; }
@@ -108,7 +126,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   #info-texte { font-size: 14px; }
 }
 /* ---- le coq du réveil (ADR-016) ---- */
-#btn-reveil { position: fixed; z-index: 21; right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+#btn-reveil { position: fixed; z-index: 21; right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(124px + env(safe-area-inset-bottom, 0px));
   border: 0; border-radius: 26px; background: #fff1b8; box-shadow: var(--ombre); padding: 8px 18px 8px 8px; display: flex; align-items: center; gap: 6px;
   font-family: inherit; font-size: 20px; font-weight: 700; color: var(--encre); cursor: pointer; animation: battre 1.4s ease-in-out infinite; }
 #btn-reveil img { width: 62px; height: 62px; object-fit: contain; }

@@ -180,6 +180,7 @@ var Monde = (function () {
   function peutConstruire(m, type) {
     var d = D.batiments[type];
     if (construisibles(m).indexOf(type) < 0 || m.pieces < d.cout) return false;
+    if (d.unique && m.batiments.some(function (b) { return b.type === type; })) return false;
     return aDeLaPlace(m, type);
   }
   function aDeLaPlace(m, type) {
@@ -407,7 +408,10 @@ var Monde = (function () {
       lieu = mam ? [mam.x - 110 + hasard(m) * 40, mam.y + 30 + hasard(m) * 20] : null;
     } else if (tr.aller === 'foret') {
       arbre = arbreProche(m, depuis);
-      if (arbre) { arbre.reserve = true; var q = centreTuile(arbre); lieu = [q[0] + 30, q[1] + 22]; }
+      if (arbre) { var q = centreTuile(arbre); lieu = [q[0] + 30, q[1] + 22]; }
+      // sans outils de pierre, pas de hache : on ramasse les branches tombées, l'arbre reste debout
+      if (!m.decouvertes.outils) { arbre = null; pose = null; }
+      else if (arbre) arbre.reserve = true;
     } else if (tr.aller === 'riviere') {
       lieu = rive(m, depuis, false);
     } else if (tr.aller === 'plage') {

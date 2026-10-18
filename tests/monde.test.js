@@ -26,7 +26,7 @@ function jouer(graine, reflexe, maxMin) {
       if (!Monde.passerEpoque(m)) break;
       continue;
     }
-    const possibles = Monde.construisibles(m).filter(t => Monde.peutConstruire(m, t));
+    const possibles = Monde.construisibles(m).filter(t => !D.batiments[t].deco && Monde.peutConstruire(m, t));
     const neufs = possibles.filter(t => !m.batiments.some(b => b.type === t));
     const pleins = m.habitants.length >= Monde.lits(m);
     let choix = neufs.sort((a, b) => D.batiments[a].cout - D.batiments[b].cout)[0];

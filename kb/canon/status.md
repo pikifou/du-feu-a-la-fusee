@@ -11,7 +11,7 @@ updated: 2026-10-18
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 22 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 23 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.
@@ -19,6 +19,7 @@ updated: 2026-10-18
 - Sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants, 24 éléments de nature, 12 poses de travail, 8 éléments de nuit ; 16 vignettes illustrées pour les fiches.
 - Test d'intégration des sprites sur le plateau concluant (`assets/raw/test-integration.jpg`).
 
+- **v0.9** : bandeau redessiné (cartes plus soignées, prix en pastille, nombre possédé en haut à droite, « Nouveau » en étiquette) avec deux onglets : 🏠 Construire et ✨ Embellir ; 12 décorations et merveilles historiques (ADR-023) : 4 peintures au choix (Chauvet, Lascaux, Altamira, Gargas) et la hutte en os de mammouth à l'âge de pierre ; menhir, Dame de Saint-Sernin, dolmen, alignements de Carnac, cairn de Barnenez, Stonehenge et Göbekli Tepe au néolithique ; chacune a sa grande page lue à voix haute. Avant la découverte des outils, le bûcheron ramasse des branches au lieu d'abattre les arbres.
 - **v0.8** : nombre de bâtiments possédés en bas à droite de chaque carte du bandeau ; voix de narratrice enregistrée pour les 182 phrases du jeu (ADR-022) ; améliorations payantes (ADR-021) ; une vraie passerelle en bois sur le gué ; au néolithique, des pirogues vont et viennent sur la rivière et la mer ; les fenêtres s'ouvrent toujours en haut ; message de fin de démo dans les découvertes.
 - **v0.7** : deux niveaux d'explication (ADR-018) : la fiche courte (une phrase, les chiffres, un bouton « En savoir plus ») et la grande page illustrée (une scène en grand, avant / maintenant, 3 « Le savais-tu ? », ce que ça permet de construire avec les vignettes) ; découvrir une technologie ouvre sa grande page, qu'on peut relire depuis la liste des découvertes ou depuis la fiche courte. La nuit, les maisons s'ouvrent en coupe et on voit les dormeurs couchés dedans, éclairés par le foyer (ADR-019). Habitants plus vivants (ADR-020) : petites phrases dans des bulles, gestes de travail en deux images, objets portés dans les bras (bois, viande, poisson, silex, blé, argile).
 - **v0.6** : la nuit en séquence (ADR-016) : à la tombée du jour, on se rassemble au feu (le premier arrivé le ranime), on veille et on travaille dans sa lumière, puis tout le monde rentre dormir dans sa maison et les feux s'éteignent (braises puis cendres) ; quand tout le village dort, un coq « Réveil ! » fait lever le soleil. On voit qui fait quoi (ADR-017) : chaque habitant a sa maison, les dormeurs sont couchés devant leur porte, la tête qui dépasse de la couverture ; au travail, chacun est en plein geste (tailleur, bûcheron, pêcheur, sage assis, paysan à la faucille, berger, potière, meunière…) ; la fiche d'un bâtiment montre une ou deux vignettes illustrées de l'activité, lues à voix haute quand on les touche.

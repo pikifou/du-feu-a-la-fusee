@@ -69,6 +69,12 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 - De temps en temps, quelqu'un dit une petite phrase selon ce qu'il fait (au travail, en portant, à la veillée, en allant se coucher, au réveil).
 - Les gestes de travail alternent deux images ; ce qu'on rapporte se porte dans les bras.
 
+## Embellir : décorations et merveilles (ADR-023)
+- Onglet ✨ du bandeau. Uniquement des monuments réels de l'époque, avec leur grande page (vraie histoire, 2 « Le savais-tu ? »).
+- Âge de pierre : les chevaux de Chauvet (15), le taureau de Lascaux (18), les bisons d'Altamira (18), les mains de Gargas (12), merveille : la hutte en os de mammouth (45).
+- Néolithique : menhir (10, plusieurs possibles), Dame de Saint-Sernin (18), dolmen (25, plusieurs possibles), merveilles : alignements de Carnac (50), cairn de Barnenez (70), Göbekli Tepe (100), Stonehenge (150).
+- Les peintures et les merveilles sont uniques. Les décorations ne produisent rien : elles embellissent et elles racontent (proposition de Claude, à discuter : un petit bonus pour les merveilles ?).
+
 ## Améliorer (ADR-021)
 - Dans la fiche courte d'un bâtiment : « ⬆ Améliorer · 🪙 prix » ou « ⬆ Agrandir en … ».
 - Bâtiments qui produisent : niveaux 1 à 3, +1 par récolte à chaque niveau ; prix = 1,5 puis 3 fois le prix du bâtiment (cercle des anciens : 45 puis 90).

@@ -71,6 +71,66 @@ var Donnees = (function () {
 
   // Grandes pages qui ne sont pas des découvertes (ADR-018)
   var pages = {
+    'deco-peinture-chauvet': {
+      nom: "Les chevaux de Chauvet", epoque: 1, image: 'deco/peinture-chauvet', deco: true,
+      texte: "Dans la grotte Chauvet, en Ardèche, des artistes ont peint des chevaux, des lions et des rhinocéros il y a plus de 30 000 ans.",
+      faits: ["La grotte a été découverte en 1994 par trois spéléologues.", "Ce sont parmi les plus anciennes peintures connues au monde."]
+    },
+    'deco-peinture-lascaux': {
+      nom: "Le taureau de Lascaux", epoque: 1, image: 'deco/peinture-lascaux', deco: true,
+      texte: "Dans la grotte de Lascaux, en Dordogne, on a peint d'immenses taureaux, des chevaux et des cerfs, il y a environ 18 000 ans.",
+      faits: ["Elle a été découverte en 1940 par quatre adolescents… et leur chien Robot !", "Pour la protéger, on visite aujourd'hui une copie de la grotte."]
+    },
+    'deco-peinture-altamira': {
+      nom: "Les bisons d'Altamira", epoque: 1, image: 'deco/peinture-altamira', deco: true,
+      texte: "En Espagne, au plafond de la grotte d'Altamira, des bisons rouges et noirs semblent bouger à la lumière des torches.",
+      faits: ["C'est une petite fille de 8 ans, María, qui les a vus la première, en 1879.", "Les peintres se servaient des bosses de la roche pour donner du relief aux animaux."]
+    },
+    'deco-peinture-mains': {
+      nom: "Les mains de Gargas", epoque: 1, image: 'deco/peinture-mains', deco: true,
+      texte: "Dans la grotte de Gargas, dans les Pyrénées, il y a des centaines de mains peintes, vieilles d'environ 27 000 ans.",
+      faits: ["On posait sa main sur la roche et on soufflait de la couleur tout autour.", "Sur certaines mains, des doigts semblent manquer : peut-être des doigts repliés, comme un langage secret."]
+    },
+    'deco-hutte-mammouth': {
+      nom: "La hutte en os de mammouth", epoque: 1, image: 'deco/hutte-mammouth', deco: true,
+      texte: "À Mejyritch, en Ukraine, il y a environ 15 000 ans, on a construit des huttes avec des os et des défenses de mammouth.",
+      faits: ["Là-bas, il n'y avait presque pas d'arbres : les os remplaçaient le bois.", "Il fallait des dizaines d'os de mammouth pour une seule hutte !"]
+    },
+    'deco-menhir': {
+      nom: "Un menhir", epoque: 2, image: 'deco/menhir', deco: true,
+      texte: "Un menhir est une grande pierre dressée. En breton, « men hir » veut dire « pierre longue ».",
+      faits: ["On en a dressé beaucoup en Bretagne, il y a plus de 6 000 ans.", "Le plus grand, à Locmariaquer, mesurait 20 mètres : aussi haut qu'un immeuble de six étages !"]
+    },
+    'deco-statue-menhir': {
+      nom: "La Dame de Saint-Sernin", epoque: 2, image: 'deco/statue-menhir', deco: true,
+      texte: "Une statue-menhir est une pierre dressée sculptée comme une personne : un visage, des bras, une ceinture.",
+      faits: ["La Dame de Saint-Sernin, dans l'Aveyron, a été sculptée il y a environ 5 000 ans.", "C'est l'une des plus anciennes statues de personne en France."]
+    },
+    'deco-dolmen': {
+      nom: "Un dolmen", epoque: 2, image: 'deco/dolmen', deco: true,
+      texte: "Un dolmen, c'est une grande pierre plate posée sur des pierres dressées, comme une table géante.",
+      faits: ["C'était une tombe : on y déposait les morts, puis on la couvrait de terre et de pierres.", "Le mot vient du breton : « taol » veut dire table, et « men » veut dire pierre."]
+    },
+    'deco-alignements': {
+      nom: "Les alignements de Carnac", epoque: 2, image: 'deco/alignements', deco: true,
+      texte: "À Carnac, en Bretagne, des milliers de menhirs sont dressés en longues rangées, depuis plus de 6 000 ans.",
+      faits: ["Il y en a environ 3 000 !", "Personne ne sait vraiment à quoi ils servaient : un calendrier, un lieu de fête, un hommage aux ancêtres ?"]
+    },
+    'deco-cairn': {
+      nom: "Le cairn de Barnenez", epoque: 2, image: 'deco/cairn', deco: true,
+      texte: "Dans le Finistère, le cairn de Barnenez est un grand monument de pierres sèches, construit il y a environ 6 500 ans.",
+      faits: ["À l'intérieur, il y a onze chambres, chacune avec son couloir.", "Il est plus vieux que les pyramides d'Égypte !"]
+    },
+    'deco-stonehenge': {
+      nom: "Stonehenge", epoque: 2, image: 'deco/stonehenge', deco: true,
+      texte: "En Angleterre, Stonehenge est un grand cercle de pierres, construit il y a environ 5 000 ans, petit à petit, pendant des siècles.",
+      faits: ["Le matin du plus long jour de l'année, le soleil se lève dans l'axe des pierres.", "Certaines pierres viennent du pays de Galles, à plus de 200 kilomètres !"]
+    },
+    'deco-gobekli-tepe': {
+      nom: "Göbekli Tepe", epoque: 2, image: 'deco/gobekli-tepe', deco: true,
+      texte: "En Turquie, Göbekli Tepe est un cercle de grands piliers sculptés de renards, de sangliers et de vautours, élevé il y a environ 11 500 ans.",
+      faits: ["C'est l'un des plus vieux grands monuments connus, bien plus ancien que Stonehenge.", "Il a été construit par des chasseurs-cueilleurs, juste avant que l'agriculture se répande."]
+    },
     cueilleurs: {
       nom: 'Les chasseurs-cueilleurs', epoque: 1, scene: 'scenes/cueilleurs',
       texte: "Au tout début, on vit de ce que donne la nature : on cueille des baies, on ramasse du bois, et le sage réfléchit pour trouver de nouvelles idées.",
@@ -100,8 +160,8 @@ var Donnees = (function () {
       travail: { metier: 'sage', aller: null, duree: 12, produit: 'idees', qte: 1 }
     },
     'tas-bois': {
-      resume: "Le bûcheron y range le bois coupé dans la forêt.", page: 'cueilleurs',
-      explication: 'Le tas de bois. Le bûcheron coupe les arbres de la forêt et rapporte les bûches. Le bois sert à construire et à faire du feu.',
+      resume: "On y range le bois rapporté de la forêt.", page: 'cueilleurs',
+      explication: "Le tas de bois. Au début, on ramasse les branches tombées dans la forêt. Avec une hache de pierre, le bûcheron pourra couper les arbres. Le bois sert à construire et à faire du feu.",
       vignettes: [{ img: 'bois', texte: "Avec sa hache de pierre, le bûcheron abat un arbre, puis il range les bûches." }],
       nom: 'Le tas de bois', sprite: '01-pierre/tas-bois', epoque: 1, jusqua: 9,
       zone: 'pre', cout: null, largeur: 130, taille: 1,
@@ -237,6 +297,67 @@ var Donnees = (function () {
       zone: 'plage', cout: 12, bois: 2, largeur: 150, taille: 1,
       travail: { metier: 'pecheur', aller: 'plage', porte: 'poisson', duree: 6, produit: 'pieces', qte: 2 }
     },
+    // Décorations et merveilles d'époque, historiquement vraies (ADR-023)
+    'peinture-chauvet': {
+      resume: "Une paroi peinte comme dans la grotte Chauvet.", page: 'deco-peinture-chauvet',
+      nom: "Les chevaux de Chauvet", sprite: 'deco/peinture-chauvet', epoque: 1, jusqua: 1,
+      zone: 'pre', cout: 15, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+    },
+    'peinture-lascaux': {
+      resume: "Une paroi peinte comme dans la grotte de Lascaux.", page: 'deco-peinture-lascaux',
+      nom: "Le taureau de Lascaux", sprite: 'deco/peinture-lascaux', epoque: 1, jusqua: 1,
+      zone: 'pre', cout: 18, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+    },
+    'peinture-altamira': {
+      resume: "Une paroi peinte comme dans la grotte d'Altamira.", page: 'deco-peinture-altamira',
+      nom: "Les bisons d'Altamira", sprite: 'deco/peinture-altamira', epoque: 1, jusqua: 1,
+      zone: 'pre', cout: 18, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+    },
+    'peinture-mains': {
+      resume: "Une paroi couverte de mains, comme dans la grotte de Gargas.", page: 'deco-peinture-mains',
+      nom: "Les mains de Gargas", sprite: 'deco/peinture-mains', epoque: 1, jusqua: 1,
+      zone: 'pre', cout: 12, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+    },
+    'hutte-mammouth': {
+      resume: "Une merveille : une hutte faite d'os de mammouth.", page: 'deco-hutte-mammouth',
+      nom: "La hutte en os de mammouth", sprite: 'deco/hutte-mammouth', epoque: 1, jusqua: 1,
+      zone: 'pre', cout: 45, bois: 4, largeur: 220, taille: 2, deco: true, merveille: true, unique: true
+    },
+    'menhir': {
+      resume: "Une grande pierre dressée.", page: 'deco-menhir',
+      nom: "Un menhir", sprite: 'deco/menhir', epoque: 2, jusqua: 9,
+      zone: 'pre', cout: 10, bois: 2, largeur: 80, taille: 1, deco: true
+    },
+    'statue-menhir': {
+      resume: "Une pierre dressée sculptée comme une personne.", page: 'deco-statue-menhir',
+      nom: "La Dame de Saint-Sernin", sprite: 'deco/statue-menhir', epoque: 2, jusqua: 9,
+      zone: 'pre', cout: 18, bois: 2, largeur: 85, taille: 1, deco: true, unique: true
+    },
+    'dolmen': {
+      resume: "Une grande table de pierre.", page: 'deco-dolmen',
+      nom: "Un dolmen", sprite: 'deco/dolmen', epoque: 2, jusqua: 9,
+      zone: 'pre', cout: 25, bois: 3, largeur: 140, taille: 1, deco: true
+    },
+    'alignements': {
+      resume: "Une merveille : des menhirs en longues rangées.", page: 'deco-alignements',
+      nom: "Les alignements de Carnac", sprite: 'deco/alignements', epoque: 2, jusqua: 9,
+      zone: 'pre', cout: 50, bois: 4, largeur: 240, taille: 2, deco: true, merveille: true, unique: true
+    },
+    'cairn': {
+      resume: "Une merveille : un grand monument de pierres sèches.", page: 'deco-cairn',
+      nom: "Le cairn de Barnenez", sprite: 'deco/cairn', epoque: 2, jusqua: 9,
+      zone: 'pre', cout: 70, bois: 5, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
+    },
+    'stonehenge': {
+      resume: "Une merveille : le grand cercle de pierres d'Angleterre.", page: 'deco-stonehenge',
+      nom: "Stonehenge", sprite: 'deco/stonehenge', epoque: 2, jusqua: 9,
+      zone: 'pre', cout: 150, bois: 6, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
+    },
+    'gobekli-tepe': {
+      resume: "Une merveille : des piliers sculptés d'animaux.", page: 'deco-gobekli-tepe',
+      nom: "Göbekli Tepe", sprite: 'deco/gobekli-tepe', epoque: 2, jusqua: 9,
+      zone: 'pre', cout: 100, bois: 5, largeur: 240, taille: 2, deco: true, merveille: true, unique: true
+    },
     passerelle: {
       resume: "Un pont de bois pour traverser la rivière.",
       explication: 'La passerelle en bois. Plus besoin de se mouiller les pieds pour traverser la rivière !',
@@ -323,6 +444,9 @@ var Donnees = (function () {
       construire: "Tu as des pièces : choisis une construction en bas de l'écran !",
       finEpoque: { 1: "Tu as fait toutes les découvertes de l'âge de pierre ! Ton village est prêt à changer d'époque." },
       amelioration: "Les habitants vont chercher du bois pour améliorer le bâtiment. Regarde les étoiles !",
+      outilsBois: 'Avec les outils de pierre, le bûcheron peut maintenant couper les arbres !',
+      embellir: "Embellis ton village avec les monuments de l'époque ! Chacun raconte une vraie histoire.",
+      dejaConstruit: 'Tu l\'as déjà ! Il n\'en existe qu\'un seul.',
       finJeu: "Tu as fait toutes les découvertes du néolithique ! La suite de l'histoire, l'âge des métaux, arrive bientôt."
     },
     prerequis: function (ids) {

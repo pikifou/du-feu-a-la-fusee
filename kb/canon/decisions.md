@@ -152,3 +152,9 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée. Tranche la question ouverte des voix off (GD).
 - **Décision** : toutes les phrases dites à voix haute sont générées avec Arcads, voix de femme narrative (Margaux, « Narrative & Story »), et intégrées au jeu. La synthèse du navigateur ne reste qu'en secours pour une phrase absente.
 - **Contexte** : Julien : « utilise Arcads pour générer les voix avec une voix de femme narrative ».
+
+## ADR-023 : des décorations et des merveilles d'époque, historiquement vraies
+- **Date** : 2026-10-19
+- **Statut** : acceptée. Complète ADR-021 (dépenser ses pièces).
+- **Décision** : on peut embellir le village avec des monuments et des décorations fidèles à l'époque et historiquement vrais, de prix variés, comme les merveilles de Civilization. Certains ont plusieurs variantes au choix (par exemple les peintures rupestres). Chacun a sa grande page qui raconte sa vraie histoire.
+- **Contexte** : Julien : « des décorations, c'est une bonne idée, tant que c'est fidèle aux époques. Dans Civilization, il y avait les wonders […] Ou les peintures par exemple, on pourrait en avoir plusieurs au choix. »
