@@ -11,7 +11,7 @@ updated: 2026-10-18
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 8 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 10 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.
@@ -22,7 +22,7 @@ updated: 2026-10-18
 - Game design en brouillon : proposition de Claude, pas encore validée par Julien (`domains/game-design/gd.md`).
 
 ## Prochaine étape
-- Valider les questions ouvertes restantes du GD (support, titre, voix off).
+- Valider les questions ouvertes restantes du GD (titre, voix off).
 - Prototype jouable des époques 1 et 2.
 
 ## Points connus

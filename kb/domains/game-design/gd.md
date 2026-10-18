@@ -16,6 +16,13 @@ updated: 2026-10-18
 - City builder cosy, attentes courtes, peu de menaces (ADR-003).
 - La ville pousse toute seule (ADR-004).
 
+## Le monde vivant (ADR-010)
+Le cœur du plaisir, façon The Settlers : on regarde son petit monde s'affairer.
+- **Produire = un trajet visible.** Le pêcheur va à la rivière, pêche, rapporte le poisson au séchoir ; c'est seulement là que la bulle 🪙 apparaît.
+- **Construire = un chantier visible.** Le bâtiment posé par Joshua devient un chantier ; des habitants vont chercher du bois au tas, l'apportent, tapent dessus ; le bâtiment sort de terre.
+- **La vie autour.** Les enfants courent, les habitants libres se rassemblent près du feu, le mammouth broute à la lisière, les nouveaux arrivants entrent dans la vallée à pied.
+- **Les époques se voient sur les gens.** Au passage au néolithique, les habitants changent de tenue et de métier.
+
 ## Le fantasme du joueur
 « J'ai fait grandir mon village, de la grotte jusqu'à la fusée. » Une seule vallée que Joshua voit se transformer : le gué devient passerelle, puis pont de pierre, puis pont suspendu. L'histoire se lit dans le paysage.
 
@@ -89,7 +96,7 @@ Des événements doux propres à chaque époque (un hiver froid, une crue, un in
 
 ## Questions ouvertes
 - [x] Rôle de Joshua dans la construction : B, il pose et la ville fait le reste (ADR-008)
-- [ ] Support principal : tablette en paysage ou téléphone en portrait ?
+- [x] Support principal : tablette en paysage (ADR-009)
 - [ ] Titre : *Du Feu à la Fusée* (proposition) ?
 - [ ] Nombre d'époques : 7 proposées, à valider.
 - [ ] Les voix off : enregistrées par Julien, ou synthèse vocale ?

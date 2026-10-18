@@ -20,11 +20,10 @@ La Tour aux Aimants et Chasseur de Dragons tournent sur la même recette, éprou
 ## Spécifique à ce jeu
 - **Contenu piloté par les données** : époques, découvertes, prérequis et bâtiments dans un seul fichier de données lu par le jeu, construit à partir de `domains/contenu-historique/epoques.md`. Pas de liste en dur dans le code (anti-drift).
 - **Rendu isométrique** : le plateau est une image fixe ; les sprites sont posés sur des emplacements prédéfinis de la prairie, triés par profondeur (y croissant).
-- **Croissance automatique** (ADR-004) : un petit planificateur choisit l'emplacement libre suivant et anime l'apparition (pop, fumée, habitant qui sort).
-- **Temps** : production calculée à partir de l'horloge réelle, avec plafond (grenier), pour que rien ne se perde pendant une pause.
+- **Monde vivant** (ADR-008, ADR-010) : chaque habitant est un petit agent avec une file de tâches (marcher vers, travailler, porter, livrer). Les chantiers et les bâtiments de production publient des besoins ; les habitants libres les prennent.
+- **Temps** : la simulation tourne en temps réel tant que le jeu est ouvert ; les bulles plafonnent par bâtiment, pour que rien ne se perde pendant une pause.
 - **Sauvegarde** : localStorage, une seule partie.
 - **Tests** : `node --test`, avec une simulation qui joue une partie entière pour vérifier que chaque époque est finissable en 10 à 15 minutes.
 
 ## Questions ouvertes
-- [ ] Tablette en paysage ou téléphone en portrait (cf. GD)
 - [ ] Voix off : fichiers audio ou synthèse vocale du navigateur

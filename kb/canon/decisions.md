@@ -65,3 +65,16 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Décision** : Joshua place lui-même les bâtiments sur des emplacements de la vallée. La ville ajoute seule tout le reste : chemins, habitants, détails, et elle améliore d'elle-même ce qui existe. Précise ADR-004 sans la remplacer.
 - **Contexte** : il fallait concilier la ville qui pousse toute seule (ADR-004) et le plaisir SimCity de construire (ADR-003).
 - **Alternatives écartées** : A, il commande et la ville place (recommandation initiale de Claude) ; C, ville entièrement autonome.
+
+## ADR-009 : tablette en paysage
+- **Date** : 2026-10-18
+- **Statut** : acceptée
+- **Décision** : le support principal est la tablette tenue en paysage. Toute la mise en page part de là.
+- **Alternatives écartées** : téléphone en portrait (format des deux autres jeux de Joshua).
+
+## ADR-010 : un petit monde vivant, façon The Settlers
+- **Date** : 2026-10-18
+- **Statut** : acceptée
+- **Décision** : les habitants travaillent, transportent, construisent et s'affairent sous les yeux du joueur. Chaque production et chaque chantier se voient : on doit avoir l'impression d'un monde qui s'agite et avance tout seul.
+- **Contexte** : Julien : « un petit monde qui vit un peu comme Settlers […] le plaisir qu'on a quand on regarde un Anno, un SimCity. Le monde devient vivant. C'est cosy, c'est mignon, et on est content de voir les choses avancer. »
+- **Conséquence** : la production n'est pas un simple minuteur sur un bâtiment, c'est un trajet d'habitant (aller chercher, travailler, rapporter). Précise ADR-004 et ADR-008.
