@@ -218,3 +218,22 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée. Précise ADR-025.
 - **Décision** : on voit les chasseurs s'éloigner et disparaître un peu au loin pour chercher les animaux, puis revenir avec leur prise.
 - **Contexte** : Julien : « il faudrait qu'on voit que les chasseurs s'éloignent et disparaissent un peu au loin pour chercher les animaux. »
+
+## ADR-034 : on garde les voix enregistrées ; les nouvelles phrases passent en voix de synthèse
+- **Date** : 2026-10-20
+- **Statut** : acceptée. Précise ADR-022.
+- **Décision** : on ne génère plus de voix pour l'instant. Les phrases déjà enregistrées restent dans le jeu ; toute phrase nouvelle ou modifiée est lue par la voix de synthèse du navigateur. On enregistrera en lot quand le jeu sera stabilisé.
+- **Contexte** : Julien : « quand on ajuste le jeu, on change les voix. Et si certaines phrases disparaissent, j'ai fait des générations pour rien, donc on les générera plus tard par batch quand on aura stabilisé le jeu. »
+
+## ADR-035 : une économie qui croît d'époque en époque
+- **Date** : 2026-10-20
+- **Statut** : acceptée. Précise ADR-026.
+- **Décision** : (1) l'économie grandit naturellement : l'âge de pierre est moins riche que le néolithique, et les prix suivent ce sens ; un bâtiment plus avancé coûte plus cher (une maison avancée plus qu'une hutte de branches). (2) Les prix suivent l'augmentation de la production, plutôt qu'un même coefficient pour tout. (3) Un bâtiment identique coûte toujours le même prix, quel que soit le nombre déjà construit. (4) D'une époque à l'autre, les coûts peuvent être très différents.
+- **Contexte** : Julien, sur la v0.11 : « ce qu'il faut aussi avoir c'est une économie qui croît naturellement » ; « un nouveau bâtiment identique n'a aucune raison de coûter plus cher ».
+- **Alternatives écartées** : le prix qui monte à chaque exemplaire (proposition de Claude).
+
+## ADR-036 : la nourriture se stocke dans une réserve limitée
+- **Date** : 2026-10-20
+- **Statut** : acceptée sur le principe. Les chiffres sont à proposer par Claude.
+- **Décision** : la réserve de nourriture a un maximum, lié aux moyens de conserver ; au-delà, ce qui arrive est perdu. Les bâtiments de stockage agrandissent la réserve.
+- **Contexte** : Julien : « il n'y a rien qui empêche d'avoir trop de bouffe » ; « Je suis d'accord avec le max de bouffe (qui est lié au stockage), très bonne idée. »
