@@ -260,9 +260,12 @@
   // ---------- dessin ----------
   var T = 0;
   var TAILLE_HAB = { sage: 66, enfant: 48, adulte: 62 }; // ADR-014 : bien plus petits que les huttes
+  // l'image d'un bâtiment change avec son niveau (ADR-031)
+  var GRANDIT = { 2: 1.12, 3: 1.24 };
   function tailleBat(b) {
-    var d = D.batiments[b.type], im = IMG[d.sprite];
-    var w = d.largeur * V.s;
+    var d = D.batiments[b.type], n = b.niveau || 1, im = IMG[d.sprite], k = 1;
+    if (n > 1 && IMG['niveaux/' + b.type + '-' + n]) { im = IMG['niveaux/' + b.type + '-' + n]; k = GRANDIT[n] / (b.k > 1 ? 1.06 : 1); }
+    var w = d.largeur * V.s * k;
     return { w: w, h: im ? w * im.height / im.width : w, im: im };
   }
   function basBat(b) { return b.y + b.k * TR.TH * 0.55; }
@@ -280,6 +283,7 @@
       if (ic) { var wc = t.w * 0.82; dessinerSprite(ic, p[0], p[1], wc, wc * ic.height / ic.width); return; }
     }
     if (enCoupe(b)) { var cc = cadreCoupe(b); ctx.drawImage(cc.im, cc.x, cc.y, cc.w, cc.h); return; }
+    if (D.batiments[b.type].merveille && !M.merveilleFinie(b)) { dessinerMerveille(b, p, t); return; }
     if (b.etat === 'fini') {
       var k = 1, age = monde.t - (b.apparu || -10);
       if (age < 0.7) k = 1 + Math.sin(age / 0.7 * Math.PI) * 0.18 * (1 - age / 0.7) - (age < 0.1 ? 0.3 * (1 - age / 0.1) : 0);
@@ -319,6 +323,37 @@
       ctx.beginPath(); ctx.rect(p[0] - t.w, bas - hauteur, t.w * 2, hauteur); ctx.clip();
       dessinerSprite(t.im, p[0], p[1], t.w, t.h);
       ctx.restore();
+    }
+  }
+  // une merveille en construction : elle sort de terre par tiers, entourée d'échafaudages (ADR-030)
+  function dessinerMerveille(b, p, t) {
+    var fait = b.etape || 0, prog = b.etat === 'chantier' && b.besoin ? b.livre / b.besoin : 0;
+    var part = Math.min(1, (fait + prog) / 3);
+    dessinerSprite(t.im, p[0], p[1], t.w, t.h, 0.18);
+    ctx.save();
+    var bas = p[1] + t.h * 0.07, hauteur = t.h * (0.12 + 0.88 * part);
+    ctx.beginPath(); ctx.rect(p[0] - t.w, bas - hauteur, t.w * 2, hauteur); ctx.clip();
+    dessinerSprite(t.im, p[0], p[1], t.w, t.h);
+    ctx.restore();
+    // échafaudages en bois
+    var c = E(b.x, b.y), rx = b.k * TR.TW * V.s * 0.8, ry = b.k * TR.TH * V.s * 0.8, haut = t.h * 0.75;
+    ctx.strokeStyle = '#8a5a32'; ctx.lineWidth = Math.max(2, 4 * V.s); ctx.lineCap = 'round';
+    [[-rx, 0], [rx, 0], [0, ry], [-rx * 0.5, ry * 0.5], [rx * 0.5, ry * 0.5]].forEach(function (q) {
+      ctx.beginPath(); ctx.moveTo(c[0] + q[0], c[1] + q[1]); ctx.lineTo(c[0] + q[0], c[1] + q[1] - haut); ctx.stroke();
+    });
+    ctx.lineWidth = Math.max(1.5, 3 * V.s);
+    [0.35, 0.7].forEach(function (f) {
+      ctx.beginPath(); ctx.moveTo(c[0] - rx, c[1] - haut * f); ctx.lineTo(c[0] - rx * 0.5, c[1] + ry * 0.5 - haut * f); ctx.lineTo(c[0], c[1] + ry - haut * f);
+      ctx.lineTo(c[0] + rx * 0.5, c[1] + ry * 0.5 - haut * f); ctx.lineTo(c[0] + rx, c[1] - haut * f); ctx.stroke();
+    });
+    // trois pastilles : les étapes
+    var r = Math.max(7, 10 * V.s), y = p[1] + 10 * V.s;
+    for (var i = 0; i < 3; i++) {
+      var x = p[0] + (i - 1) * r * 2.6;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 7);
+      ctx.fillStyle = i < fait ? '#ffd23f' : 'rgba(255,255,255,.7)'; ctx.fill();
+      if (i === fait && prog > 0) { ctx.save(); ctx.clip(); ctx.fillStyle = '#ffd23f'; ctx.fillRect(x - r, y + r - 2 * r * prog, 2 * r, 2 * r * prog); ctx.restore(); }
+      ctx.lineWidth = 2; ctx.strokeStyle = '#8a5a32'; ctx.stroke();
     }
   }
   // les étoiles du niveau, sous le bâtiment (ADR-021)
@@ -426,6 +461,13 @@
       ctx.fillStyle = '#e8b94a'; for (var k = -2; k <= 2; k++) { ctx.beginPath(); ctx.ellipse(k * 5, -21, 3, 5, 0, 0, 7); ctx.fill(); }
     } else if (objet === 'argile') {
       ctx.fillStyle = '#b8714a'; ctx.beginPath(); ctx.ellipse(0, -9, 13, 9, 0, 0, 7); ctx.fill();
+    } else if (objet === 'baies') {
+      ctx.fillStyle = '#c99a5b'; ctx.beginPath(); ctx.roundRect(-12, -12, 24, 12, 4); ctx.fill();
+      ctx.fillStyle = '#d33a2c'; [[-6, -14], [0, -16], [6, -14], [-3, -18], [3, -18]].forEach(function (q) { ctx.beginPath(); ctx.arc(q[0], q[1], 3.6, 0, 7); ctx.fill(); });
+    } else if (objet === 'pot' || objet === 'lait' || objet === 'farine') {
+      ctx.fillStyle = objet === 'pot' ? '#c2683f' : '#b8794e'; ctx.beginPath(); ctx.ellipse(0, -10, 10, 11, 0, 0, 7); ctx.fill();
+      ctx.fillRect(-6, -24, 12, 6);
+      ctx.fillStyle = objet === 'lait' ? '#fffaf0' : objet === 'farine' ? '#f3ead8' : '#e9a274'; ctx.beginPath(); ctx.ellipse(0, -23, 6, 2.5, 0, 0, 7); ctx.fill();
     }
     ctx.restore();
   }
@@ -525,6 +567,16 @@
   }
   function dessinerHab(h) {
     if (h.dort) { dessinerDormeur(h); return; }
+    // le chasseur s'éloigne dans la forêt : il s'efface, puis revient (ADR-033)
+    var dtl = Math.min(0.1, T - (h.__t || T)), cible = h.cache ? 0 : 1;
+    h.__t = T;
+    h.__a = h.__a == null ? cible : h.__a + Math.sign(cible - h.__a) * Math.min(Math.abs(cible - h.__a), dtl * 1.2);
+    if (h.__a < 0.03) return;
+    ctx.globalAlpha = h.__a;
+    dessinerHabVisible(h);
+    ctx.globalAlpha = 1;
+  }
+  function dessinerHabVisible(h) {
     var im = IMG['habitants/' + h.allure];
     if (!im) return;
     var base = (h.enfant ? TAILLE_HAB.enfant : h.allure === 'sage' ? TAILLE_HAB.sage : TAILLE_HAB.adulte) * V.s;
@@ -567,6 +619,7 @@
   }
 
   function dessinerAnimal(a) {
+    if (a.disparu) return;
     if (a.espece === 'lapin') {
       // le lapin sautille : deux images, assis et en plein saut
       var saut = a.marche && Math.sin(T * 11 + a.id) > -0.2, il = IMG[saut ? 'faune/lapin-saut' : 'faune/lapin-assis'];
@@ -646,6 +699,7 @@
     });
   }
 
+  var EMOJI = { pieces: '🪙', idees: '💡', nourriture: '🍖' };
   var bulles = [];
   function dessinerBulles() {
     bulles = [];
@@ -659,10 +713,10 @@
       ctx.fillStyle = 'rgba(60,40,20,.18)'; ctx.beginPath(); ctx.arc(x, y + 5, r, 0, 7); ctx.fill();
       ctx.fillStyle = tr.produit === 'idees' ? '#fff6c9' : '#fffaf0';
       ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
-      ctx.lineWidth = 3; ctx.strokeStyle = tr.produit === 'idees' ? '#f2c94c' : '#e9873b'; ctx.stroke();
+      ctx.lineWidth = 3; ctx.strokeStyle = tr.produit === 'idees' ? '#f2c94c' : tr.produit === 'nourriture' ? '#d0573c' : '#e9873b'; ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x - 6, y + r - 2); ctx.lineTo(x, y + r + 9); ctx.lineTo(x + 6, y + r - 2); ctx.fillStyle = tr.produit === 'idees' ? '#fff6c9' : '#fffaf0'; ctx.fill();
       ctx.font = Math.round(r * 0.95) + 'px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(tr.produit === 'idees' ? '💡' : '🪙', x, y + 1);
+      ctx.fillText(EMOJI[tr.produit], x, y + 1);
       var n = b.stock * M.quantite(b);
       ctx.font = '700 ' + Math.round(r * 0.6) + 'px Fredoka, system-ui, sans-serif';
       ctx.fillStyle = '#fff'; ctx.strokeStyle = '#5b3c24'; ctx.lineWidth = 4;
@@ -708,7 +762,8 @@
       paysan: ['Le blé est doré !', 'Belle récolte !'], berger: ['Bêêê !', 'Viens, petit !'], porteur: ['Au grenier !'],
       potier: ['Un beau pot !', 'Tout rond !'], meunier: ['Bientôt du pain !', 'Ça fait de la farine !']
     },
-    porte: { bois: ['Lourd, ce bois !', 'Du bois !'], viande: ['Ce soir, on mange !'], lapin: ['Un lapin pour ce soir !'], poisson: ['Regardez ma pêche !'],
+    faim: ['J\'ai faim !', 'Mon ventre gargouille…', 'Il reste à manger ?'],
+    porte: { baies: ['Plein de baies !'], lait: ['Du bon lait !'], pot: ['Un pot tout neuf !'], farine: ['De la farine !'], bois: ['Lourd, ce bois !', 'Du bois !'], viande: ['Ce soir, on mange !'], lapin: ['Un lapin pour ce soir !'], poisson: ['Regardez ma pêche !'],
       silex: ['Des cailloux tout neufs !'], ble: ['Plein de blé !'], argile: ['De la bonne argile !'] },
     chantier: ['On construit !', 'Encore un peu !', 'Ça avance !'],
     veillee: ['Qu\'il fait bon !', 'On se raconte une histoire ?', 'Ça sent bon la viande !'],
@@ -726,6 +781,7 @@
   function phraseDe(h) {
     var ph = M.phase(monde);
     if (h.enfant) return auHasard(BARKS.enfant);
+    if (h.faim && Math.random() < 0.6) return auHasard(BARKS.faim);
     if (h.porte && BARKS.porte[h.porte]) return auHasard(BARKS.porte[h.porte]);
     if (h.reserve) return auHasard(BARKS.chantier);
     if (h.pose && BARKS.travail[h.metier]) return auHasard(BARKS.travail[h.metier]);
@@ -739,7 +795,7 @@
     prochainBark = T + 2.5 + Math.random() * 3.5;
     if (paroles.length >= 2) return;
     var l = monde.habitants.filter(function (h) {
-      if (h.dort) return false;
+      if (h.dort || h.cache) return false;
       var p = E(h.x, h.y);
       return p[0] > 40 && p[0] < V.W - 40 && p[1] > 90 && p[1] < V.H - 100 && !paroles.some(function (q) { return q.hab === h.id; });
     });
@@ -795,6 +851,13 @@
     parts.forEach(function (p) {
       p.x += p.vx * dt; p.y += p.vy * dt;
       var k = p.vie / p.max, s = E(p.x, p.y);
+      if (p.type === 'gain') {
+        var ag = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
+        ctx.globalAlpha = ag; ctx.font = Math.round(Math.max(18, 30 * V.s)) + 'px ' + POLICE_BULLE;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 4; ctx.strokeStyle = '#5b3c24'; ctx.fillStyle = '#fff';
+        ctx.strokeText(p.texte, s[0], s[1]); ctx.fillText(p.texte, s[0], s[1]); ctx.globalAlpha = 1;
+        return;
+      }
       if (p.type === 'eclat') { p.vy += 260 * dt; }
       if (p.type === 'pouf') { p.vx *= 0.94; p.vy *= 0.94; }
       var r = p.type === 'fumee' ? p.r * (1 + k * 2) : p.r * (1 - k * 0.5);
@@ -976,8 +1039,8 @@
   var choix = null;
   var derniers = { hab: -1, pieces: -1, idees: -1 };
   function majCompteurs() {
-    var v = { hab: monde.habitants.length + ' / ' + M.lits(monde), pieces: monde.pieces, idees: monde.idees };
-    ['hab', 'pieces', 'idees'].forEach(function (k) {
+    var v = { hab: monde.habitants.length + ' / ' + M.lits(monde), pieces: Math.floor(monde.pieces), idees: Math.floor(monde.idees), nourriture: Math.floor(monde.nourriture) };
+    ['hab', 'pieces', 'nourriture', 'idees'].forEach(function (k) {
       if (derniers[k] !== v[k]) {
         $('v-' + k).textContent = v[k];
         var el = $('c-' + k);
@@ -992,13 +1055,25 @@
     }
     var possible = M.decouvertesEpoque(monde).some(function (id) { return M.etatDecouverte(monde, id) === 'possible'; });
     $('btn-decouvertes').classList.toggle('pret', possible);
+    // pas assez à manger pour ce soir : le compteur rougit (ADR-032)
+    $('c-nourriture').classList.toggle('manque', monde.faim > 0 || monde.nourriture < M.besoinRepas(monde));
+    // le bouton doré de l'époque suivante (ADR-027)
+    var suiv = D.epoques.filter(function (x) { return x.id === monde.epoque + 1; })[0];
+    var pret = !!suiv && M.epoqueTerminee(monde) && !enScene;
+    if (pret !== !$('btn-epoque').hidden) {
+      $('btn-epoque').hidden = !pret;
+      if (pret) $('btn-epoque').textContent = (ICONE_EPOQUE[suiv.id] || '✨') + ' Vers ' + suiv.nom.toLowerCase().replace(/^l'/, "l'") + ' !';
+    }
+    $('btn-merveilles').classList.toggle('pret', merveilles().some(function (t) { var a = actionMerveille(t); return a.genre && a.cout <= monde.pieces; }));
   }
 
+  var ICONE_EPOQUE = { 2: '🌾', 3: '⚒️' };
   var signatureBarre = '';
   // le bandeau : deux onglets, construire et embellir (ADR-023)
   function majBarre() {
     var tout = M.construisibles(monde);
     var onglet = ui.onglet || 'construire';
+    tout = tout.filter(function (k) { return !D.batiments[k].merveille; }); // les merveilles ont leur fenêtre (ADR-030)
     var decos = tout.filter(function (k) { return D.batiments[k].deco; });
     if (!decos.length) onglet = 'construire';
     var liste = tout.filter(function (k) { return !!D.batiments[k].deco === (onglet === 'embellir'); });
@@ -1094,8 +1169,11 @@
     $('scene-illu').hidden = !(o.illustration && ASSETS[o.illustration]);
     if (o.illustration) $('scene-illu').src = ASSETS[o.illustration] || '';
     $('scene-images').innerHTML = o.illustration ? '' : (o.images || []).map(function (k) { return '<img src="' + ASSETS[k] + '" alt="">'; }).join('');
-    $('scene-texte').textContent = o.texte;
+    $('scene-texte').textContent = nb(o.texte);
     $('scene-ok').textContent = o.bouton || 'Super !';
+    $('scene-non').hidden = !o.non;
+    $('scene-non').textContent = o.non || '';
+    $('scene-non').onclick = function () { fermer('scene'); enScene = false; if (o.sinon) o.sinon(); };
     $('scene-voix').onclick = function () { dire(o.texte); };
     $('scene-ok').onclick = function () {
       fermer('scene'); enScene = false;
@@ -1155,26 +1233,77 @@
         texte: A.finJeu, bouton: 'À bientôt !' });
       return;
     }
+    scene({ titre: 'Bravo !', images: ['habitants/sage', '01-pierre/peintures-rupestres'], texte: A.finEpoque[monde.epoque], bouton: 'Super !' });
+  }
+  $('btn-epoque').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var suiv = D.epoques.filter(function (x) { return x.id === monde.epoque + 1; })[0];
+    if (!suiv || !M.epoqueTerminee(monde)) return;
+    son('clic');
     scene({
-      titre: 'Bravo !', images: ['habitants/sage', '01-pierre/peintures-rupestres'],
-      texte: A.finEpoque[monde.epoque],
-      bouton: 'En avant !',
+      titre: suiv.nom, illustration: suiv.id === 2 ? 'scenes/agriculture' : null, texte: A.pretEpoque,
+      bouton: 'En avant !', non: 'Pas encore',
       ensuite: function () {
         M.passerEpoque(monde);
         ui.nouveaux = ui.nouveaux.filter(function (k) { return D.batiments[k].epoque >= monde.epoque; });
+        choisir(null);
         montrerEpoque();
         sauver();
       }
     });
-  }
+  });
   function montrerEpoque() {
     var e = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0];
     $('epoque-nom').textContent = e.nom;
     var images = monde.epoque === 1 ? ['01-pierre/hutte-peaux', 'habitants/chasseur'] : ['02-neolithique/champ-ble', 'habitants/paysan'];
     scene({ titre: e.nom, images: images, illustration: monde.epoque === 1 ? 'scenes/cueilleurs' : 'scenes/agriculture', texte: e.intro, bouton: 'C\'est parti !', ensuite: function () {
-      if (monde.epoque === 2) aideUneFois('epoque2', A.epoque2);
+      if (monde.epoque === 2) { aideUneFois('epoque2', A.epoque2); setTimeout(function () { aideUneFois('maisons-a-main', A.maisonsAMain); }, 9000); }
     } });
   }
+
+  $('c-nourriture').addEventListener('click', function () { son('clic'); aide(A.nourritureInfo, true); });
+
+  // ---------- les merveilles (ADR-030) ----------
+  function merveilles() { return M.construisibles(monde).filter(function (k) { return D.batiments[k].merveille; }); }
+  // ce que le joueur peut faire pour une merveille : la commencer, bâtir l'étape suivante, attendre le chantier
+  function actionMerveille(type) {
+    var d = D.batiments[type], b = monde.batiments.filter(function (x) { return x.type === type; })[0];
+    if (!b) return { genre: 'commencer', etape: 1, cout: d.cout };
+    if (b.etat === 'chantier') return { encours: true, b: b };
+    var a = M.amelioration(monde, b);
+    return a ? { genre: 'etape', etape: a.etape, cout: a.cout, b: b } : { finie: true, b: b };
+  }
+  function ouvrirMerveilles() {
+    var g = $('grille-merv'); g.innerHTML = '';
+    merveilles().forEach(function (type) {
+      var d = D.batiments[type], a = actionMerveille(type), b = a.b, fait = b ? (b.etape || 0) : 0;
+      var el = document.createElement('div');
+      el.className = 'merv' + (a.encours ? ' encours' : a.finie ? ' finie' : '');
+      var etapes = '<div class="etapes">' + [0, 1, 2].map(function (i) { return '<i class="' + (i < fait ? 'ok' : '') + '"></i>'; }).join('') + '</div>';
+      var bouton = a.finie ? '<div class="nom">✓ Terminée !</div>'
+        : a.encours ? '<button class="bat non" disabled>🔨 En chantier…</button>'
+        : '<button class="bat' + (monde.pieces >= a.cout ? '' : ' non') + '">' + (a.genre === 'commencer' ? 'Commencer' : 'Étape ' + a.etape) + ' · 🪙 ' + a.cout + '</button>';
+      el.innerHTML = '<img src="' + ASSETS[d.sprite] + '" alt=""><div class="nom"></div>' + etapes + bouton + '<button class="lire">📖</button>';
+      el.querySelector('.nom').textContent = d.nom;
+      el.querySelector('.lire').addEventListener('click', function () { fermer('merveilles'); ouvrirPage(d.page); });
+      var bt = el.querySelector('.bat');
+      if (bt && !a.encours) bt.addEventListener('click', function () {
+        if (monde.pieces < a.cout) { son('non'); aide(A.piecesManquent, true); return; }
+        if (a.genre === 'commencer') {
+          if (!M.peutConstruire(monde, type)) { son('non'); aide(A.plusDePlace, true); return; }
+          fermer('merveilles'); choisir(type);
+        } else if (M.ameliorer(monde, b.id)) {
+          son('pose'); fermer('merveilles'); centrerSur(b.x, b.y); signatureBarre = ''; sauver();
+        }
+      });
+      g.appendChild(el);
+    });
+    ouvrir('merveilles');
+    var fen = document.querySelector('#merveilles .fenetre');
+    fen.scrollTop = 0; requestAnimationFrame(function () { fen.scrollTop = 0; });
+  }
+  $('btn-merveilles').addEventListener('click', function () { son('clic'); ouvrirMerveilles(); aideUneFois('merveilles', A.merveilles); });
+  function centrerSur(x, y) { V.cx = x; V.cy = y - 60; borner(); }
 
   // menu
   $('btn-menu').addEventListener('click', function () { $('menu-voix').textContent = '🔊 Voix : ' + (ui.voix ? 'oui' : 'non'); ouvrir('menu'); });
@@ -1240,7 +1369,7 @@
   // phrases des habitants
   var phrases = D.textes.phrases, A = D.textes.aides;
   function parler(h) {
-    var cat = h.enfant ? 'enfant' : h.reserve ? 'construit' : (h.metier && phrases[h.metier]) ? h.metier : 'libre';
+    var cat = h.faim ? 'faim' : h.enfant ? 'enfant' : h.reserve ? 'construit' : (h.metier && phrases[h.metier]) ? h.metier : 'libre';
     var l = phrases[cat], texte = l[Math.floor(Math.random() * l.length)];
     paroles = paroles.filter(function (p) { return p.hab !== h.id; });
     paroles.push({ hab: h.id, texte: texte, debut: T, fin: T + 2.8 });
@@ -1332,14 +1461,15 @@
     var am = o.bat ? M.amelioration(monde, o.bat) : null, ba = $('info-ameliorer');
     ba.hidden = !am;
     if (am) {
-      ba.innerHTML = '⬆ ' + (am.genre === 'maison' ? 'Agrandir en ' + D.batiments[am.vers].nom.replace(/^Une? /, '').toLowerCase() : 'Améliorer') + ' · 🪙 ' + am.cout;
+      ba.innerHTML = (am.genre === 'maison' ? '⬆ Transformer en ' + D.batiments[am.vers].nom.replace(/^Une? /, '').toLowerCase()
+        : am.genre === 'etape' ? '🏛 Étape ' + am.etape : '⬆ Niveau ' + am.niveau + ' : un travailleur de plus') + ' · 🪙 ' + am.cout;
       ba.classList.toggle('non', monde.pieces < am.cout);
       ba.onclick = function (e) {
         e.stopPropagation();
         if (monde.pieces < am.cout) { son('non'); aide(A.piecesManquent, true); return; }
         if (M.ameliorer(monde, o.bat.id)) {
           son('pose'); cacherInfo();
-          aideUneFois('ameliorer', A.amelioration);
+          if (am.genre === 'niveau') aideUneFois('ameliorer', A.amelioration);
           signatureBarre = ''; sauver();
         }
       };
@@ -1365,6 +1495,7 @@
     $('page-img').src = ASSETS[d.scene] || ASSETS[d.image] || ASSETS[d.icone] || '';
     $('page-image').classList.toggle('objet', !ASSETS[d.scene]);
     $('page-bandeau').hidden = !o.nouveau;
+    $('page-bandeau').textContent = o.bandeau || 'Nouvelle découverte !';
     var bd = Object.keys(D.batiments).map(function (k) { return D.batiments[k]; }).filter(function (b) { return b.page === id; })[0];
     $('page-epoque').textContent = (ep ? ep.nom : '') + (D.decouvertes[id] ? ' · Découverte' : bd && bd.merveille ? ' · Merveille' : d.deco ? ' · Décoration' : '');
     $('page-titre').textContent = d.nom;
@@ -1413,21 +1544,25 @@
   function resumeType(type) {
     var d = D.batiments[type], l = [];
     if (d.lits) l.push('👥 ' + d.lits + ' personnes y dorment');
-    if (d.travail) l.push((d.travail.produit === 'idees' ? '💡' : '🪙') + ' +' + d.travail.qte + ' à chaque fois · ' + METIERS[d.travail.metier]);
-    if (d.cout != null) l.push('Coûte 🪙 ' + d.cout);
+    if (d.travail) l.push(EMOJI[d.travail.produit] + ' +' + d.travail.qte + ' à chaque fois · ' + METIERS[d.travail.metier]);
+    if (d.merveille) l.push('🏛 Merveille en 3 étapes');
+    if (d.cout != null) l.push((d.merveille ? 'Chaque étape coûte 🪙 ' : 'Coûte 🪙 ') + d.cout);
     return l.join(' · ');
   }
   function infoBatiment(b) {
     var d = D.batiments[b.type], statut;
     if (b.etat === 'chantier') statut = '🔨 Chantier : ' + b.livre + ' bois apporté' + (b.livre > 1 ? 's' : '') + ' sur ' + b.besoin;
     else if (d.travail) {
-      var h = monde.habitants.filter(function (q) { return q.id === b.ouvrier; })[0];
-      statut = h ? 'Ici travaille ' + METIERS[d.travail.metier] + '.' : 'Personne n\'y travaille encore : il faut un nouvel habitant.';
-    } else if (d.lits) statut = '👥 ' + d.lits + ' personnes y dorment';
+      var nO = (b.ouvriers || []).length, nP = M.places(b);
+      statut = nO ? '👷 ' + nO + ' / ' + nP + ' travailleur' + (nP > 1 ? 's' : '') + ' · ' + METIERS[d.travail.metier]
+        : 'Personne n\'y travaille encore : il faut un nouvel habitant.';
+      if (nO && nO < nP) statut += ' (il manque quelqu\'un)';
+    } else if (d.merveille && !M.merveilleFinie(b)) statut = '🏛 Étape ' + (b.etape || 0) + ' sur 3 : ouvre les merveilles pour continuer.';
+    else if (d.lits) statut = '👥 ' + d.lits + ' personnes y dorment';
     if (d.finitAvec && monde.decouvertes[d.finitAvec]) statut = 'Depuis l\'élevage, plus besoin de chasser : la viande vient de l\'enclos.';
     var n = monde.habitants.filter(function (q) { return q.dort && q.dortChez === b.id; }).length;
     if (n) statut = '😴 Chut… ' + (n > 1 ? n + ' personnes dorment' : 'quelqu\'un dort') + ' ici.';
-    if (d.travail && b.etat === 'fini' && !(d.finitAvec && monde.decouvertes[d.finitAvec])) statut = (statut ? statut + ' · ' : '') + '⭐ Niveau ' + (b.niveau || 1) + ' : ' + (d.travail.produit === 'idees' ? '💡' : '🪙') + ' +' + M.quantite(b) + ' à chaque fois';
+    if (d.travail && b.etat === 'fini' && !(d.finitAvec && monde.decouvertes[d.finitAvec])) statut = (statut ? statut + ' · ' : '') + '⭐ Niveau ' + (b.niveau || 1) + ' · ' + EMOJI[d.travail.produit] + ' +' + M.quantite(b) + ' à chaque fois';
     montrerInfo({ img: d.sprite, titre: d.nom, texte: d.resume || d.explication || '', statut: statut, page: pageDuBat(b.type), type: b.type, bat: b });
   }
   function infoNature(cle) { var n = D.textes.nature[cle]; montrerInfo({ img: n[0], titre: n[1], texte: n[2] }); }
@@ -1456,14 +1591,14 @@
       var bu = bulles[i];
       if (Math.hypot(x - bu.x, y - bu.y) < bu.r) {
         var r = M.recolter(monde, bu.bat);
-        if (r) { son('pop'); voler(r.produit === 'idees' ? '💡' : '🪙', bu.x, bu.y, r.produit === 'idees' ? 'c-idees' : 'c-pieces', r.n); }
+        if (r) { son('pop'); voler(EMOJI[r.produit], bu.x, bu.y, 'c-' + r.produit, r.n); }
         return;
       }
     }
     // un habitant ?
     var best2 = null, bd2 = 1e9;
     monde.habitants.forEach(function (h) {
-      if (h.dort) return;
+      if (h.dort || h.cache) return;
       var p = E(h.x, h.y - 30);
       var d = Math.hypot(x - p[0], y - p[1]);
       if (d < bd2) { bd2 = d; best2 = h; }
@@ -1471,6 +1606,7 @@
     if (best2 && bd2 < Math.max(24, 36 * V.s)) { parler(best2); return; }
     // un animal ?
     var an = monde.animaux.filter(function (a) {
+      if (a.disparu) return false;
       var p = E(a.x, a.y), lw = (a.espece === 'mammouth' ? 165 : a.espece === 'lapin' ? 40 : 50) * V.s;
       return Math.abs(x - p[0]) < lw / 2 && y < p[1] + 6 && y > p[1] - lw * 0.8;
     })[0];
@@ -1497,6 +1633,19 @@
     cacherInfo();
   }
 
+  // une merveille terminée : confettis, musique et sa grande page (ADR-030)
+  function feteMerveille(b) {
+    if (!b) return;
+    var d = D.batiments[b.type], t = tailleBat(b);
+    for (var i = 0; i < 4; i++) setTimeout(function () {
+      pouf(b.x + (Math.random() - 0.5) * 200, b.y - t.h / V.s * 0.5, 16, ['255,210,63', '233,135,59', '120,190,240', '240,120,160'][Math.floor(Math.random() * 4)]);
+      son('fini');
+    }, i * 350);
+    monde.habitants.filter(function (h) { return !h.dort && !h.cache; }).slice(0, 4).forEach(function (h, i) { setTimeout(function () { bark(h, auHasard(['Hourra !', 'Magnifique !', 'Bravo !', 'Quelle merveille !'])); }, 300 + i * 400); });
+    centrerSur(b.x, b.y);
+    aide(A.merveilleFinie);
+    setTimeout(function () { ouvrirPage(d.page, { nouveau: true, bandeau: '🏛 Merveille terminée !' }); }, 2600);
+  }
   function voler(emoji, x, y, cible, n) {
     var el = document.createElement('div');
     el.id = 'vole'; el.textContent = emoji + '+' + n;
@@ -1519,10 +1668,24 @@
         var b = M.bat(monde, e.bat);
         if (b) { var t = tailleBat(b); pouf(b.x, b.y - t.h / V.s * 0.3, 14); son('fini'); }
         if (b && D.batiments[b.type].lits) aideUneFois('maison', A.maison);
+        if (b && D.batiments[b.type].merveille && !M.merveilleFinie(b)) aide(A.merveilleEtape);
+      } else if (e.type === 'merveille') {
+        feteMerveille(M.bat(monde, e.bat));
       } else if (e.type === 'chasse') {
-        pouf(e.x, e.y - 10, e.espece === 'mammouth' ? 14 : 7, '235,225,205');
+        if (!e.loin) pouf(e.x, e.y - 10, e.espece === 'mammouth' ? 14 : 7, '235,225,205');
+      } else if (e.type === 'gain') {
+        // chacun rapporte lui-même sa production au village (ADR-029)
+        particule({ type: 'gain', texte: '+' + e.n + ' ' + EMOJI[e.produit], x: e.x, y: e.y - 70, vy: -26, max: 1.6 });
+        var cpt = $('c-' + e.produit); if (cpt) { cpt.classList.remove('tilt'); void cpt.offsetWidth; cpt.classList.add('tilt'); }
+      } else if (e.type === 'faim') {
+        aide(monde.epoque >= 2 ? A.faim2 : A.faim1);
+      } else if (e.type === 'grandi') {
+        var hg = monde.habitants.filter(function (q) { return q.id === e.hab; })[0];
+        if (hg) bark(hg, 'J\'ai grandi !');
       } else if (e.type === 'bulle') {
-        aideUneFois('bulle', A.bulle);
+        var bb = M.bat(monde, e.bat);
+        if (bb && D.batiments[bb.type].travail.produit === 'nourriture') aideUneFois('nourriture', A.nourriture);
+        else aideUneFois('bulle', A.bulle);
       } else if (e.type === 'arrivee') {
         aideUneFois('arrivee', A.arrivee);
       }
@@ -1545,7 +1708,11 @@
     if (!ui.aide.idee && monde.idees >= 4 && !Object.keys(monde.decouvertes).length && !enScene) {
       aideUneFois('idee', A.idee);
     }
-    if (!ui.aide.construire && monde.pieces >= 6 && monde.t > 25 && !enScene) {
+    // les chasseurs qui s'enfoncent dans la forêt (ADR-033)
+    if (!ui.aide.chasseursLoin && !enScene && monde.habitants.some(function (h) { return h.cache && h.metier === 'chasseur'; })) aideUneFois('chasseursLoin', A.chasseursLoin);
+    // des maisons vides, mais pas assez à manger pour accueillir quelqu'un (ADR-032)
+    if (!ui.aide.maisonsVides && !enScene && monde.t > 60 && M.lits(monde) > monde.habitants.length && !M.assezAManger(monde) && M.phase(monde) === 'jour') aideUneFois('maisonsVides', A.maisonsVides);
+    if (!ui.aide.construire && monde.pieces >= 15 && monde.t > 25 && !enScene) {
       aideUneFois('construire', A.construire);
     }
   }

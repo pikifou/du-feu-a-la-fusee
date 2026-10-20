@@ -170,3 +170,51 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée. Tranche le rôle du mammouth (proposition de Claude jusque-là).
 - **Décision** : (1) des lapins et des mammouths se promènent dans la vallée, et les chasseurs vont les chasser (on ne voit pas que de la cueillette). (2) Un mammouth chassé disparaît pour de bon. (3) Des lapins réapparaissent de temps en temps, pour qu'il y ait toujours de quoi chasser. (4) Une fois l'élevage découvert, on n'a plus besoin d'aller chasser : c'est la transition vers le néolithique.
 - **Contexte** : Julien : « Le mammouth, une fois qu'on l'a tué, il n'est plus là. Autant faut faire spawner des lapins de temps en temps pour qu'ils aillent les manger. Comme ça, au moins, ça fait une transition. Quand après on fait de l'élevage, il n'y a plus besoin d'y aller. »
+
+## ADR-026 : une économie beaucoup plus lente
+- **Date** : 2026-10-20
+- **Statut** : acceptée. Les chiffres exacts sont une proposition de Claude, à régler en test.
+- **Décision** : les prix montent fortement (ordre de grandeur donné par Julien : transformer une maison coûte environ 50 pièces). On doit attendre et choisir ; l'argent ne doit plus s'accumuler sans rien à payer en face.
+- **Contexte** : Julien sur la v0.10 : « On a vraiment trop d'argent, il faut augmenter les échelles drastiquement. […] On a rien à payer en face donc il faut slow down. »
+
+## ADR-027 : on change d'époque quand on veut, avec un bouton qui donne envie
+- **Date** : 2026-10-20
+- **Statut** : acceptée. Remplace le passage automatique.
+- **Décision** : quand toutes les découvertes d'une époque sont faites, l'époque suivante ne démarre pas toute seule : un bouton motivant apparaît et c'est le joueur qui appuie quand il est prêt. En attendant, on peut continuer à poser, améliorer et finir ses merveilles.
+- **Contexte** : Julien : « le passage de phase est automatique, ce qui est une mauvaise idée […] à l'âge de pierre ça passe automatiquement donc on ne peut ni poser, ni améliorer. Il faut un bouton motivant qui nous pousse à appuyer dessus. »
+
+## ADR-028 : pas d'amélioration automatique au changement d'époque
+- **Date** : 2026-10-20
+- **Statut** : acceptée. Remplace le point « la ville améliore d'elle-même ce qui existe » d'ADR-008.
+- **Décision** : au passage d'époque, les bâtiments restent tels quels ; c'est le joueur qui les améliore à la main (contre des pièces).
+- **Contexte** : Julien : « il ne faut pas améliorer les bâtiments automatiquement au passage d'âge, il faut le faire à la main. »
+
+## ADR-029 : la récolte devient automatique à la fin du nomadisme
+- **Date** : 2026-10-20
+- **Statut** : acceptée.
+- **Décision** : à l'âge de pierre (chasseurs-cueilleurs nomades), on récolte à la main en touchant les bulles. Dès le néolithique, on se sédentarise : chaque travailleur rapporte lui-même sa production à la place du village, on le voit marcher, et le compte monte quand il arrive. Plus besoin de toucher partout.
+- **Contexte** : Julien : « mon fils passe son temps à appuyer partout dès qu'on a 5 ou 6 bâtiments […] il faut justifier de manière diégétique le fait que les éléments soient récompensés automatiquement. Quand on termine le nomadisme, ça peut se justifier. » Option choisie parmi trois proposées (néolithique, grenier, découverte dédiée).
+
+## ADR-030 : les merveilles sont de grands chantiers visibles
+- **Date** : 2026-10-20
+- **Statut** : acceptée. Précise ADR-023 et ADR-024.
+- **Décision** : les merveilles ont leur propre bouton 🏛 en haut de l'écran. Une merveille se construit en 3 étapes payées une à une : on voit le monument grandir ; à la fin, une fête et sa grande page.
+- **Contexte** : Julien : « Mon fils ni moi n'avons compris où est le système de merveille dont on avait parlé. » Les embellissements sont aussi « trop peu nombreux ou pas assez évidents ».
+
+## ADR-031 : monter de niveau, c'est un travailleur de plus et un bâtiment qui change
+- **Date** : 2026-10-20
+- **Statut** : acceptée. Précise ADR-021.
+- **Décision** : chaque niveau d'un bâtiment qui produit ajoute un travailleur (il faut donc plus d'habitants, donc plus de maisons et plus à manger) et change l'aspect du bâtiment.
+- **Contexte** : Julien : « Les améliorations sont trop peu nombreuses ou pas assez intéressantes. » Réponse au choix proposé : « OK pour ouvrier. »
+
+## ADR-032 : il faut nourrir les habitants
+- **Date** : 2026-10-20
+- **Statut** : acceptée sur le principe. Le détail (combien on mange, quand, ce qui se passe si on a faim) est une proposition de Claude.
+- **Décision** : la nourriture devient une ressource : certains bâtiments la produisent (cueillette, chasse, pêche, puis champs et troupeaux), et les habitants la consomment. Sans assez à manger, le village ne grandit plus : construire des maisons partout ne sert à rien.
+- **Contexte** : Julien : « il faut rajouter la gestion de la bouffe. Sinon tout est trop bordélique et il construit des maisons partout. »
+
+## ADR-033 : les chasseurs partent au loin
+- **Date** : 2026-10-20
+- **Statut** : acceptée. Précise ADR-025.
+- **Décision** : on voit les chasseurs s'éloigner et disparaître un peu au loin pour chercher les animaux, puis revenir avec leur prise.
+- **Contexte** : Julien : « il faudrait qu'on voit que les chasseurs s'éloignent et disparaissent un peu au loin pour chercher les animaux. »

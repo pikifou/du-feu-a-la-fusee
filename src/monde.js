@@ -4,7 +4,8 @@ var Monde = (function () {
   var D = typeof Donnees !== 'undefined' ? Donnees : require('./data.js');
   var TR = typeof Terrain !== 'undefined' ? Terrain : require('./terrain.js');
 
-  var BULLES_MAX = 3; // unités de production stockées par bâtiment
+  var BULLES_MAX = 3; // unités de production stockées par bâtiment et par travailleur
+  var REPAS = 3; // ce que mange chaque habitant au repas du soir (ADR-032)
   var VITESSE = { adulte: 80, enfant: 110, sage: 50 };
   var DELAI_ARRIVEE = 25;
   // Jour et nuit (ADR-011, ADR-016) : le jour, la soirée (veillée au feu), la nuit (on dort,
@@ -43,7 +44,7 @@ var Monde = (function () {
   function nouveau(graine) {
     var m = {
       t: 0, graine: graine || 12345, prochainId: 1,
-      pieces: 12, idees: 0, epoque: 1, decouvertes: {},
+      pieces: 20, idees: 0, nourriture: 20, faim: 0, epoque: 1, decouvertes: {},
       batiments: [], habitants: [], animaux: [],
       arrivee: 0, evenements: [], fini: false, repousse: 0,
       cycle: { phase: 'jour', t: 20 },
@@ -52,13 +53,15 @@ var Monde = (function () {
     var C = [TR.CI, TR.CJ];
     var cercle = poserPres(m, 'cercle-pierres', C, true);
     var tas = poserPres(m, 'tas-bois', [C[0] - 3, C[1] + 1], true);
+    var baies = poserPres(m, 'buisson-baies', [C[0] - 1, C[1] + 4], true);
     poserPres(m, 'tente', [C[0] + 1, C[1] + 3], true);
     poserPres(m, 'tente', [C[0] + 3, C[1] - 1], true);
     var sage = ajouterHabitant(m, { allure: 'sage', metier: 'sage', x: cercle.x + 40, y: cercle.y + 50 });
     affecter(m, sage, cercle);
     var b = ajouterHabitant(m, { allure: 'porteur-bois', x: tas.x + 50, y: tas.y + 30 });
     affecter(m, b, tas);
-    ajouterHabitant(m, { allure: 'cueilleuse', x: cercle.x - 80, y: cercle.y + 70 });
+    var c = ajouterHabitant(m, { allure: 'cueilleuse', x: cercle.x - 80, y: cercle.y + 70 });
+    affecter(m, c, baies);
     // quelques mammouths sur l'autre rive : une fois chassés, ils ne reviennent pas
     [[5, -8], [8, -5], [3, -11]].forEach(function (o) {
       var zm = pointLibre(m, TR.centre(TR.CI + o[0], TR.CJ + o[1]), 3, function (t) { return t.sauvage && t.sol === 'herbe'; });
@@ -75,7 +78,7 @@ var Monde = (function () {
     var bat = {
       id: m.prochainId++, type: type, i: i, j: j, k: k, x: c[0], y: c[1],
       etat: fini ? 'fini' : 'chantier', livre: 0, besoin: def.bois || 0, enRoute: 0,
-      stock: 0, ouvrier: null, apparu: fini ? -10 : null, cree: m.t
+      stock: 0, ouvriers: [], apparu: fini ? -10 : null, cree: m.t
     };
     if (type !== 'passerelle') {
       (TR.empreinte(T, i, j, k) || []).forEach(function (t) { t.bat = bat.id; t.deco = null; if (t.obj === 'souche') t.obj = null; t.usure = 0; });
@@ -95,7 +98,7 @@ var Monde = (function () {
       id: m.prochainId++, allure: o.allure, enfant: enfant, metier: o.metier || null, travail: null,
       x: o.x, y: o.y, etapes: [], porte: null, dir: 1, marche: false, anim: 'repos',
       vitesse: o.allure === 'sage' ? VITESSE.sage : (enfant ? VITESSE.enfant : VITESSE.adulte),
-      pouf: 0, reserve: null
+      pouf: 0, reserve: null, ne: m.t
     };
     m.habitants.push(h);
     return h;
@@ -105,7 +108,8 @@ var Monde = (function () {
     var def = D.batiments[bat.type];
     h.travail = bat.id;
     h.metier = def.travail.metier;
-    bat.ouvrier = h.id;
+    if (!bat.ouvriers) bat.ouvriers = [];
+    if (bat.ouvriers.indexOf(h.id) < 0) bat.ouvriers.push(h.id);
     var allure = D.allures[m.epoque][h.metier];
     if (allure && allure !== h.allure && h.allure !== 'sage') { h.allure = allure; h.pouf = 0.6; }
   }
@@ -118,6 +122,9 @@ var Monde = (function () {
       return s + (b.etat === 'fini' ? (d.lits || 0) : (b.renove || 0));
     }, 0);
   }
+  // un travailleur par niveau (ADR-031)
+  function places(b) { return D.batiments[b.type].travail ? (b.niveau || 1) : 0; }
+  function stockMax(b) { return BULLES_MAX * (b.niveau || 1); }
   function aFeu(m) { return m.batiments.some(function (b) { return b.type === 'feu' && b.etat === 'fini'; }); }
 
   function construisibles(m) {
@@ -198,6 +205,7 @@ var Monde = (function () {
     if (!ancre || !ancreValide(m, type, ancre[0], ancre[1])) return null;
     m.pieces -= D.batiments[type].cout;
     var b = poser(m, type, ancre[0], ancre[1], false);
+    if (D.batiments[type].merveille) { b.etape = 0; b.etapeVisee = 1; } // ADR-030 : une merveille se bâtit en 3 étapes
     m.evenements.push({ type: 'chantier', bat: b.id });
     return b;
   }
@@ -231,20 +239,8 @@ var Monde = (function () {
     m.epoque = suivante.id;
     m.terrain.epoque = m.epoque; // l'île s'agrandit
     m.terrain.agrandi = m.t;
-    // la ville améliore d'elle-même ce qui existe (ADR-008)
-    m.batiments.forEach(function (b) {
-      var d = D.batiments[b.type];
-      if (b.etat === 'fini' && d.ameliore) {
-        b.renove = d.lits || 0;
-        b.ancien = b.type;
-        b.type = d.ameliore;
-        b.etat = 'chantier';
-        b.livre = 0;
-        b.besoin = D.batiments[b.type].bois;
-        b.enRoute = 0;
-        b.cree = m.t;
-      }
-    });
+    // pas d'amélioration automatique (ADR-028) ; fin du nomadisme : ce qui attendait d'être ramassé est mis en commun (ADR-029)
+    m.batiments.forEach(function (b) { recolter(m, b.id); });
     if (m.epoque === 2 && m.terrain.gue) {
       var g = m.terrain.gue;
       var pass = poser(m, 'passerelle', g[0], g[1], false);
@@ -262,19 +258,27 @@ var Monde = (function () {
 
   // ---------- améliorations payantes (ADR-021) ----------
   var NIVEAU_MAX = 3;
+  // ce qu'on peut faire de mieux avec un bâtiment : l'agrandir (maison), monter de niveau, ou bâtir l'étape suivante d'une merveille
   function amelioration(m, b) {
     if (!b || b.etat !== 'fini') return null;
-    var d = D.batiments[b.type], ev = d.evolue;
-    if (ev) {
-      var cible = D.batiments[ev.vers];
-      if ((!ev.decouverte || m.decouvertes[ev.decouverte]) && cible.epoque <= m.epoque && (cible.jusqua || 9) >= m.epoque)
-        return { genre: 'maison', vers: ev.vers, cout: ev.cout };
+    var d = D.batiments[b.type];
+    if (d.merveille) {
+      var et = b.etape == null ? 3 : b.etape;
+      return et < 3 ? { genre: 'etape', etape: et + 1, cout: d.cout } : null;
+    }
+    if (d.evolue) {
+      var evs = [].concat(d.evolue);
+      for (var i = evs.length - 1; i >= 0; i--) {
+        var ev = evs[i], cible = D.batiments[ev.vers];
+        if ((!ev.decouverte || m.decouvertes[ev.decouverte]) && cible.epoque <= m.epoque && (cible.jusqua || 9) >= m.epoque)
+          return { genre: 'maison', vers: ev.vers, cout: ev.cout };
+      }
       return null;
     }
     var n = b.niveau || 1;
-    if (d.travail && n < NIVEAU_MAX) {
+    if (d.travail && n < NIVEAU_MAX && !inactif(m, b)) {
       var base = d.prixNiveau || d.cout || 10;
-      return { genre: 'niveau', niveau: n + 1, cout: Math.round(base * (n === 1 ? 1.5 : 3)) };
+      return { genre: 'niveau', niveau: n + 1, cout: Math.round(base * (n === 1 ? 2 : 4)) };
     }
     return null;
   }
@@ -287,6 +291,9 @@ var Monde = (function () {
       b.ancien = b.type;
       b.type = a.vers;
       b.besoin = D.batiments[a.vers].bois;
+    } else if (a.genre === 'etape') {
+      b.etapeVisee = a.etape;
+      b.besoin = D.batiments[b.type].bois;
     } else {
       b.niveauVise = a.niveau;
       b.besoin = 1 + a.niveau;
@@ -295,7 +302,8 @@ var Monde = (function () {
     m.evenements.push({ type: 'chantier', bat: b.id });
     return a;
   }
-  function quantite(b) { return D.batiments[b.type].travail.qte + (b.niveau || 1) - 1; }
+  function quantite(b) { return D.batiments[b.type].travail.qte; }
+  function merveilleFinie(b) { return !D.batiments[b.type].merveille || (b.etape == null ? 3 : b.etape) >= 3; }
 
   function recolter(m, id) {
     var b = bat(m, id);
@@ -303,7 +311,7 @@ var Monde = (function () {
     var tr = D.batiments[b.type].travail;
     var n = b.stock * quantite(b);
     b.stock = 0;
-    if (tr.produit === 'idees') m.idees += n; else m.pieces += n;
+    m[tr.produit] = (m[tr.produit] || 0) + n;
     return { produit: tr.produit, n: n };
   }
 
@@ -327,13 +335,25 @@ var Monde = (function () {
     m.cycle = { phase: ph, t: 0 };
     if (ph === 'aube') m.jour = (m.jour || 0) + 1;
     m.evenements.push({ type: 'phase', phase: ph });
+    if (ph === 'soir') manger(m);
     if (ph === 'nuit') {
       // les feux s'éteignent : tout le monde va se coucher
       m.habitants.forEach(function (h) { lacher(m, h); });
     }
   }
+  // le repas du soir : chacun mange ; s'il n'y a pas assez, le village ne grandit plus (ADR-032)
+  function besoinRepas(m, n) { return (n == null ? m.habitants.length : n) * REPAS; }
+  function manger(m) {
+    var n = m.habitants.length, nourris = Math.min(n, Math.floor(m.nourriture / REPAS));
+    m.nourriture -= nourris * REPAS;
+    m.faim = n - nourris;
+    var affames = m.habitants.slice().sort(function (a, b) { return b.id - a.id; }).slice(0, m.faim).map(function (h) { return h.id; });
+    m.habitants.forEach(function (h) { h.faim = affames.indexOf(h.id) >= 0; });
+    m.evenements.push({ type: m.faim ? 'faim' : 'repas', n: nourris * REPAS, affames: m.faim });
+  }
   function lacher(m, h) {
-    m.animaux.forEach(function (a) { if (a.chasse === h.id) a.chasse = null; });
+    h.cache = false;
+    m.animaux.forEach(function (a) { if (a.chasse === h.id) { a.chasse = null; a.fuit = null; if (a.disparu) a.parti = true; } });
     if (h.reserve) { var c = bat(m, h.reserve); if (c) c.enRoute = Math.max(0, c.enRoute - 1); h.reserve = null; }
     h.etapes.forEach(function (e) { if (e.fait === 'couper') { var t = TR.tuile(m.terrain, e.i, e.j); if (t) t.reserve = false; } });
     h.etapes = []; h.porte = null;
@@ -403,18 +423,63 @@ var Monde = (function () {
     return best ? centreTuile(best) : p;
   }
 
+  // là où l'on rapporte ce qu'on a produit, une fois sédentaires (ADR-029) : la place du village,
+  // ou le grenier le plus proche pour la nourriture
+  function depot(m, produit, p) {
+    var l = m.batiments.filter(function (b) {
+      return b.etat === 'fini' && (b.type === 'cercle-pierres' || (produit === 'nourriture' && b.type === 'grenier'));
+    });
+    var best = null, bd = 1e9;
+    l.forEach(function (b) { var d = dist(p, [b.x, b.y]); if (d < bd) { bd = d; best = b; } });
+    return best;
+  }
+  // la lisière de la forêt où les chasseurs disparaissent (ADR-033) : loin du village, contre les arbres
+  function lisiere(m, p) {
+    var T = m.terrain, l = [];
+    T.tuiles.forEach(function (t) {
+      if (!TR.surIle(T, t) || TR.bloque(T, t) || t.sol !== 'herbe' || t.bat) return;
+      var n = 0;
+      for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { var v = TR.tuile(T, t.i + di, t.j + dj); if (v && v.obj === 'arbre') n++; }
+      if (n < 4) return;
+      var q = centreTuile(t), d = dist(p, q);
+      if (d > 700) l.push({ t: t, d: d });
+    });
+    if (!l.length) return null;
+    l.sort(function (a, b) { return a.d - b.d; });
+    var t = l[Math.min(l.length - 1, Math.floor(hasard(m) * Math.min(8, l.length)))].t;
+    // le point de fuite : on s'enfonce un peu vers les arbres
+    var q = centreTuile(t), ax = 0, ay = 0;
+    for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { var v = TR.tuile(T, t.i + di, t.j + dj); if (v && v.obj === 'arbre') { var c = centreTuile(v); ax += c[0] - q[0]; ay += c[1] - q[1]; } }
+    var k = Math.hypot(ax, ay) || 1;
+    return { p: q, loin: [q[0] + ax / k * 40, q[1] + ay / k * 20] };
+  }
+
   function planTravail(m, h, b) {
     var tr = D.batiments[b.type].travail;
-    var et = [], lieu = null, arbre = null;
+    var et = [], lieu = null, arbre = null, objet = tr.porte || null;
     var pose = (D.poses[m.epoque] || {})[tr.metier] || null; // ADR-017 : on voit ce qu'il fait
     var depuis = [b.x, b.y];
-    var proie = null;
+    var proie = null, foret = null, fois = 1;
     if (tr.aller === 'gibier') {
+      // la chasse : un mammouth de temps en temps, sinon on part au loin dans la forêt (ADR-033),
+      // en suivant un lapin s'il y en a un
       proie = gibierProche(m, depuis);
-      if (!proie) return [{ fait: 'aller', p: pointLibre(m, devant(m, b), 1) }, { fait: 'attendre', d: 4, anim: 'repos' }];
-      proie.chasse = h.id; proie.etapes = []; proie.marche = false;
-      var gros = proie.espece === 'mammouth';
-      lieu = [proie.x + (gros ? -110 : -34) * (hasard(m) < 0.5 ? 1 : -1), proie.y + (gros ? 30 : 10)];
+      if (!proie || proie.espece === 'lapin') foret = lisiere(m, depuis);
+      if (!proie && !foret) return [{ fait: 'aller', p: pointLibre(m, devant(m, b), 1) }, { fait: 'attendre', d: 4, anim: 'repos' }];
+      if (proie) { proie.chasse = h.id; proie.etapes = []; proie.marche = false; }
+      if (proie && proie.espece === 'mammouth') {
+        lieu = [proie.x + -110 * (hasard(m) < 0.5 ? 1 : -1), proie.y + 30];
+        fois = 3;
+      } else {
+        if (proie) { proie.fuit = foret.loin.slice(); objet = 'lapin'; }
+        et.push({ fait: 'aller', p: proie ? [proie.x - 30, proie.y + 8] : foret.p });
+        if (proie) et.push({ fait: 'aller', p: foret.p });
+        et.push({ fait: 'aller', p: foret.loin });
+        et.push({ fait: 'disparaitre', d: tr.duree + 6 + hasard(m) * 6 });
+        if (proie) et.push({ fait: 'chasser', animal: proie.id, loin: true });
+        et.push({ fait: 'prendre', objet: objet });
+        et.push({ fait: 'aller', p: foret.p });
+      }
     } else if (tr.aller === 'foret') {
       arbre = arbreProche(m, depuis);
       if (arbre) { var q = centreTuile(arbre); lieu = [q[0] + 30, q[1] + 22]; }
@@ -432,34 +497,54 @@ var Monde = (function () {
       var champs = m.batiments.filter(function (c) { return c.type === 'champ-ble' && c.etat === 'fini'; });
       if (champs.length) { var c = choisir(m, champs); lieu = [c.x + (hasard(m) - 0.5) * 120, c.y + (hasard(m) - 0.5) * 40]; }
     }
+    var sedentaire = m.epoque >= 2; // fin du nomadisme : on rapporte soi-même au village (ADR-029)
+    var dep = sedentaire ? depot(m, tr.produit, depuis) : null;
+    var sur = dep && dep.id === b.id; // le sage est déjà sur la place
     if (lieu) {
       et.push({ fait: 'aller', p: lieu });
-      et.push({ fait: 'attendre', d: proie && proie.espece === 'mammouth' ? tr.duree * 2 : tr.duree, anim: 'travail', pose: pose });
+      et.push({ fait: 'attendre', d: fois > 1 ? tr.duree * 2 : tr.duree, anim: 'travail', pose: pose });
       if (arbre) et.push({ fait: 'couper', i: arbre.i, j: arbre.j });
       if (proie) et.push({ fait: 'chasser', animal: proie.id });
-      et.push({ fait: 'prendre', objet: proie && proie.espece === 'lapin' ? 'lapin' : tr.porte });
-      et.push({ fait: 'aller', p: devant(m, b) });
-      et.push({ fait: 'attendre', d: 0.6, anim: 'repos' });
-      et.push({ fait: 'deposer' });
-    } else {
+      et.push({ fait: 'prendre', objet: objet });
+      if (dep && tr.livre) {
+        // on rapporte la matière à l'atelier, on la travaille, puis on livre l'objet fini au village
+        et.push({ fait: 'aller', p: devant(m, b) });
+        et.push({ fait: 'deposer' });
+        et.push({ fait: 'attendre', d: 2, anim: 'travail', pose: pose });
+        et.push({ fait: 'prendre', objet: tr.livre });
+      }
+    } else if (!foret) {
       var dedans = b.type === 'cercle-pierres'; // le sage s'assoit au milieu du cercle
       var p = b.type === 'champ-ble' || b.type === 'enclos-moutons'
         ? [b.x + (hasard(m) - 0.5) * 120, b.y + (hasard(m) - 0.5) * 40] : dedans ? [b.x, b.y] : devant(m, b);
       et.push({ fait: 'aller', p: p });
       et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose, dans: dedans ? b.id : null });
+      if (dep && !sur && (tr.livre || objet)) et.push({ fait: 'prendre', objet: tr.livre || objet });
     }
-    et.push({ fait: 'produire', bat: b.id });
-    if (proie && proie.espece === 'mammouth') { et.push({ fait: 'produire', bat: b.id }); et.push({ fait: 'produire', bat: b.id }); }
+    if (dep) {
+      if (!sur) {
+        et.push({ fait: 'aller', p: pointLibre(m, devant(m, dep), 1) });
+        et.push({ fait: 'attendre', d: 0.5, anim: 'repos' });
+      }
+      et.push({ fait: 'deposer' });
+      et.push({ fait: 'rapporter', bat: b.id, fois: fois });
+      return et;
+    }
+    if (lieu || foret) {
+      et.push({ fait: 'aller', p: devant(m, b) });
+      et.push({ fait: 'attendre', d: 0.6, anim: 'repos' });
+      et.push({ fait: 'deposer' });
+    }
+    for (var k = 0; k < fois; k++) et.push({ fait: 'produire', bat: b.id });
     return et;
   }
-  // le gibier le plus proche : un lapin de préférence, sinon un mammouth
+  // le gibier : de temps en temps un mammouth (il ne reviendra pas), sinon le lapin le plus proche
   function gibierProche(m, p) {
     var libres = m.animaux.filter(function (a) { return (a.espece === 'lapin' || a.espece === 'mammouth') && !a.part && !a.chasse && !a.parti; });
     var dist = function (a) { return Math.hypot(a.x - p[0], a.y - p[1]); };
     var mams = libres.filter(function (a) { return a.espece === 'mammouth'; });
     var laps = libres.filter(function (a) { return a.espece === 'lapin'; }).sort(function (a, b) { return dist(a) - dist(b); });
-    // de temps en temps, une grande chasse au mammouth (il ne reviendra pas)
-    if (mams.length && (!laps.length || hasard(m) < 0.25)) return mams[0];
+    if (mams.length && hasard(m) < 0.2) return mams[0];
     return laps[0] || null;
   }
   // un bâtiment qui ne sert plus (la chasse après l'élevage)
@@ -537,14 +622,14 @@ var Monde = (function () {
 
   function decider(m, h) {
     var b = h.travail ? bat(m, h.travail) : null;
-    if (b && inactif(m, b)) { b.ouvrier = null; h.travail = null; h.metier = null; b = null; }
+    if (b && inactif(m, b)) { b.ouvriers = (b.ouvriers || []).filter(function (id) { return id !== h.id; }); h.travail = null; h.metier = null; b = null; }
     if (m.cycle.phase === 'nuit') { planNuit(m, h); return; }
     if (estNuit(m)) {
       // pendant la veillée, on ne travaille que dans la lumière d'un feu (ADR-011, ADR-016)
       var ch0 = chantierEnAttente(m);
       var tas = m.batiments.filter(function (t) { return t.type === 'tas-bois' && t.etat === 'fini'; })[0];
       if (!h.enfant && !b && ch0 && eclaire(m, [ch0.x, ch0.y]) && (!tas || eclaire(m, [tas.x, tas.y]))) { h.etapes = planChantier(m, h, ch0); return; }
-      if (!h.enfant && b && b.etat === 'fini' && b.stock < BULLES_MAX && eclaire(m, [b.x, b.y])) {
+      if (!h.enfant && b && b.etat === 'fini' && b.stock < stockMax(b) && eclaire(m, [b.x, b.y])) {
         var plan = planTravail(m, h, b);
         var dehors = plan.filter(function (e) { return e.fait === 'aller' && !eclaire(m, e.p); }).length;
         if (!dehors) { h.etapes = plan; return; }
@@ -561,7 +646,7 @@ var Monde = (function () {
     if (!b && ch) { h.etapes = planChantier(m, h, ch); return; }
     if (b && b.etat === 'fini') {
       if (ch && h.metier !== 'sage' && adultesLibres(m).length === 0 && hasard(m) < 0.5) { h.etapes = planChantier(m, h, ch); return; }
-      if (b.stock >= BULLES_MAX) {
+      if (b.stock >= stockMax(b)) {
         h.etapes = [{ fait: 'aller', p: pointLibre(m, devant(m, b), 1) }, { fait: 'attendre', d: 3, anim: 'repos' }];
         return;
       }
@@ -603,6 +688,11 @@ var Monde = (function () {
         } else {
           h.x += dx / d * pas; h.y += dy / d * pas; reste = 0;
         }
+      } else if (e.fait === 'disparaitre') {
+        // le chasseur s'enfonce dans la forêt : on ne le voit plus un moment (ADR-033)
+        h.marche = false; h.cache = true; h.anim = 'repos';
+        if (e.reste == null) e.reste = e.d;
+        if (e.reste > reste) { e.reste -= reste; reste = 0; } else { reste -= e.reste; h.cache = false; h.etapes.shift(); }
       } else if (e.fait === 'dormir') {
         h.marche = false;
         if (estNuit(m)) { h.dort = true; h.dortChez = e.maison; h.anim = 'dort'; reste = 0; }
@@ -634,16 +724,27 @@ var Monde = (function () {
             if (c.livre >= c.besoin) {
               c.etat = 'fini'; c.apparu = m.t; c.renove = 0;
               if (c.niveauVise) { c.niveau = c.niveauVise; c.niveauVise = null; }
+              if (c.etapeVisee) {
+                c.etape = c.etapeVisee; c.etapeVisee = null;
+                if (c.etape >= 3) m.evenements.push({ type: 'merveille', bat: c.id });
+              }
               if (c.type === 'passerelle') m.terrain.passerelle = true;
               m.evenements.push({ type: 'fini', bat: c.id });
             }
           }
         } else if (e.fait === 'chasser') {
           var proie = m.animaux.filter(function (a) { return a.id === e.animal; })[0];
-          if (proie) { proie.parti = true; m.evenements.push({ type: 'chasse', espece: proie.espece, x: proie.x, y: proie.y }); }
+          if (proie) { proie.parti = true; m.evenements.push({ type: 'chasse', espece: proie.espece, x: proie.x, y: proie.y, loin: !!e.loin }); }
+        } else if (e.fait === 'rapporter') {
+          var rb = bat(m, e.bat);
+          if (rb && D.batiments[rb.type].travail) {
+            var pr = D.batiments[rb.type].travail.produit, nq = quantite(rb) * (e.fois || 1);
+            m[pr] = (m[pr] || 0) + nq;
+            m.evenements.push({ type: 'gain', produit: pr, n: nq, x: h.x, y: h.y, bat: rb.id });
+          }
         } else if (e.fait === 'produire') {
           var pb = bat(m, e.bat);
-          if (pb && pb.stock < BULLES_MAX) { pb.stock++; m.evenements.push({ type: 'bulle', bat: pb.id }); }
+          if (pb && pb.stock < stockMax(pb)) { pb.stock++; m.evenements.push({ type: 'bulle', bat: pb.id }); }
         }
         h.etapes.shift();
       }
@@ -651,6 +752,14 @@ var Monde = (function () {
   }
 
   function bougerAnimal(m, a, dt) {
+    if (a.disparu) return;
+    if (a.chasse && a.fuit) {
+      // le lapin poursuivi détale vers la forêt et disparaît entre les arbres
+      var fx = a.fuit[0] - a.x, fy = a.fuit[1] - a.y, fd = Math.hypot(fx, fy), fv = 95 * dt;
+      a.marche = true; if (Math.abs(fx) > 2) a.dir = fx > 0 ? 1 : -1;
+      if (fd <= fv) { a.disparu = true; a.marche = false; } else { a.x += fx / fd * fv; a.y += fy / fd * fv; }
+      return;
+    }
     if (a.chasse) { a.marche = false; return; }
     if (!a.etapes.length) {
       if (a.part) { a.parti = true; return; }
@@ -688,15 +797,20 @@ var Monde = (function () {
     m.animaux.push({ id: m.prochainId++, espece: 'lapin', x: c[0], y: c[1], etapes: [], dir: 1, marche: false, attente: 1 });
   }
 
+  // on ne vient vivre au village que s'il y a de quoi manger (ADR-032)
+  function assezAManger(m) { return !m.faim && m.nourriture >= besoinRepas(m, m.habitants.length + 1); }
   function arrivees(m, dt) {
     if (m.habitants.length >= lits(m)) { m.arrivee = 0; return; }
+    // sans assez à manger, on ne vient que pour aider à nourrir le village (pas de cercle vicieux)
+    var aideNourrir = m.batiments.some(function (b) { return b.etat === 'fini' && produitDe(b) === 'nourriture' && (b.ouvriers || []).length < places(b) && !inactif(m, b); });
+    if (!assezAManger(m) && !aideNourrir) { m.arrivee = 0; return; }
     if (estNuit(m) && (!aFeu(m) || m.cycle.phase === 'nuit')) return;
     m.arrivee += dt;
     var delai = aFeu(m) ? DELAI_ARRIVEE / 2 : DELAI_ARRIVEE;
     if (m.arrivee < delai) return;
     m.arrivee = 0;
     var al = D.allures[m.epoque];
-    var manque = m.batiments.filter(function (b) { return b.etat === 'fini' && D.batiments[b.type].travail && !b.ouvrier; });
+    var manque = m.batiments.filter(function (b) { return b.etat === 'fini' && (b.ouvriers || []).length < places(b) && !inactif(m, b); });
     var enfant = !manque.length && hasard(m) < 0.3;
     var allure = enfant ? al.enfant : (manque.length ? al[D.batiments[manque[0].type].travail.metier] : choisir(m, al.adulte));
     // on arrive par la plage
@@ -706,15 +820,32 @@ var Monde = (function () {
     m.evenements.push({ type: 'arrivee', hab: h.id });
   }
 
+  // les enfants grandissent et deviennent des travailleurs
+  var ENFANCE = 240;
+  function grandir(m) {
+    m.habitants.forEach(function (h) {
+      if (!h.enfant || h.dort) return;
+      if (h.ne == null) h.ne = m.t;
+      if (m.t - h.ne < ENFANCE) return;
+      h.enfant = false; h.vitesse = VITESSE.adulte;
+      h.allure = choisir(m, D.allures[m.epoque].adulte); h.pouf = 0.6;
+      m.evenements.push({ type: 'grandi', hab: h.id });
+    });
+  }
+  function produitDe(b) { var t = D.batiments[b.type].travail; return t ? t.produit : null; }
   function embaucher(m) {
-    m.batiments.forEach(function (b) {
+    // la nourriture d'abord (ADR-032)
+    m.batiments.slice().sort(function (a, b) { return (produitDe(b) === 'nourriture') - (produitDe(a) === 'nourriture'); }).forEach(function (b) {
       var d = D.batiments[b.type];
-      if (b.etat !== 'fini' || !d.travail || b.ouvrier || inactif(m, b)) return;
-      var libres = adultesLibres(m).filter(function (h) { return h.allure !== 'sage' || d.travail.metier === 'sage'; });
-      if (!libres.length) return;
-      var best = libres[0], bd = 1e9;
-      libres.forEach(function (h) { var dd = Math.hypot(h.x - b.x, h.y - b.y); if (dd < bd) { bd = dd; best = h; } });
-      affecter(m, best, b);
+      if (b.etat !== 'fini' || !d.travail || inactif(m, b)) return;
+      if (!b.ouvriers) b.ouvriers = [];
+      while (b.ouvriers.length < places(b)) {
+        var libres = adultesLibres(m).filter(function (h) { return h.allure !== 'sage' || d.travail.metier === 'sage'; });
+        if (!libres.length) return;
+        var best = libres[0], bd = 1e9;
+        libres.forEach(function (h) { var dd = Math.hypot(h.x - b.x, h.y - b.y); if (dd < bd) { bd = dd; best = h; } });
+        affecter(m, best, b);
+      }
     });
   }
 
@@ -725,6 +856,7 @@ var Monde = (function () {
     avancerCycle(m, dt);
     m.attribution = (m.attribution || 0) + dt;
     if (m.attribution > 1) { m.attribution = 0; attribuerMaisons(m); }
+    if ((m.croissance = (m.croissance || 0) + dt) > 3) { m.croissance = 0; grandir(m); }
     embaucher(m);
     m.habitants.forEach(function (h) { avancer(m, h, dt); });
     lapins(m, dt);
@@ -736,7 +868,15 @@ var Monde = (function () {
   }
 
   function exporter(m) { var c = JSON.parse(JSON.stringify(m)); c.evenements = []; return c; }
-  function importer(o) { o.evenements = []; return o; }
+  function importer(o) {
+    o.evenements = [];
+    if (o.nourriture == null) { o.nourriture = 30; o.faim = 0; }
+    o.batiments.forEach(function (b) {
+      if (!b.ouvriers) { b.ouvriers = b.ouvrier ? [b.ouvrier] : []; delete b.ouvrier; }
+      if (D.batiments[b.type] && D.batiments[b.type].merveille && b.etape == null) b.etape = 3;
+    });
+    return o;
+  }
 
   return {
     nouveau: nouveau, pas: pas, construire: construire, construisibles: construisibles,
@@ -747,7 +887,8 @@ var Monde = (function () {
     lits: lits, bat: bat, exporter: exporter, importer: importer, BULLES_MAX: BULLES_MAX,
     heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
     phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES,
-    amelioration: amelioration, ameliorer: ameliorer, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX
+    amelioration: amelioration, ameliorer: ameliorer, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX,
+    REPAS: REPAS, besoinRepas: besoinRepas, assezAManger: assezAManger, places: places, merveilleFinie: merveilleFinie, inactif: inactif
   };
 })();
 if (typeof module !== 'undefined') module.exports = Monde;

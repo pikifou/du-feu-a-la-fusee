@@ -49,6 +49,33 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   color: #fff; font-size: 14px; font-weight: 700; display: none; place-items: center; padding: 0 6px; }
 #btn-decouvertes.pret .pastille { display: grid; }
 #btn-menu, #btn-plein { width: 40px; height: 40px; font-size: 19px; }
+/* nourriture (ADR-032) : le compteur rougit quand il n'y a pas assez pour accueillir du monde */
+#c-nourriture.manque { background: #ffe1d6; color: #b23a1f; animation: battre 1.4s ease-in-out infinite; }
+/* merveilles (ADR-030) */
+#btn-merveilles { width: 52px; height: 52px; font-size: 26px; }
+#btn-merveilles.pret { background: #fff1b8; }
+#merveilles .fenetre { max-width: 860px; }
+#grille-merv { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.merv { background: var(--carte-2); border-radius: 20px; padding: 10px; text-align: center; border: 4px solid transparent; position: relative; }
+.merv.encours { border-color: var(--orange); background: #fff1d6; }
+.merv.finie { background: #fff6cc; border-color: #f2c94c; }
+.merv img { width: 100%; height: 110px; object-fit: contain; }
+.merv .nom { font-weight: 700; font-size: 16px; line-height: 1.15; min-height: 37px; }
+.merv .etapes { display: flex; justify-content: center; gap: 6px; margin: 6px 0; }
+.merv .etapes i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #8a5a32; background: #fff; display: block; }
+.merv .etapes i.ok { background: #ffd23f; }
+.merv button { border: 0; font-family: inherit; font-weight: 700; font-size: 15px; border-radius: 999px; padding: 7px 14px; cursor: pointer; margin: 2px; }
+.merv .bat { background: var(--orange); color: #fff; box-shadow: 0 3px 0 var(--orange-fonce); }
+.merv .bat.non { background: #d9cbb8; box-shadow: 0 3px 0 #bba98f; }
+.merv .lire { background: #fff; color: var(--encre); box-shadow: 0 2px 0 #e2d5c3; }
+/* le changement d'époque (ADR-027) : un gros bouton doré qui donne envie */
+#btn-epoque { position: fixed; z-index: 15; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(max(12px, env(safe-area-inset-top, 0px)) + 74px);
+  border: 0; font-family: inherit; font-size: 20px; font-weight: 700; color: #5b3a12; padding: 10px 22px; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(#ffe48a, #f5b93a); box-shadow: 0 5px 0 #c98a1c, 0 10px 22px rgba(120,80,20,.35); animation: appel 1.6s ease-in-out infinite; transform-origin: right center; }
+#btn-epoque:active { transform: translateY(3px); }
+@keyframes appel { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+.merv .bat { white-space: nowrap; font-size: 14px; }
+#scene-non { border: 0; background: transparent; font-family: inherit; font-size: 17px; color: var(--encre-douce); text-decoration: underline; cursor: pointer; margin-top: 10px; }
 #btn-plein { font-size: 22px; font-weight: 700; }
 
 /* ---- tourner le téléphone ---- */
@@ -58,7 +85,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 @keyframes pivote { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
 #tourner p { font-size: 22px; font-weight: 600; margin: 0; max-width: 300px; }
 @media (orientation: portrait) and (max-width: 900px) { #tourner { display: flex; } }
-@media (prefers-reduced-motion: reduce) { #btn-reveil, #tourner .tel, #btn-decouvertes.pret, .dec.possible, #scene-images img { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #btn-epoque, #c-nourriture.manque, #btn-reveil, #tourner .tel, #btn-decouvertes.pret, .dec.possible, #scene-images img { animation: none; } }
 
 /* ---- barre de construction ---- */
 #barre { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px max(14px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
@@ -134,7 +161,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #info .bouton-rond { width: 34px; height: 34px; font-size: 16px; box-shadow: none; background: var(--carte-2); }
 
 /* ---- fenêtres ---- */
-.voile { position: fixed; inset: 0; background: rgba(60, 40, 20, .45); display: none; align-items: center; justify-content: center; padding: 24px; }
+.voile { position: fixed; inset: 0; z-index: 40; background: rgba(60, 40, 20, .45); display: none; align-items: center; justify-content: center; padding: 24px; }
 .voile.ouvert { display: flex; animation: apparait .25s ease; }
 @keyframes apparait { from { opacity: 0; } to { opacity: 1; } }
 .fenetre { background: var(--carte); border-radius: 26px; box-shadow: var(--ombre); padding: 18px 22px; max-width: 860px; width: 100%;
@@ -229,13 +256,16 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 <div id="haut">
   <div class="compteur" id="c-hab"><span class="ico">👥</span><span id="v-hab">0</span></div>
   <div class="compteur" id="c-pieces"><span class="ico">🪙</span><span id="v-pieces">0</span></div>
+  <div class="compteur" id="c-nourriture"><span class="ico">🍖</span><span id="v-nourriture">0</span></div>
   <div class="compteur" id="c-idees"><span class="ico">💡</span><span id="v-idees">0</span></div>
   <div id="epoque-nom">L'âge de pierre</div>
   <button class="bouton-rond" id="btn-plein" aria-label="Plein écran">⛶</button>
   <button class="bouton-rond" id="btn-menu" aria-label="Menu">⚙️</button>
+  <button class="bouton-rond" id="btn-merveilles" aria-label="Merveilles">🏛</button>
   <button class="bouton-rond" id="btn-decouvertes" aria-label="Découvertes">💡<span class="pastille">!</span></button>
 </div>
 
+<button id="btn-epoque" hidden></button>
 <div id="barre"></div>
 <div id="bulle-aide"></div>
 <div id="info" hidden>
@@ -261,6 +291,13 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   <div id="grille-dec"></div>
 </div></div>
 
+<div class="voile" id="merveilles"><div class="fenetre">
+  <button class="bouton-rond fermer" data-ferme="merveilles" aria-label="Fermer">✕</button>
+  <h2>🏛 Les merveilles</h2>
+  <div class="sous" id="merv-sous">De grands monuments qui ont vraiment existé. Chacun se construit en trois étapes.</div>
+  <div id="grille-merv"></div>
+</div></div>
+
 <div class="voile" id="scene"><div class="fenetre">
   <h2 id="scene-titre"></h2>
   <img id="scene-illu" alt="" hidden>
@@ -270,6 +307,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
     <button class="bouton-rond" id="scene-voix" aria-label="Écouter">🔊</button>
     <button class="gros-bouton" id="scene-ok">Super !</button>
   </div>
+  <button id="scene-non" hidden>Pas encore</button>
 </div></div>
 
 <div class="voile" id="page"><div class="fenetre">

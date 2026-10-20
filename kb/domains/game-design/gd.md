@@ -3,7 +3,7 @@ title: Game design (brouillon)
 domain: game-design
 type: doc
 status: draft
-updated: 2026-10-18
+updated: 2026-10-20
 ---
 
 # Game design
@@ -26,22 +26,23 @@ Le cœur du plaisir, façon The Settlers : on regarde son petit monde s'affairer
 ## Le fantasme du joueur
 « J'ai fait grandir mon village, de la grotte jusqu'à la fusée. » Une seule vallée que Joshua voit se transformer : le gué devient passerelle, puis pont de pierre, puis pont suspendu. L'histoire se lit dans le paysage.
 
-## Ressources (3 compteurs, que des icônes)
+## Ressources (4 compteurs, que des icônes)
 | Icône | Ressource | Rôle |
 |---|---|---|
 | 👥 | Habitants | Arrivent quand il y a des maisons et à manger ; font tourner les bâtiments |
-| 🪙 | Pièces | Produites par les bâtiments avec le temps ; servent à faire grandir la ville |
+| 🪙 | Pièces | Produites par le bois, le silex, les pots ; servent à construire et à améliorer |
+| 🍖 | Nourriture | Baies, chasse, pêche, puis blé, lait, farine ; chacun en mange au repas du soir (ADR-032) |
 | 💡 | Idées | Produites par les penseurs (le sage, puis l'école, puis le labo) ; servent aux découvertes |
 
 Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit pouvoir lire ses compteurs seul.
 
 ## Boucle principale
 1. Les bâtiments produisent : une bulle 🪙 ou 💡 apparaît au-dessus.
-2. Joshua tape les bulles pour récolter.
+2. À l'âge de pierre, Joshua tape les bulles pour récolter ; dès le néolithique, chacun rapporte lui-même sa production à la place du village (ADR-029).
 3. Il dépense ses pièces pour poser un bâtiment sur un emplacement de son choix (ADR-008).
 4. La ville fait le reste d'elle-même : chemins, habitants, fumée, détails, améliorations (ADR-004, ADR-008).
 5. Quand il a assez d'idées : **une découverte**. Nouveaux bâtiments, les anciens peuvent s'améliorer.
-6. Quand toutes les découvertes d'une époque sont faites : **changement d'époque**, grand moment de transformation de la vallée.
+6. Quand toutes les découvertes d'une époque sont faites, un bouton doré « Vers le néolithique ! » apparaît : Joshua change d'époque quand il le veut (ADR-027). Rien ne s'améliore tout seul (ADR-028).
 
 ## Le terrain (ADR-012, ADR-013)
 - Une île en tuiles : prairie, forêt, rivière avec un gué, grotte sur l'autre rive, plage et mer. Elle s'agrandit à chaque époque.
@@ -71,20 +72,36 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 
 ## La chasse (ADR-025)
 - Des lapins sautillent près de la forêt ; il en réapparaît un toutes les 20 à 40 s le jour (au plus 5 à l'âge de pierre, 3 au néolithique). Trois mammouths broutent sur l'autre rive.
-- Le chasseur du râtelier part vers le gibier le plus proche (un mammouth une fois sur quatre environ), le chasse, puis rapporte la prise dans ses bras. Un mammouth rapporte trois fois plus, prend deux fois plus de temps, et ne revient jamais.
+- Le chasseur du râtelier part loin dans la forêt (ADR-033) : il marche jusqu'à la lisière, s'efface entre les arbres un moment, puis revient avec sa prise dans les bras. S'il y a un lapin, il le suit : le lapin détale vers la forêt et disparaît le premier. Une fois sur cinq environ, c'est une grande chasse au mammouth, sur l'autre rive : elle rapporte trois fois plus, prend deux fois plus de temps, et le mammouth ne revient jamais.
 - Après la découverte de l'élevage, le râtelier n'a plus de chasseur (une aide l'explique). Les chiffres sont une proposition de Claude.
 
-## Embellir : décorations et merveilles (ADR-023)
+## Manger (ADR-032)
+- Au début du soir, chaque habitant mange 3 parts. S'il n'y en a pas assez, une aide le dit et ceux qui ont faim le disent dans leurs bulles.
+- Une famille n'arrive que s'il y a de quoi nourrir tout le monde ce soir, nouveau venu compris ; sinon les maisons restent vides (une aide l'explique). Exception, pour éviter le cercle vicieux : quelqu'un vient quand même si un bâtiment de nourriture attend un travailleur.
+- Les enfants grandissent (environ 4 min) et deviennent des travailleurs.
+- Au départ : un buisson de baies tenu par la cueilleuse, 20 parts. Chiffres proposés par Claude.
+
+## Les prix (ADR-026)
+- Tout est environ trois fois plus cher qu'en v0.10 : tente 15, hutte de branches 25, buisson 15, feu 20, atelier de silex, râtelier et séchoir 30, grotte peinte 40, hutte en peaux 45 ; au néolithique, champ 40, maison en torchis 45, enclos 50, meule 55, grenier et potier 60, maison longue 90. On démarre avec 20 pièces.
+- Le bois rapporte 4, le silex 5, les pots 6. Les découvertes coûtent environ 1,5 fois plus d'idées.
+- Mesure (joueur automatique) : âge de pierre ~10 min, néolithique ~13 à 17 min. Chiffres proposés par Claude, à régler en test.
+
+## Embellir : décorations (ADR-023)
 - Onglet ✨ du bandeau. Uniquement des monuments réels de l'époque, avec leur grande page (vraie histoire, 2 « Le savais-tu ? »).
-- Âge de pierre : les chevaux de Chauvet (15), le taureau de Lascaux (18), les bisons d'Altamira (18), les mains de Gargas (12), merveille : la hutte en os de mammouth (45).
-- Néolithique : menhir (10, plusieurs possibles), Dame de Saint-Sernin (18), dolmen (25, plusieurs possibles), merveilles : alignements de Carnac (50), cairn de Barnenez (70), Göbekli Tepe (100), Stonehenge (150).
+- Âge de pierre : les chevaux de Chauvet (45), le taureau de Lascaux (55), les bisons d'Altamira (55), les mains de Gargas (35), les lions de Chauvet (55), les cerfs de Lascaux (50), l'homme-lion (60), les bisons d'argile du Tuc d'Audoubert (50, près de la grotte).
+- Néolithique : menhir (30, plusieurs possibles), cromlech (45, plusieurs possibles), dolmen (70, plusieurs possibles), Dame de Saint-Sernin (50), pierre gravée de Gavrinis (60), statue d'Aïn Ghazal (65), grand menhir brisé de Locmariaquer (80), maison de Skara Brae (90).
+
+## Les merveilles (ADR-030)
+- Bouton 🏛 en haut de l'écran : la fenêtre des merveilles de l'époque, chacune avec ses trois pastilles d'étapes et son bouton « Commencer » puis « Étape 2 », « Étape 3 ».
+- Chaque étape est payée à part (prix par étape) et bâtie par les habitants ; le monument sort de terre par tiers, dans ses échafaudages. À la troisième : confettis, « Hourra ! » et sa grande page « Merveille terminée ! ».
+- Âge de pierre : les cercles de Bruniquel (40 par étape, près de la grotte), la hutte en os de mammouth (50). Néolithique : alignements de Carnac (70), cairn de Barnenez (90), Göbekli Tepe (110), Stonehenge (150).
 - Les peintures et les merveilles sont uniques. Aucun bonus de jeu : elles embellissent et elles racontent (ADR-024).
 - Au changement d'époque, les monuments posés restent ; ceux de l'époque passée ne se construisent plus (ADR-024).
 
-## Améliorer (ADR-021)
-- Dans la fiche courte d'un bâtiment : « ⬆ Améliorer · 🪙 prix » ou « ⬆ Agrandir en … ».
-- Bâtiments qui produisent : niveaux 1 à 3, +1 par récolte à chaque niveau ; prix = 1,5 puis 3 fois le prix du bâtiment (cercle des anciens : 45 puis 90).
-- Maisons : tente (10) ou hutte de branches (8) vers hutte en peaux après « Les huttes en peaux » ; maison en torchis vers maison longue (14) après « Le grenier ».
+## Améliorer (ADR-021, ADR-031)
+- Dans la fiche courte d'un bâtiment : « ⬆ Niveau 2 : un travailleur de plus · 🪙 prix » ou « ⬆ Transformer en … ».
+- Bâtiments qui produisent : niveaux 1 à 3 ; chaque niveau ajoute un travailleur et change l'image du bâtiment (deux buissons puis trois, deux séchoirs, un abri sur le tas de bois…). Prix = 2 puis 4 fois le prix du bâtiment (cercle des anciens : 120 puis 240 ; tas de bois : 40 puis 80).
+- Maisons, toujours à la main : tente (50) ou hutte de branches (40) vers hutte en peaux après « Les huttes en peaux » ; au néolithique, tente, hutte de branches (60) ou hutte en peaux (50) vers maison en torchis (4 places) après « L'agriculture » ; maison en torchis vers maison longue (80, 6 places) après « Le grenier ».
 
 ## Comprendre ce qu'on voit (ADR-015)
 Toucher un bâtiment, un arbre, la grotte, le mammouth, le gué ou un sentier ouvre une petite fiche lue à voix haute : à quoi ça sert, qui y travaille, ce que ça change. Choisir un bâtiment à construire montre la même fiche.

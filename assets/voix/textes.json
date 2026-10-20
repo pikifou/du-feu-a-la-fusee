@@ -392,6 +392,182 @@
   "texte": "Il a été construit par des chasseurs-cueilleurs, juste avant que l'agriculture se répande."
  },
  {
+  "id": "1eeeace7b2",
+  "texte": "Les cercles de Bruniquel"
+ },
+ {
+  "id": "1a4915e15d",
+  "texte": "Il y a 176 000 ans, bien avant les premières peintures, des Néandertaliens sont entrés tout au fond d'une grotte, à Bruniquel, en France. À la lumière du feu, ils ont cassé des stalagmites et les ont rangées en grands cercles."
+ },
+ {
+  "id": "4b875c7b42",
+  "texte": "On a compté environ 400 morceaux de stalagmites, rangés en deux grands cercles."
+ },
+ {
+  "id": "5a6c61ac58",
+  "texte": "Des traces de feu montrent qu'ils s'éclairaient pour travailler dans le noir."
+ },
+ {
+  "id": "84b6bbbedd",
+  "texte": "C'est l'une des plus vieilles constructions humaines connues. À quoi servaient ces cercles ? C'est encore un mystère !"
+ },
+ {
+  "id": "e2e4bdb3d8",
+  "texte": "L'homme-lion"
+ },
+ {
+  "id": "3ff7d293d6",
+  "texte": "Il y a environ 40 000 ans, quelqu'un a sculpté dans une défense de mammouth un personnage debout, avec une tête de lion. On l'a retrouvé en morceaux dans une grotte d'Allemagne."
+ },
+ {
+  "id": "2a8be09303",
+  "texte": "Il mesure à peu près 30 centimètres, comme une grande règle."
+ },
+ {
+  "id": "1ea5a0bd92",
+  "texte": "Il a fallu des centaines d'heures pour le sculpter avec des outils de silex."
+ },
+ {
+  "id": "8209c813ff",
+  "texte": "C'est l'une des plus vieilles sculptures du monde."
+ },
+ {
+  "id": "114f4a301b",
+  "texte": "Les bisons d'argile"
+ },
+ {
+  "id": "96539f0fee",
+  "texte": "Il y a environ 15 000 ans, au fond de la grotte du Tuc d'Audoubert, en Ariège, des artistes ont modelé deux bisons en argile, appuyés contre un rocher. Ils sont toujours là !"
+ },
+ {
+  "id": "e4694ef9e7",
+  "texte": "Chaque bison mesure environ 60 centimètres de long."
+ },
+ {
+  "id": "f0ba0034ec",
+  "texte": "On voit encore les traces des doigts qui ont lissé l'argile."
+ },
+ {
+  "id": "02aaef53aa",
+  "texte": "La grotte est fermée au public pour protéger les bisons."
+ },
+ {
+  "id": "cefb07b34c",
+  "texte": "Les lions de Chauvet"
+ },
+ {
+  "id": "d6852dc166",
+  "texte": "Dans la grotte Chauvet, il y a environ 36 000 ans, des artistes ont dessiné au charbon de bois toute une troupe de lions des cavernes, qui semblent chasser ensemble."
+ },
+ {
+  "id": "82b6e7453b",
+  "texte": "Sur les dessins, les lions n'ont pas de crinière."
+ },
+ {
+  "id": "cabfd68cc4",
+  "texte": "Les lions des cavernes étaient plus grands que les lions d'aujourd'hui."
+ },
+ {
+  "id": "51c54b606b",
+  "texte": "Les cerfs de Lascaux"
+ },
+ {
+  "id": "218bad66cb",
+  "texte": "Dans la grotte de Lascaux, les artistes ont peint de grands cerfs aux bois immenses, en noir et en rouge."
+ },
+ {
+  "id": "605f4a86aa",
+  "texte": "Sur une paroi, une rangée de têtes de cerfs semble traverser une rivière à la nage !"
+ },
+ {
+  "id": "249778a891",
+  "texte": "Ces peintures ont environ 17 000 ans."
+ },
+ {
+  "id": "0539008295",
+  "texte": "Pour peindre, on écrasait des pierres colorées, comme l'ocre, et on les mélangeait avec de l'eau ou de la graisse."
+ },
+ {
+  "id": "694a871d14",
+  "texte": "Le grand menhir brisé"
+ },
+ {
+  "id": "a90ab18e85",
+  "texte": "Il y a près de 7 000 ans, à Locmariaquer en Bretagne, on a dressé le plus grand menhir connu : plus de 20 mètres de haut ! Aujourd'hui, il est couché par terre, cassé en quatre morceaux."
+ },
+ {
+  "id": "b321921ec7",
+  "texte": "Il pèse à peu près 280 tonnes, autant que 50 éléphants."
+ },
+ {
+  "id": "37807fcb13",
+  "texte": "La pierre a été apportée de plusieurs kilomètres, sans roues ni machines."
+ },
+ {
+  "id": "92c684f7ec",
+  "texte": "La pierre gravée de Gavrinis"
+ },
+ {
+  "id": "2441ab62ff",
+  "texte": "Sur l'île de Gavrinis, en Bretagne, un couloir de pierre est couvert de gravures : des spirales, des vagues et des lignes qui tournent comme des empreintes de doigts."
+ },
+ {
+  "id": "115808fe79",
+  "texte": "Ces gravures ont environ 5 500 ans."
+ },
+ {
+  "id": "41254bbaf7",
+  "texte": "Les sculpteurs n'avaient pas de métal : ils gravaient avec des outils en pierre très dure, comme le quartz."
+ },
+ {
+  "id": "52d108e60a",
+  "texte": "Un cromlech"
+ },
+ {
+  "id": "c9143cdbbf",
+  "texte": "Un cromlech, c'est un cercle de pierres dressées. Il y en a beaucoup en Bretagne et en Grande-Bretagne."
+ },
+ {
+  "id": "04b0c15633",
+  "texte": "À Er Lannic, en Bretagne, il y a deux cromlechs : l'un est aujourd'hui à moitié sous la mer !"
+ },
+ {
+  "id": "a84005eb3e",
+  "texte": "On pense que ces cercles servaient à se rassembler et à suivre le soleil."
+ },
+ {
+  "id": "dc17fff625",
+  "texte": "La statue d'Aïn Ghazal"
+ },
+ {
+  "id": "d1a1159435",
+  "texte": "À Aïn Ghazal, en Jordanie, il y a environ 9 000 ans, on fabriquait de grandes statues en plâtre, avec de grands yeux soulignés de noir."
+ },
+ {
+  "id": "30d55ddada",
+  "texte": "À l'intérieur, il y avait une armature de roseaux."
+ },
+ {
+  "id": "eafae1399e",
+  "texte": "On en a retrouvé une trentaine, enterrées avec soin."
+ },
+ {
+  "id": "481ae7b833",
+  "texte": "La maison de Skara Brae"
+ },
+ {
+  "id": "e6846177f0",
+  "texte": "Skara Brae est un village de maisons en pierre, en Écosse, sur les îles Orcades. Il a environ 5 000 ans."
+ },
+ {
+  "id": "0b480ff929",
+  "texte": "Dans les maisons, même les meubles sont en pierre : les lits, les buffets et le foyer."
+ },
+ {
+  "id": "373f5fae55",
+  "texte": "Le village a été découvert en 1850, quand une grande tempête a emporté le sable qui le recouvrait."
+ },
+ {
   "id": "8294c84c42",
   "texte": "Les chasseurs-cueilleurs"
  },
@@ -552,8 +728,8 @@
   "texte": "À la lumière d'une torche, on peint les animaux sur la paroi de la grotte."
  },
  {
-  "id": "f9cc1c35d7",
-  "texte": "Une maison en terre et en paille, pour 3 personnes."
+  "id": "d2fd879384",
+  "texte": "Une maison en terre et en paille, pour 4 personnes."
  },
  {
   "id": "e6d2492db5",
@@ -604,12 +780,12 @@
   "texte": "Le grenier est sur pilotis : les souris ne peuvent pas monter manger le blé."
  },
  {
-  "id": "183ccf1cf0",
-  "texte": "Une grande maison pour 5 personnes."
+  "id": "e6d7cdbcb0",
+  "texte": "Une grande maison pour 6 personnes."
  },
  {
-  "id": "29f4067025",
-  "texte": "Une maison longue. Plusieurs familles vivent ensemble sous le même toit : jusqu'à cinq personnes."
+  "id": "9b9d7fcd07",
+  "texte": "Une maison longue. Plusieurs familles vivent ensemble sous le même toit : jusqu'à six personnes."
  },
  {
   "id": "468969191a",
@@ -670,6 +846,46 @@
  {
   "id": "d7b142efcb",
   "texte": "Une merveille : une hutte faite d'os de mammouth."
+ },
+ {
+  "id": "02b057117e",
+  "texte": "Une petite statue à tête de lion, en ivoire."
+ },
+ {
+  "id": "56abc388e3",
+  "texte": "Deux bisons modelés dans l'argile."
+ },
+ {
+  "id": "5b8391c651",
+  "texte": "Une paroi peinte de lions, comme dans la grotte Chauvet."
+ },
+ {
+  "id": "13a0fa3cb3",
+  "texte": "Une paroi peinte de grands cerfs, comme à Lascaux."
+ },
+ {
+  "id": "0cef5833bf",
+  "texte": "Une merveille : des cercles de stalagmites au fond d'une grotte."
+ },
+ {
+  "id": "c6ec7071fa",
+  "texte": "Le plus grand menhir connu, couché et cassé en quatre."
+ },
+ {
+  "id": "c33fd1d3e3",
+  "texte": "Une pierre couverte de spirales gravées."
+ },
+ {
+  "id": "cc799aa585",
+  "texte": "Un petit cercle de pierres dressées."
+ },
+ {
+  "id": "760ec6b527",
+  "texte": "Une grande statue en plâtre aux grands yeux."
+ },
+ {
+  "id": "771c92331e",
+  "texte": "Une maison en pierre, même les meubles !"
  },
  {
   "id": "1541bdb750",
@@ -792,6 +1008,14 @@
   "texte": "Je rapporte le blé au grenier."
  },
  {
+  "id": "a13458472f",
+  "texte": "J'ai faim !"
+ },
+ {
+  "id": "37e7c9984a",
+  "texte": "Il faudrait plus à manger…"
+ },
+ {
   "id": "4ca3fef241",
   "texte": "Je vais chercher de l'argile."
  },
@@ -888,8 +1112,52 @@
   "texte": "Il te faut plus d'idées. Ramasse les bulles du cercle des anciens !"
  },
  {
-  "id": "4bc65f9384",
-  "texte": "Regarde : les habitants transforment eux-mêmes leurs huttes en maisons !"
+  "id": "1cddb01048",
+  "texte": "Fini de bouger ! Au néolithique, on reste au même endroit : chacun rapporte lui-même ce qu'il produit au village. Plus besoin de toucher les bulles !"
+ },
+ {
+  "id": "6a08ed9216",
+  "texte": "Touche une hutte pour la transformer en maison du néolithique."
+ },
+ {
+  "id": "425c98eaea",
+  "texte": "Les baies, la viande et le poisson vont dans la réserve de nourriture. Chaque soir, tout le monde mange !"
+ },
+ {
+  "id": "418ec5f3c9",
+  "texte": "La réserve de nourriture. Chaque soir, chaque habitant mange trois parts. Pour qu'une nouvelle famille arrive, il faut assez à manger pour tout le monde."
+ },
+ {
+  "id": "c52056a651",
+  "texte": "Il n'y avait pas assez à manger ce soir ! Construis un buisson de baies, un séchoir à poissons ou un râtelier de chasseurs."
+ },
+ {
+  "id": "2477b1b1ba",
+  "texte": "Il n'y avait pas assez à manger ce soir ! Construis un champ de blé, un enclos ou une pirogue."
+ },
+ {
+  "id": "397e99daff",
+  "texte": "Les maisons attendent du monde, mais il faut plus à manger pour accueillir une nouvelle famille."
+ },
+ {
+  "id": "f8250ac816",
+  "texte": "Les chasseurs partent loin dans la forêt pour trouver du gibier. Ils reviendront avec leur prise !"
+ },
+ {
+  "id": "61f0625b06",
+  "texte": "Prêt pour le néolithique ? Les premiers paysans vont planter du blé, élever des moutons et faire des pots. L'île va s'agrandir !"
+ },
+ {
+  "id": "6742a33e63",
+  "texte": "Les merveilles ! De grands monuments qui se construisent en trois étapes. Choisis-en une !"
+ },
+ {
+  "id": "a11ca0430b",
+  "texte": "Une étape de la merveille est finie ! Ouvre les merveilles pour lancer la suivante."
+ },
+ {
+  "id": "e89ca6400f",
+  "texte": "Bravo ! Ta merveille est terminée ! Tout le village fait la fête !"
  },
  {
   "id": "ed0a39f44c",
@@ -944,12 +1212,12 @@
   "texte": "Tu as des pièces : choisis une construction en bas de l'écran !"
  },
  {
-  "id": "4fa753beec",
-  "texte": "Tu as fait toutes les découvertes de l'âge de pierre ! Ton village est prêt à changer d'époque."
+  "id": "bd53156b67",
+  "texte": "Tu as fait toutes les découvertes de l'âge de pierre ! Ton village est prêt à changer d'époque. Quand tu veux, touche le bouton doré en haut."
  },
  {
-  "id": "013cfbb325",
-  "texte": "Les habitants vont chercher du bois pour améliorer le bâtiment. Regarde les étoiles !"
+  "id": "4e52b3e742",
+  "texte": "Les habitants vont chercher du bois pour améliorer le bâtiment. Ensuite, une personne de plus y travaillera !"
  },
  {
   "id": "650820d918",
