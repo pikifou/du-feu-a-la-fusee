@@ -717,7 +717,7 @@
       ctx.beginPath(); ctx.moveTo(x - 6, y + r - 2); ctx.lineTo(x, y + r + 9); ctx.lineTo(x + 6, y + r - 2); ctx.fillStyle = tr.produit === 'idees' ? '#fff6c9' : '#fffaf0'; ctx.fill();
       ctx.font = Math.round(r * 0.95) + 'px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(EMOJI[tr.produit], x, y + 1);
-      var n = b.stock * M.quantite(b);
+      var n = b.stock * M.quantite(b, monde);
       ctx.font = '700 ' + Math.round(r * 0.6) + 'px Fredoka, system-ui, sans-serif';
       ctx.fillStyle = '#fff'; ctx.strokeStyle = '#5b3c24'; ctx.lineWidth = 4;
       ctx.strokeText('+' + n, x + r * 0.75, y - r * 0.7); ctx.fillText('+' + n, x + r * 0.75, y - r * 0.7);
@@ -1039,7 +1039,7 @@
   var choix = null;
   var derniers = { hab: -1, pieces: -1, idees: -1 };
   function majCompteurs() {
-    var v = { hab: monde.habitants.length + ' / ' + M.lits(monde), pieces: Math.floor(monde.pieces), idees: Math.floor(monde.idees), nourriture: Math.floor(monde.nourriture) };
+    var v = { hab: monde.habitants.length + ' / ' + M.lits(monde), pieces: Math.floor(monde.pieces), idees: Math.floor(monde.idees), nourriture: Math.floor(monde.nourriture) + ' / ' + M.reserveMax(monde) };
     ['hab', 'pieces', 'nourriture', 'idees'].forEach(function (k) {
       if (derniers[k] !== v[k]) {
         $('v-' + k).textContent = v[k];
@@ -1057,6 +1057,7 @@
     $('btn-decouvertes').classList.toggle('pret', possible);
     // pas assez à manger pour ce soir : le compteur rougit (ADR-032)
     $('c-nourriture').classList.toggle('manque', monde.faim > 0 || monde.nourriture < M.besoinRepas(monde));
+    $('c-nourriture').classList.toggle('plein', monde.nourriture >= M.reserveMax(monde));
     // le bouton doré de l'époque suivante (ADR-027)
     var suiv = D.epoques.filter(function (x) { return x.id === monde.epoque + 1; })[0];
     var pret = !!suiv && M.epoqueTerminee(monde) && !enScene;
@@ -1257,7 +1258,11 @@
     $('epoque-nom').textContent = e.nom;
     var images = monde.epoque === 1 ? ['01-pierre/hutte-peaux', 'habitants/chasseur'] : ['02-neolithique/champ-ble', 'habitants/paysan'];
     scene({ titre: e.nom, images: images, illustration: monde.epoque === 1 ? 'scenes/cueilleurs' : 'scenes/agriculture', texte: e.intro, bouton: 'C\'est parti !', ensuite: function () {
-      if (monde.epoque === 2) { aideUneFois('epoque2', A.epoque2); setTimeout(function () { aideUneFois('maisons-a-main', A.maisonsAMain); }, 9000); }
+      if (monde.epoque === 2) {
+        aideUneFois('epoque2', A.epoque2);
+        setTimeout(function () { aideUneFois('hache-polie', A.hachePolie); }, 8000);
+        setTimeout(function () { aideUneFois('maisons-a-main', A.maisonsAMain); }, 16000);
+      }
     } });
   }
 
@@ -1544,8 +1549,9 @@
   function resumeType(type) {
     var d = D.batiments[type], l = [];
     if (d.lits) l.push('👥 ' + d.lits + ' personnes y dorment');
-    if (d.travail) l.push(EMOJI[d.travail.produit] + ' +' + d.travail.qte + ' à chaque fois · ' + METIERS[d.travail.metier]);
+    if (d.travail) l.push(EMOJI[d.travail.produit] + ' +' + M.qteDe(d.travail, monde.epoque) + ' à chaque fois · ' + METIERS[d.travail.metier]);
     if (d.merveille) l.push('🏛 Merveille en 3 étapes');
+    if (M.RESERVE[type]) l.push('🍖 La réserve grandit de ' + M.RESERVE[type]);
     if (d.cout != null) l.push((d.merveille ? 'Chaque étape coûte 🪙 ' : 'Coûte 🪙 ') + d.cout);
     return l.join(' · ');
   }
@@ -1559,10 +1565,11 @@
       if (nO && nO < nP) statut += ' (il manque quelqu\'un)';
     } else if (d.merveille && !M.merveilleFinie(b)) statut = '🏛 Étape ' + (b.etape || 0) + ' sur 3 : ouvre les merveilles pour continuer.';
     else if (d.lits) statut = '👥 ' + d.lits + ' personnes y dorment';
+    if (M.RESERVE[b.type] && b.etat === 'fini') statut = (statut ? statut + ' · ' : '') + '🍖 +' + M.RESERVE[b.type] + ' dans la réserve';
     if (d.finitAvec && monde.decouvertes[d.finitAvec]) statut = 'Depuis l\'élevage, plus besoin de chasser : la viande vient de l\'enclos.';
     var n = monde.habitants.filter(function (q) { return q.dort && q.dortChez === b.id; }).length;
     if (n) statut = '😴 Chut… ' + (n > 1 ? n + ' personnes dorment' : 'quelqu\'un dort') + ' ici.';
-    if (d.travail && b.etat === 'fini' && !(d.finitAvec && monde.decouvertes[d.finitAvec])) statut = (statut ? statut + ' · ' : '') + '⭐ Niveau ' + (b.niveau || 1) + ' · ' + EMOJI[d.travail.produit] + ' +' + M.quantite(b) + ' à chaque fois';
+    if (d.travail && b.etat === 'fini' && !(d.finitAvec && monde.decouvertes[d.finitAvec])) statut = (statut ? statut + ' · ' : '') + '⭐ Niveau ' + (b.niveau || 1) + ' · ' + EMOJI[d.travail.produit] + ' +' + M.quantite(b, monde) + ' à chaque fois';
     montrerInfo({ img: d.sprite, titre: d.nom, texte: d.resume || d.explication || '', statut: statut, page: pageDuBat(b.type), type: b.type, bat: b });
   }
   function infoNature(cle) { var n = D.textes.nature[cle]; montrerInfo({ img: n[0], titre: n[1], texte: n[2] }); }
@@ -1677,6 +1684,13 @@
         // chacun rapporte lui-même sa production au village (ADR-029)
         particule({ type: 'gain', texte: '+' + e.n + ' ' + EMOJI[e.produit], x: e.x, y: e.y - 70, vy: -26, max: 1.6 });
         var cpt = $('c-' + e.produit); if (cpt) { cpt.classList.remove('tilt'); void cpt.offsetWidth; cpt.classList.add('tilt'); }
+      } else if (e.type === 'perdu') {
+        // la réserve est pleine : ce qui arrive est perdu (ADR-036) ; on dit quoi faire, de temps en temps
+        if (!enScene && monde.t - (ui.perduA || -999) > 180) {
+          ui.perduA = monde.t;
+          var trop = M.besoinRepas(monde, monde.habitants.length + 1) > M.reserveMax(monde);
+          aide(trop ? (monde.epoque >= 2 ? A.reserveTropPetite2 : A.reserveTropPetite1) : A.reserveDeborde);
+        }
       } else if (e.type === 'faim') {
         aide(monde.epoque >= 2 ? A.faim2 : A.faim1);
       } else if (e.type === 'grandi') {

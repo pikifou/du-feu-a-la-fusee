@@ -218,3 +218,26 @@ test('les chasseurs partent au loin et reviennent (ADR-033)', () => {
   for (let i = 0; i < 6000; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.length = 0; if (m.habitants.some(h => h.cache)) caches++; }
   assert.ok(caches > 50, 'on a vu un chasseur disparaître un moment');
 });
+
+test('la réserve de nourriture a un maximum, agrandi par le stockage (ADR-036)', () => {
+  const m = Monde.nouveau(13);
+  const max0 = Monde.reserveMax(m);
+  assert.strictEqual(max0, 30);
+  let perdu = 0;
+  for (let i = 0; i < 3000; i++) { m.cycle = { phase: 'jour', t: 20 }; Monde.pas(m, 0.1); m.batiments.forEach(b => Monde.recolter(m, b.id)); m.evenements.forEach(e => { if (e.type === 'perdu') perdu += e.n; }); m.evenements.length = 0; }
+  assert.ok(m.nourriture <= max0, 'jamais plus que la réserve');
+  assert.ok(perdu > 0, 'ce qui dépasse est perdu');
+  m.decouvertes.outils = 1; m.decouvertes.chasse = 1; m.pieces = 500;
+  const s = Monde.construire(m, 'sechoir-poissons', Monde.emplacementsLibres(m, 'sechoir-poissons')[0]);
+  for (let i = 0; i < 3000 && s.etat !== 'fini'; i++) Monde.pas(m, 0.1);
+  assert.strictEqual(Monde.reserveMax(m), max0 + 20, 'le séchoir agrandit la réserve');
+});
+
+test('au néolithique, la hache polie rapporte plus (ADR-035)', () => {
+  const m = Monde.nouveau(14);
+  const tas = m.batiments.find(b => b.type === 'tas-bois');
+  const avant = Monde.quantite(tas, m);
+  Monde.decouvertesEpoque(m).forEach(id => { m.decouvertes[id] = 1; });
+  Monde.passerEpoque(m);
+  assert.ok(Monde.quantite(tas, m) > avant);
+});

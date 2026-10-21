@@ -3,15 +3,15 @@ title: État courant
 domain: canon
 type: doc
 status: active
-updated: 2026-10-20
+updated: 2026-10-21
 ---
 
-# Où on en est (20/10/2026)
+# Où on en est (21/10/2026)
 
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 33 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 36 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.
@@ -19,6 +19,7 @@ updated: 2026-10-20
 - Sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants, 24 éléments de nature, 12 poses de travail, 8 éléments de nuit ; 16 vignettes illustrées pour les fiches.
 - Test d'intégration des sprites sur le plateau concluant (`assets/raw/test-integration.jpg`).
 
+- **v0.12** : économie refondue avec Julien (ADR-035, ADR-036). Les prix suivent ce que rapporte chaque bâtiment et la richesse de l'époque : l'âge de pierre redevient bon marché, le néolithique est plus riche (hache polie, livraisons groupées) et plus cher ; plus de multiplicateur unique. La réserve de nourriture a un maximum (30, plus le séchoir, le grenier et le potier) ; ce qui dépasse est perdu et une aide dit quoi faire. Le grenier conserve au lieu de produire. Plus de génération de voix : les nouvelles phrases passent par la voix du navigateur (ADR-034). 14 tests.
 - **v0.11** : retours de Julien (ADR-026 à 033). Économie beaucoup plus lente (prix environ triplés) ; la nourriture 🍖 (on mange chaque soir, le village ne grandit que s'il y a à manger, les enfants grandissent) ; dès le néolithique, chacun rapporte lui-même sa production au village (plus de bulles à toucher) ; un bouton doré pour changer d'époque quand on veut ; plus d'amélioration automatique des huttes ; chaque niveau ajoute un travailleur et change l'image du bâtiment (24 nouvelles images) ; les merveilles ont leur bouton 🏛 et se bâtissent en 3 étapes, avec une fête à la fin ; 9 nouvelles décorations et une nouvelle merveille (les cercles de Bruniquel) ; les chasseurs disparaissent au loin dans la forêt. 73 nouvelles phrases enregistrées.
 - **v0.10** : la chasse (ADR-025) : des lapins sautillent près de la forêt et réapparaissent de temps en temps (jusqu'à 5 à l'âge de pierre, 3 au néolithique), trois mammouths broutent sur l'autre rive ; le chasseur du râtelier part chasser un lapin (ou parfois un mammouth) et le rapporte dans ses bras ; un mammouth chassé ne revient pas ; après l'élevage, le râtelier n'a plus de chasseur.
 - **v0.9** : bandeau redessiné (cartes plus soignées, prix en pastille, nombre possédé en haut à droite, « Nouveau » en étiquette) avec deux onglets : 🏠 Construire et ✨ Embellir ; 12 décorations et merveilles historiques (ADR-023) : 4 peintures au choix (Chauvet, Lascaux, Altamira, Gargas) et la hutte en os de mammouth à l'âge de pierre ; menhir, Dame de Saint-Sernin, dolmen, alignements de Carnac, cairn de Barnenez, Stonehenge et Göbekli Tepe au néolithique ; chacune a sa grande page lue à voix haute. Avant la découverte des outils, le bûcheron ramasse des branches au lieu d'abattre les arbres.
@@ -47,4 +48,5 @@ updated: 2026-10-20
 ## Points connus
 - Code poussé sur https://github.com/pikifou/du-feu-a-la-fusee (push possible depuis Claude). Pages s'active à la main (branche main, dossier /docs) : l'API Pages est bloquée par le proxy.
 - Pas encore de Frise du temps ni de Musée, pas de petits problèmes, pas de déplacement des bâtiments posés (prévus au GD).
-- Économie v0.11 à juger avec Joshua : prix, quantité de nourriture, durée des époques (âge de pierre ~10 min, néolithique ~13 à 17 min avec le joueur automatique).
+- Économie v0.12 à juger avec Joshua : prix, réserve de nourriture, durée des époques (âge de pierre ~10 min, néolithique ~15 min avec le joueur automatique).
+- Voix : les phrases nouvelles ou modifiées depuis la v0.11 sont lues par la synthèse du navigateur ; enregistrement en lot quand le jeu sera stable (ADR-034). Les mp3 qui ne servent plus restent sur le disque.

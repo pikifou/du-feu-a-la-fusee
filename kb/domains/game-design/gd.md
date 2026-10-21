@@ -79,29 +79,39 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 - Au début du soir, chaque habitant mange 3 parts. S'il n'y en a pas assez, une aide le dit et ceux qui ont faim le disent dans leurs bulles.
 - Une famille n'arrive que s'il y a de quoi nourrir tout le monde ce soir, nouveau venu compris ; sinon les maisons restent vides (une aide l'explique). Exception, pour éviter le cercle vicieux : quelqu'un vient quand même si un bâtiment de nourriture attend un travailleur.
 - Les enfants grandissent (environ 4 min) et deviennent des travailleurs.
-- Au départ : un buisson de baies tenu par la cueilleuse, 20 parts. Chiffres proposés par Claude.
+- Au départ : un buisson de baies tenu par la cueilleuse, 20 parts. Chiffres proposés par Claude. La réserve a un maximum (voir plus bas).
 
-## Les prix (ADR-026)
-- Tout est environ trois fois plus cher qu'en v0.10 : tente 15, hutte de branches 25, buisson 15, feu 20, atelier de silex, râtelier et séchoir 30, grotte peinte 40, hutte en peaux 45 ; au néolithique, champ 40, maison en torchis 45, enclos 50, meule 55, grenier et potier 60, maison longue 90. On démarre avec 20 pièces.
-- Le bois rapporte 4, le silex 5, les pots 6. Les découvertes coûtent environ 1,5 fois plus d'idées.
-- Mesure (joueur automatique) : âge de pierre ~10 min, néolithique ~13 à 17 min. Chiffres proposés par Claude, à régler en test.
+## Les prix et la richesse (ADR-026, ADR-035)
+- Règle : un bâtiment qui produit coûte environ 3 minutes de ce qu'il rapporte. Un bâtiment identique coûte toujours le même prix.
+- L'âge de pierre est pauvre : buisson 15, râtelier 25, séchoir 30, atelier de silex 35, feu 20, grotte peinte 40. On démarre avec 20 pièces.
+- Le néolithique est plus riche et plus cher : pirogue 35, meule 50, enclos 70, champ 75, grenier 80, atelier du potier 110. La hache en pierre polie double presque ce que rapportent le bûcheron (3 puis 6) et le tailleur (5 puis 8).
+- Maisons, selon l'époque et la qualité : tente 10 (2 places), hutte de branches 20 (3), hutte en peaux 40 (3), maison en torchis 80 (4), maison longue 150 (6). Transformations : vers hutte en peaux 30, vers maison en torchis 70, vers maison longue 80.
+- Niveaux : 1,5 puis 3 fois le prix du bâtiment.
+- Le frein naturel : la nourriture (production et réserve) limite le nombre d'habitants, donc de travailleurs ; les gains de chaque époque se stabilisent, et le surplus part dans les niveaux, les décorations et les merveilles. Le néolithique relève tout.
+- Mesure (joueur automatique qui épargne, v0.12) : environ 20 pièces par minute à l'âge de pierre et 30 au néolithique ; un achat toutes les 1 à 2 minutes ; les pièces en poche ne dépassent pas le prix du prochain achat.
+
+## La réserve de nourriture (ADR-036)
+- La réserve tient 30 parts ; chaque séchoir à poissons ajoute 20, chaque grenier 60, chaque atelier du potier 30. Ce qui dépasse est perdu. Le compteur affiche « 🍖 24 / 30 », en vert quand c'est plein.
+- Quand ça déborde, une aide dit quoi faire : construire une maison, ou, si la réserve est trop petite pour accueillir une famille de plus, de quoi conserver.
+- Le grenier ne produit plus : il conserve, et on y livre la nourriture.
 
 ## Embellir : décorations (ADR-023)
 - Onglet ✨ du bandeau. Uniquement des monuments réels de l'époque, avec leur grande page (vraie histoire, 2 « Le savais-tu ? »).
-- Âge de pierre : les chevaux de Chauvet (45), le taureau de Lascaux (55), les bisons d'Altamira (55), les mains de Gargas (35), les lions de Chauvet (55), les cerfs de Lascaux (50), l'homme-lion (60), les bisons d'argile du Tuc d'Audoubert (50, près de la grotte).
-- Néolithique : menhir (30, plusieurs possibles), cromlech (45, plusieurs possibles), dolmen (70, plusieurs possibles), Dame de Saint-Sernin (50), pierre gravée de Gavrinis (60), statue d'Aïn Ghazal (65), grand menhir brisé de Locmariaquer (80), maison de Skara Brae (90).
+- Âge de pierre : les mains de Gargas (20), les chevaux de Chauvet (25), le taureau de Lascaux, les bisons d'Altamira, les lions de Chauvet, les cerfs de Lascaux, les bisons d'argile du Tuc d'Audoubert (30), l'homme-lion (35).
+- Néolithique : menhir (40, plusieurs possibles), cromlech (60, plusieurs possibles), Dame de Saint-Sernin (70), pierre gravée de Gavrinis (80), statue d'Aïn Ghazal (90), dolmen (100, plusieurs possibles), grand menhir brisé de Locmariaquer (120), maison de Skara Brae (130).
 
 ## Les merveilles (ADR-030)
 - Bouton 🏛 en haut de l'écran : la fenêtre des merveilles de l'époque, chacune avec ses trois pastilles d'étapes et son bouton « Commencer » puis « Étape 2 », « Étape 3 ».
 - Chaque étape est payée à part (prix par étape) et bâtie par les habitants ; le monument sort de terre par tiers, dans ses échafaudages. À la troisième : confettis, « Hourra ! » et sa grande page « Merveille terminée ! ».
-- Âge de pierre : les cercles de Bruniquel (40 par étape, près de la grotte), la hutte en os de mammouth (50). Néolithique : alignements de Carnac (70), cairn de Barnenez (90), Göbekli Tepe (110), Stonehenge (150).
+- Âge de pierre : les cercles de Bruniquel (40 par étape, près de la grotte), la hutte en os de mammouth (50). Néolithique : alignements de Carnac (100), cairn de Barnenez (130), Göbekli Tepe (160), Stonehenge (200).
 - Les peintures et les merveilles sont uniques. Aucun bonus de jeu : elles embellissent et elles racontent (ADR-024).
 - Au changement d'époque, les monuments posés restent ; ceux de l'époque passée ne se construisent plus (ADR-024).
 
 ## Améliorer (ADR-021, ADR-031)
 - Dans la fiche courte d'un bâtiment : « ⬆ Niveau 2 : un travailleur de plus · 🪙 prix » ou « ⬆ Transformer en … ».
-- Bâtiments qui produisent : niveaux 1 à 3 ; chaque niveau ajoute un travailleur et change l'image du bâtiment (deux buissons puis trois, deux séchoirs, un abri sur le tas de bois…). Prix = 2 puis 4 fois le prix du bâtiment (cercle des anciens : 120 puis 240 ; tas de bois : 40 puis 80).
-- Maisons, toujours à la main : tente (50) ou hutte de branches (40) vers hutte en peaux après « Les huttes en peaux » ; au néolithique, tente, hutte de branches (60) ou hutte en peaux (50) vers maison en torchis (4 places) après « L'agriculture » ; maison en torchis vers maison longue (80, 6 places) après « Le grenier ».
+- Bâtiments qui produisent : niveaux 1 à 3 ; chaque niveau ajoute un travailleur et change l'image du bâtiment (deux buissons puis trois, deux séchoirs, un abri sur le tas de bois…). Prix : voir « Les prix et la richesse ».
+- Maisons, toujours à la main : vers hutte en peaux après « Les huttes en peaux » ; vers maison en torchis après « L'agriculture » ; maison en torchis vers maison longue après « Le grenier ».
+- Au néolithique, chacun travaille trois fois avant d'aller livrer au village (une livraison groupée), pour que la marche ne mange pas tout le travail.
 
 ## Comprendre ce qu'on voit (ADR-015)
 Toucher un bâtiment, un arbre, la grotte, le mammouth, le gué ou un sentier ouvre une petite fiche lue à voix haute : à quoi ça sert, qui y travaille, ce que ça change. Choisir un bâtiment à construire montre la même fiche.

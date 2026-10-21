@@ -214,22 +214,22 @@ var Donnees = (function () {
       explication: "Le tas de bois. Au début, on ramasse les branches tombées dans la forêt. Avec une hache de pierre, le bûcheron pourra couper les arbres. Le bois sert à construire et à faire du feu.",
       vignettes: [{ img: 'bois', texte: "Avec sa hache de pierre, le bûcheron abat un arbre, puis il range les bûches." }],
       nom: 'Le tas de bois', sprite: '01-pierre/tas-bois', epoque: 1, jusqua: 9,
-      zone: 'pre', cout: null, prixNiveau: 20, largeur: 130, taille: 1,
-      travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: 4 }
+      zone: 'pre', cout: null, prixNiveau: 40, largeur: 130, taille: 1,
+      travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 3, 2: 6 } }
     },
     tente: {
-      evolue: [{ vers: 'hutte-peaux', cout: 50, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 60, decouverte: 'agriculture' }],
+      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }],
       resume: "Une petite maison pour 2 personnes.", page: 'cueilleurs',
       explication: "Une tente en peaux tendues sur des bâtons. Deux personnes y dorment à l'abri du vent. Plus il y a de maisons, plus de familles viennent vivre au village.",
       nom: 'Une tente', sprite: '01-pierre/tente', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 15, bois: 2, lits: 2, largeur: 200, taille: 2
+      zone: 'pre', cout: 10, bois: 2, lits: 2, largeur: 200, taille: 2
     },
     'hutte-branches': {
-      evolue: [{ vers: 'hutte-peaux', cout: 40, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 60, decouverte: 'agriculture' }],
+      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }],
       resume: "Une maison de branches pour 3 personnes.", page: 'cueilleurs',
       explication: 'Une hutte de branches entrecroisées. Trois personnes peuvent y dormir.',
       nom: 'Une hutte de branches', sprite: '01-pierre/hutte-branches', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 25, bois: 3, lits: 3, largeur: 205, taille: 2
+      zone: 'pre', cout: 20, bois: 3, lits: 3, largeur: 205, taille: 2
     },
     'buisson-baies': {
       resume: "La cueilleuse y ramasse des baies.", page: 'cueilleurs',
@@ -244,8 +244,8 @@ var Donnees = (function () {
       explication: "L'atelier du tailleur, près de la grotte. Il frappe le silex avec un caillou pour faire des lames, des grattoirs et des pointes bien tranchantes.",
       vignettes: [{ img: 'silex', texte: "Le tailleur frappe le silex avec un caillou : les éclats tranchants deviennent des pointes de lance et des couteaux." }],
       nom: "L'atelier de silex", sprite: '01-pierre/atelier-silex', epoque: 1, jusqua: 9, debloque: 'outils',
-      zone: 'grotte', cout: 30, bois: 2, largeur: 130, taille: 1,
-      travail: { metier: 'tailleur', aller: 'grotte', porte: 'silex', duree: 4, produit: 'pieces', qte: 5 }
+      zone: 'grotte', cout: 35, bois: 2, largeur: 130, taille: 1,
+      travail: { metier: 'tailleur', aller: 'grotte', porte: 'silex', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 8 } }
     },
     feu: {
       resume: "Il chauffe et éclaire : on peut veiller le soir.",
@@ -259,12 +259,12 @@ var Donnees = (function () {
       explication: "Le râtelier des chasseurs. On y range les lances. Les chasseurs attrapent les lapins près de la forêt, et parfois un mammouth de l'autre côté de la rivière.",
       vignettes: [{ img: 'chasse', texte: "Les chasseurs avancent ensemble, cachés dans les hautes herbes, vers le mammouth." }],
       nom: 'Le râtelier des chasseurs', sprite: '01-pierre/ratelier-lances', epoque: 1, jusqua: 9, debloque: 'chasse',
-      zone: 'pre', cout: 30, bois: 2, largeur: 125, taille: 1,
+      zone: 'pre', cout: 25, bois: 2, largeur: 125, taille: 1,
       finitAvec: 'elevage',
       travail: { metier: 'chasseur', aller: 'gibier', porte: 'viande', duree: 6, produit: 'nourriture', qte: 4 }
     },
     'sechoir-poissons': {
-      resume: "On y fait sécher les poissons du pêcheur.",
+      resume: "On y fait sécher les poissons pour les garder : la réserve grandit.",
       explication: "Le séchoir à poissons, au bord de l'eau. Le pêcheur attrape les poissons, puis on les fait sécher pour pouvoir les garder longtemps.",
       vignettes: [{ img: 'peche', texte: "Le pêcheur attrape les poissons avec sa lance, puis on les fait sécher sur des bâtons." }],
       nom: 'Le séchoir à poissons', sprite: '01-pierre/sechoir-poissons', epoque: 1, jusqua: 9, debloque: 'chasse',
@@ -274,9 +274,9 @@ var Donnees = (function () {
     'hutte-peaux': {
       resume: "Une maison chaude en peaux, pour 3 personnes.",
       explication: 'Une grande hutte couverte de peaux cousues entre elles. Bien chaude, elle accueille trois personnes, même en hiver.',
-      evolue: [{ vers: 'maison-torchis', cout: 50, decouverte: 'agriculture' }],
+      evolue: [{ vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }],
       nom: 'Une hutte en peaux', sprite: '01-pierre/hutte-peaux', epoque: 1, jusqua: 1, debloque: 'abri',
-      zone: 'pre', cout: 45, bois: 3, lits: 3, largeur: 220, taille: 2
+      zone: 'pre', cout: 40, bois: 3, lits: 3, largeur: 220, taille: 2
     },
     'peintures-rupestres': {
       resume: "On peint nos histoires sur la roche.",
@@ -292,83 +292,82 @@ var Donnees = (function () {
       explication: "Une maison en torchis : de la terre, de la paille et de l'eau collées sur des branches. Les paysans y vivent toute l'année, près de leurs champs.",
       vignettes: [{ img: 'torchis', texte: "On tresse des branches, puis on les couvre de terre mêlée de paille : c'est le torchis." }],
       nom: 'Une maison en torchis', sprite: '02-neolithique/maison-torchis', epoque: 2, jusqua: 9, debloque: 'agriculture',
-      zone: 'pre', cout: 45, bois: 3, lits: 4, largeur: 215, taille: 2
+      zone: 'pre', cout: 80, bois: 3, lits: 4, largeur: 215, taille: 2
     },
     'champ-ble': {
       resume: "Le paysan y sème et récolte le blé.",
       explication: "Un champ de blé. Le paysan sème les graines, puis récolte les épis. Avec les champs, on n'a plus besoin de partir chercher à manger.",
       vignettes: [{ img: 'semer', texte: "Le paysan sème les graines de blé dans la terre." }, { img: 'moisson', texte: "Quand le blé est doré, on le coupe avec une faucille et on fait des gerbes." }],
       nom: 'Un champ de blé', sprite: '02-neolithique/champ-ble', epoque: 2, jusqua: 9, debloque: 'agriculture',
-      zone: 'pre', cout: 40, bois: 1, largeur: 240, taille: 2,
-      travail: { metier: 'paysan', aller: null, porte: 'ble', duree: 8, produit: 'nourriture', qte: 3 }
+      zone: 'pre', cout: 75, bois: 1, largeur: 240, taille: 2,
+      travail: { metier: 'paysan', aller: null, porte: 'ble', duree: 8, produit: 'nourriture', qte: 5 }
     },
     'enclos-moutons': {
       resume: "Le berger y garde les moutons et les chèvres.",
       explication: "L'enclos à moutons. Le berger garde les moutons : ils donnent de la laine pour les vêtements, et du lait.",
       vignettes: [{ img: 'enclos', texte: "Le berger garde les moutons dans l'enclos." }],
       nom: "L'enclos à moutons", sprite: '02-neolithique/enclos-moutons', epoque: 2, jusqua: 9, debloque: 'elevage',
-      zone: 'pre', cout: 50, bois: 3, largeur: 240, taille: 2,
-      travail: { metier: 'berger', aller: null, livre: 'lait', duree: 9, produit: 'nourriture', qte: 3 }
+      zone: 'pre', cout: 70, bois: 3, largeur: 240, taille: 2,
+      travail: { metier: 'berger', aller: null, livre: 'lait', duree: 9, produit: 'nourriture', qte: 5 }
     },
     grenier: {
-      resume: "On y garde le blé au sec, loin des souris.",
+      resume: "On y garde le blé au sec : la réserve de nourriture grandit.",
       explication: "Le grenier sur pilotis. On y range le blé en hauteur, au sec et loin des souris, pour en avoir tout l'hiver.",
       vignettes: [{ img: 'grenier', texte: "Le grenier est sur pilotis : les souris ne peuvent pas monter manger le blé." }],
       nom: 'Le grenier', sprite: '02-neolithique/grenier', epoque: 2, jusqua: 9, debloque: 'grenier',
-      zone: 'pre', cout: 60, bois: 3, largeur: 140, taille: 1,
-      travail: { metier: 'porteur', aller: 'champ', porte: 'ble', duree: 3, produit: 'nourriture', qte: 2 }
+      zone: 'pre', cout: 80, bois: 3, largeur: 140, taille: 1, reserve: 60
     },
     'maison-longue': {
       resume: "Une grande maison pour 6 personnes.",
       explication: "Une maison longue. Plusieurs familles vivent ensemble sous le même toit : jusqu'à six personnes.",
       vignettes: [{ img: 'torchis', texte: "Tout le monde aide à construire la maison : branches tressées, terre et toit de paille." }],
       nom: 'Une maison longue', sprite: '02-neolithique/maison-longue', epoque: 2, jusqua: 9, debloque: 'grenier',
-      zone: 'pre', cout: 90, bois: 4, lits: 6, largeur: 250, taille: 2
+      zone: 'pre', cout: 150, bois: 4, lits: 6, largeur: 250, taille: 2
     },
     'atelier-potier': {
       resume: "La potière y fait des pots en terre cuite.",
       explication: "L'atelier du potier. Il prend de l'argile au bord de la rivière, façonne des pots et les cuit dans le four pour qu'ils deviennent durs.",
       vignettes: [{ img: 'poterie', texte: "La potière façonne l'argile, puis elle cuit les pots dans le four." }],
       nom: "L'atelier du potier", sprite: '02-neolithique/atelier-potier', epoque: 2, jusqua: 9, debloque: 'poterie',
-      zone: 'pre', cout: 60, bois: 2, largeur: 210, taille: 2,
-      travail: { metier: 'potier', aller: 'riviere', porte: 'argile', livre: 'pot', duree: 4, produit: 'pieces', qte: 6 }
+      zone: 'pre', cout: 110, bois: 2, largeur: 210, taille: 2,
+      travail: { metier: 'potier', aller: 'riviere', porte: 'argile', livre: 'pot', duree: 4, produit: 'pieces', qte: 10 }
     },
     meule: {
       resume: "On y écrase le blé pour faire de la farine.",
       explication: 'La meule. On écrase les grains de blé entre deux pierres pour faire de la farine. Avec la farine, on fait du pain.',
       vignettes: [{ img: 'meule', texte: "On écrase les grains entre deux pierres : ça fait de la farine pour le pain." }],
       nom: 'La meule', sprite: '02-neolithique/meule', epoque: 2, jusqua: 9, debloque: 'meule',
-      zone: 'pre', cout: 55, bois: 1, largeur: 120, taille: 1,
-      travail: { metier: 'meunier', aller: 'champ', porte: 'ble', livre: 'farine', duree: 5, produit: 'nourriture', qte: 3 }
+      zone: 'pre', cout: 50, bois: 1, largeur: 120, taille: 1,
+      travail: { metier: 'meunier', aller: 'champ', porte: 'ble', livre: 'farine', duree: 5, produit: 'nourriture', qte: 4 }
     },
     pirogue: {
       resume: "Le pêcheur part sur l'eau dans un tronc creusé.", page: 'pirogue',
       explication: "Une pirogue, creusée dans un seul tronc d'arbre. Le pêcheur part pêcher en mer.",
       vignettes: [{ img: 'pirogue', texte: "En pirogue, le pêcheur part en mer et remonte son filet plein de poissons." }],
       nom: 'Une pirogue', sprite: '02-neolithique/pirogue', epoque: 2, jusqua: 9,
-      zone: 'plage', cout: 40, bois: 2, largeur: 150, taille: 1,
-      travail: { metier: 'pecheur', aller: 'plage', porte: 'poisson', duree: 6, produit: 'nourriture', qte: 2 }
+      zone: 'plage', cout: 35, bois: 2, largeur: 150, taille: 1,
+      travail: { metier: 'pecheur', aller: 'plage', porte: 'poisson', duree: 6, produit: 'nourriture', qte: 3 }
     },
     // Décorations et merveilles d'époque, historiquement vraies (ADR-023)
     'peinture-chauvet': {
       resume: "Une paroi peinte comme dans la grotte Chauvet.", page: 'deco-peinture-chauvet',
       nom: "Les chevaux de Chauvet", sprite: 'deco/peinture-chauvet', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 45, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 25, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
     },
     'peinture-lascaux': {
       resume: "Une paroi peinte comme dans la grotte de Lascaux.", page: 'deco-peinture-lascaux',
       nom: "Le taureau de Lascaux", sprite: 'deco/peinture-lascaux', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 55, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 30, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
     },
     'peinture-altamira': {
       resume: "Une paroi peinte comme dans la grotte d'Altamira.", page: 'deco-peinture-altamira',
       nom: "Les bisons d'Altamira", sprite: 'deco/peinture-altamira', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 55, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 30, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
     },
     'peinture-mains': {
       resume: "Une paroi couverte de mains, comme dans la grotte de Gargas.", page: 'deco-peinture-mains',
       nom: "Les mains de Gargas", sprite: 'deco/peinture-mains', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 35, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 20, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
     },
     'hutte-mammouth': {
       resume: "Une merveille : une hutte faite d'os de mammouth.", page: 'deco-hutte-mammouth',
@@ -378,22 +377,22 @@ var Donnees = (function () {
     'homme-lion': {
       resume: "Une petite statue à tête de lion, en ivoire.", page: 'deco-homme-lion',
       nom: "L'homme-lion", sprite: 'deco/homme-lion', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 60, bois: 1, largeur: 70, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 35, bois: 1, largeur: 70, taille: 1, deco: true, unique: true
     },
     'bisons-argile': {
       resume: "Deux bisons modelés dans l'argile.", page: 'deco-bisons-argile',
       nom: "Les bisons d'argile", sprite: 'deco/bisons-argile', epoque: 1, jusqua: 1,
-      zone: 'grotte', cout: 50, bois: 1, largeur: 120, taille: 1, deco: true, unique: true
+      zone: 'grotte', cout: 30, bois: 1, largeur: 120, taille: 1, deco: true, unique: true
     },
     'peinture-lions': {
       resume: "Une paroi peinte de lions, comme dans la grotte Chauvet.", page: 'deco-peinture-lions',
       nom: "Les lions de Chauvet", sprite: 'deco/peinture-lions', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 55, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 30, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
     },
     'peinture-cerfs': {
       resume: "Une paroi peinte de grands cerfs, comme à Lascaux.", page: 'deco-peinture-cerfs',
       nom: "Les cerfs de Lascaux", sprite: 'deco/peinture-cerfs', epoque: 1, jusqua: 1,
-      zone: 'pre', cout: 50, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 30, bois: 1, largeur: 140, taille: 1, deco: true, unique: true
     },
     'bruniquel': {
       resume: "Une merveille : des cercles de stalagmites au fond d'une grotte.", page: 'deco-bruniquel',
@@ -403,62 +402,62 @@ var Donnees = (function () {
     'menhir-brise': {
       resume: "Le plus grand menhir connu, couché et cassé en quatre.", page: 'deco-menhir-brise',
       nom: "Le grand menhir brisé", sprite: 'deco/menhir-brise', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 80, bois: 3, largeur: 220, taille: 2, deco: true, unique: true
+      zone: 'pre', cout: 120, bois: 3, largeur: 220, taille: 2, deco: true, unique: true
     },
     'gavrinis': {
       resume: "Une pierre couverte de spirales gravées.", page: 'deco-gavrinis',
       nom: "La pierre gravée de Gavrinis", sprite: 'deco/gavrinis', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 60, bois: 2, largeur: 95, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 80, bois: 2, largeur: 95, taille: 1, deco: true, unique: true
     },
     'cromlech': {
       resume: "Un petit cercle de pierres dressées.", page: 'deco-cromlech',
       nom: "Un cromlech", sprite: 'deco/cromlech', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 45, bois: 2, largeur: 150, taille: 1, deco: true
+      zone: 'pre', cout: 60, bois: 2, largeur: 150, taille: 1, deco: true
     },
     'ain-ghazal': {
       resume: "Une grande statue en plâtre aux grands yeux.", page: 'deco-ain-ghazal',
       nom: "La statue d'Aïn Ghazal", sprite: 'deco/ain-ghazal', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 65, bois: 2, largeur: 70, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 90, bois: 2, largeur: 70, taille: 1, deco: true, unique: true
     },
     'skara-brae': {
       resume: "Une maison en pierre, même les meubles !", page: 'deco-skara-brae',
       nom: "La maison de Skara Brae", sprite: 'deco/skara-brae', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 90, bois: 3, largeur: 200, taille: 2, deco: true, unique: true
+      zone: 'pre', cout: 130, bois: 3, largeur: 200, taille: 2, deco: true, unique: true
     },
     'menhir': {
       resume: "Une grande pierre dressée.", page: 'deco-menhir',
       nom: "Un menhir", sprite: 'deco/menhir', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 30, bois: 2, largeur: 80, taille: 1, deco: true
+      zone: 'pre', cout: 40, bois: 2, largeur: 80, taille: 1, deco: true
     },
     'statue-menhir': {
       resume: "Une pierre dressée sculptée comme une personne.", page: 'deco-statue-menhir',
       nom: "La Dame de Saint-Sernin", sprite: 'deco/statue-menhir', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 50, bois: 2, largeur: 85, taille: 1, deco: true, unique: true
+      zone: 'pre', cout: 70, bois: 2, largeur: 85, taille: 1, deco: true, unique: true
     },
     'dolmen': {
       resume: "Une grande table de pierre.", page: 'deco-dolmen',
       nom: "Un dolmen", sprite: 'deco/dolmen', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 70, bois: 3, largeur: 140, taille: 1, deco: true
+      zone: 'pre', cout: 100, bois: 3, largeur: 140, taille: 1, deco: true
     },
     'alignements': {
       resume: "Une merveille : des menhirs en longues rangées.", page: 'deco-alignements',
       nom: "Les alignements de Carnac", sprite: 'deco/alignements', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 70, bois: 4, largeur: 240, taille: 2, deco: true, merveille: true, unique: true
+      zone: 'pre', cout: 100, bois: 4, largeur: 240, taille: 2, deco: true, merveille: true, unique: true
     },
     'cairn': {
       resume: "Une merveille : un grand monument de pierres sèches.", page: 'deco-cairn',
       nom: "Le cairn de Barnenez", sprite: 'deco/cairn', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 90, bois: 5, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
+      zone: 'pre', cout: 130, bois: 5, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
     },
     'stonehenge': {
       resume: "Une merveille : le grand cercle de pierres d'Angleterre.", page: 'deco-stonehenge',
       nom: "Stonehenge", sprite: 'deco/stonehenge', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 150, bois: 6, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
+      zone: 'pre', cout: 200, bois: 6, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
     },
     'gobekli-tepe': {
       resume: "Une merveille : des piliers sculptés d'animaux.", page: 'deco-gobekli-tepe',
       nom: "Göbekli Tepe", sprite: 'deco/gobekli-tepe', epoque: 2, jusqua: 9,
-      zone: 'pre', cout: 110, bois: 5, largeur: 240, taille: 2, deco: true, merveille: true, unique: true
+      zone: 'pre', cout: 160, bois: 5, largeur: 240, taille: 2, deco: true, merveille: true, unique: true
     },
     passerelle: {
       resume: "Un pont de bois pour traverser la rivière.",
@@ -535,7 +534,11 @@ var Donnees = (function () {
       epoque2: "Fini de bouger ! Au néolithique, on reste au même endroit : chacun rapporte lui-même ce qu'il produit au village. Plus besoin de toucher les bulles !",
       maisonsAMain: 'Touche une hutte pour la transformer en maison du néolithique.',
       nourriture: "Les baies, la viande et le poisson vont dans la réserve de nourriture. Chaque soir, tout le monde mange !",
-      nourritureInfo: "La réserve de nourriture. Chaque soir, chaque habitant mange trois parts. Pour qu'une nouvelle famille arrive, il faut assez à manger pour tout le monde.",
+      nourritureInfo: "La réserve de nourriture. Chaque soir, chaque habitant mange trois parts. Pour qu'une nouvelle famille arrive, il faut assez à manger pour tout le monde. On ne peut pas tout garder : ce qui dépasse de la réserve est perdu.",
+      reserveDeborde: "Ta réserve déborde ! Construis une maison pour accueillir une nouvelle famille.",
+      reserveTropPetite1: "Ta réserve est trop petite pour accueillir une famille de plus. Un séchoir à poissons permet de garder plus de nourriture.",
+      reserveTropPetite2: "Ta réserve est trop petite pour accueillir une famille de plus. Construis un grenier ou un atelier du potier pour garder plus de nourriture.",
+      hachePolie: "Nouvel outil : la hache en pierre polie ! Le bûcheron et le tailleur de pierre travaillent bien mieux.",
       faim1: "Il n'y avait pas assez à manger ce soir ! Construis un buisson de baies, un séchoir à poissons ou un râtelier de chasseurs.",
       faim2: "Il n'y avait pas assez à manger ce soir ! Construis un champ de blé, un enclos ou une pirogue.",
       maisonsVides: "Les maisons attendent du monde, mais il faut plus à manger pour accueillir une nouvelle famille.",

@@ -278,7 +278,7 @@ var Monde = (function () {
     var n = b.niveau || 1;
     if (d.travail && n < NIVEAU_MAX && !inactif(m, b)) {
       var base = d.prixNiveau || d.cout || 10;
-      return { genre: 'niveau', niveau: n + 1, cout: Math.round(base * (n === 1 ? 2 : 4)) };
+      return { genre: 'niveau', niveau: n + 1, cout: Math.round(base * (n === 1 ? 1.5 : 3) / 5) * 5 };
     }
     return null;
   }
@@ -302,16 +302,18 @@ var Monde = (function () {
     m.evenements.push({ type: 'chantier', bat: b.id });
     return a;
   }
-  function quantite(b) { return D.batiments[b.type].travail.qte; }
+  // ce que rapporte une tournée ; certains outils s'améliorent au néolithique (la hache polie)
+  function qteDe(tr, epoque) { return typeof tr.qte === 'object' ? (tr.qte[epoque] || tr.qte[1]) : tr.qte; }
+  function quantite(b, m) { return qteDe(D.batiments[b.type].travail, m ? m.epoque : 1); }
   function merveilleFinie(b) { return !D.batiments[b.type].merveille || (b.etape == null ? 3 : b.etape) >= 3; }
 
   function recolter(m, id) {
     var b = bat(m, id);
     if (!b || b.stock <= 0) return null;
     var tr = D.batiments[b.type].travail;
-    var n = b.stock * quantite(b);
+    var n = b.stock * quantite(b, m);
     b.stock = 0;
-    m[tr.produit] = (m[tr.produit] || 0) + n;
+    ajouter(m, tr.produit, n);
     return { produit: tr.produit, n: n };
   }
 
@@ -340,6 +342,18 @@ var Monde = (function () {
       // les feux s'éteignent : tout le monde va se coucher
       m.habitants.forEach(function (h) { lacher(m, h); });
     }
+  }
+  // la réserve de nourriture : ce qu'on sait conserver (ADR-036)
+  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30 };
+  function reserveMax(m) {
+    return m.batiments.reduce(function (s, b) { return s + (b.etat === 'fini' || b.niveau ? (RESERVE[b.type] || 0) : 0); }, RESERVE.base);
+  }
+  function ajouter(m, produit, n) {
+    if (produit !== 'nourriture') { m[produit] = (m[produit] || 0) + n; return n; }
+    var max = reserveMax(m), avant = m.nourriture;
+    m.nourriture = Math.min(max, m.nourriture + n);
+    if (avant + n > max) m.evenements.push({ type: 'perdu', n: avant + n - max });
+    return m.nourriture - avant;
   }
   // le repas du soir : chacun mange ; s'il n'y a pas assez, le village ne grandit plus (ADR-032)
   function besoinRepas(m, n) { return (n == null ? m.habitants.length : n) * REPAS; }
@@ -454,8 +468,24 @@ var Monde = (function () {
     return { p: q, loin: [q[0] + ax / k * 40, q[1] + ay / k * 20] };
   }
 
-  function planTravail(m, h, b) {
+  var LOT = 3; // au néolithique, on travaille trois fois avant d'aller livrer au village
+  function planTravail(m, h, b, nomade) {
     var tr = D.batiments[b.type].travail;
+    // sédentaires : quelques tournées de travail, puis une seule livraison groupée (ADR-029)
+    if (!nomade && m.epoque >= 2 && tr.aller !== 'gibier') {
+      var dp = depot(m, tr.produit, [b.x, b.y]);
+      if (dp && dp.id !== b.id) {
+        var lot = [];
+        for (var k = 0; k < LOT; k++) lot = lot.concat(planTravail(m, h, b, true).filter(function (e) { return e.fait !== 'produire'; }));
+        var obj = tr.livre || tr.porte;
+        if (obj) lot.push({ fait: 'prendre', objet: obj });
+        lot.push({ fait: 'aller', p: pointLibre(m, devant(m, dp), 1) });
+        lot.push({ fait: 'attendre', d: 0.5, anim: 'repos' });
+        lot.push({ fait: 'deposer' });
+        lot.push({ fait: 'rapporter', bat: b.id, fois: LOT });
+        return lot;
+      }
+    }
     var et = [], lieu = null, arbre = null, objet = tr.porte || null;
     var pose = (D.poses[m.epoque] || {})[tr.metier] || null; // ADR-017 : on voit ce qu'il fait
     var depuis = [b.x, b.y];
@@ -497,7 +527,7 @@ var Monde = (function () {
       var champs = m.batiments.filter(function (c) { return c.type === 'champ-ble' && c.etat === 'fini'; });
       if (champs.length) { var c = choisir(m, champs); lieu = [c.x + (hasard(m) - 0.5) * 120, c.y + (hasard(m) - 0.5) * 40]; }
     }
-    var sedentaire = m.epoque >= 2; // fin du nomadisme : on rapporte soi-même au village (ADR-029)
+    var sedentaire = m.epoque >= 2 && !nomade; // fin du nomadisme : on rapporte soi-même au village (ADR-029)
     var dep = sedentaire ? depot(m, tr.produit, depuis) : null;
     var sur = dep && dep.id === b.id; // le sage est déjà sur la place
     if (lieu) {
@@ -738,8 +768,8 @@ var Monde = (function () {
         } else if (e.fait === 'rapporter') {
           var rb = bat(m, e.bat);
           if (rb && D.batiments[rb.type].travail) {
-            var pr = D.batiments[rb.type].travail.produit, nq = quantite(rb) * (e.fois || 1);
-            m[pr] = (m[pr] || 0) + nq;
+            var pr = D.batiments[rb.type].travail.produit, nq = quantite(rb, m) * (e.fois || 1);
+            ajouter(m, pr, nq);
             m.evenements.push({ type: 'gain', produit: pr, n: nq, x: h.x, y: h.y, bat: rb.id });
           }
         } else if (e.fait === 'produire') {
@@ -888,7 +918,7 @@ var Monde = (function () {
     heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
     phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES,
     amelioration: amelioration, ameliorer: ameliorer, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX,
-    REPAS: REPAS, besoinRepas: besoinRepas, assezAManger: assezAManger, places: places, merveilleFinie: merveilleFinie, inactif: inactif
+    REPAS: REPAS, reserveMax: reserveMax, RESERVE: RESERVE, qteDe: qteDe, besoinRepas: besoinRepas, assezAManger: assezAManger, places: places, merveilleFinie: merveilleFinie, inactif: inactif
   };
 })();
 if (typeof module !== 'undefined') module.exports = Monde;
