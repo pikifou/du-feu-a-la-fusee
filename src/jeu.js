@@ -261,7 +261,7 @@
   var T = 0;
   var TAILLE_HAB = { sage: 66, enfant: 48, adulte: 62 }; // ADR-014 : bien plus petits que les huttes
   // l'image d'un bâtiment change avec son niveau (ADR-031)
-  var GRANDIT = { 2: 1.12, 3: 1.24 };
+  var GRANDIT = { 2: 1.16, 3: 1.32 };
   function tailleBat(b) {
     var d = D.batiments[b.type], n = b.niveau || 1, im = IMG[d.sprite], k = 1;
     if (n > 1 && IMG['niveaux/' + b.type + '-' + n]) { im = IMG['niveaux/' + b.type + '-' + n]; k = GRANDIT[n] / (b.k > 1 ? 1.06 : 1); }
@@ -700,7 +700,29 @@
   }
 
   var EMOJI = { pieces: '🪙', idees: '💡', nourriture: '🍖' };
-  var bulles = [];
+  var bulles = [], fleches = [];
+  // la flèche verte : ce bâtiment peut monter de niveau, et on a de quoi payer (ADR-038)
+  function dessinerFleches() {
+    fleches = [];
+    if (choix) return;
+    monde.batiments.forEach(function (b) {
+      var trF = D.batiments[b.type].travail;
+      var a = b.etat === 'fini' && trF && trF.produit === 'pieces' ? M.amelioration(monde, b) : null; // ce qui rapporte des pièces
+      if (!a || a.genre !== 'niveau' || a.cout > monde.pieces) return;
+      var t = tailleBat(b), p = E(b.x, basBat(b));
+      var r = Math.max(13, Math.min(20, 24 * V.s));
+      var x = p[0] + t.w * 0.38, y = p[1] - t.h * 0.75 - Math.abs(Math.sin(T * 3.2 + b.id)) * 8;
+      if (!visible(b.x, b.y, 100)) return;
+      fleches.push({ bat: b.id, x: x, y: y, r: r * 1.5 });
+      ctx.fillStyle = 'rgba(40,70,20,.22)'; ctx.beginPath(); ctx.arc(x, y + 4, r, 0, 7); ctx.fill();
+      ctx.fillStyle = '#5a9a3c'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath();
+      ctx.moveTo(x, y - r * 0.62); ctx.lineTo(x + r * 0.55, y); ctx.lineTo(x + r * 0.22, y); ctx.lineTo(x + r * 0.22, y + r * 0.55);
+      ctx.lineTo(x - r * 0.22, y + r * 0.55); ctx.lineTo(x - r * 0.22, y); ctx.lineTo(x - r * 0.55, y); ctx.closePath(); ctx.fill();
+    });
+    if (fleches.length && !enScene) aideUneFois('fleche-verte', A.flecheVerte);
+  }
   function dessinerBulles() {
     bulles = [];
     monde.batiments.forEach(function (b) {
@@ -1030,6 +1052,7 @@
     fumees(dt);
     dessinerParts(dt);
     dessinerNuit();
+    dessinerFleches();
     dessinerBulles();
     barks();
     dessinerParoles();
@@ -1078,6 +1101,9 @@
     var decos = tout.filter(function (k) { return D.batiments[k].deco; });
     if (!decos.length) onglet = 'construire';
     var liste = tout.filter(function (k) { return !!D.batiments[k].deco === (onglet === 'embellir'); });
+    // d'abord ce qui rapporte des pièces, puis les maisons, puis la nourriture, puis le reste (ADR-037)
+    var rangCarte = function (k) { var d = D.batiments[k], tr = d.travail; return tr && tr.produit === 'pieces' ? 0 : d.lits ? 1 : tr && tr.produit === 'nourriture' ? 2 : 3; };
+    liste.sort(function (a, b) { return (rangCarte(a) - rangCarte(b)) || ((D.batiments[a].cout || 0) - (D.batiments[b].cout || 0)); });
     var sig = tout.join() + '|' + onglet + '|' + monde.pieces + '|' + choix + '|' + ui.nouveaux.join() + '|' + monde.batiments.length;
     if (sig === signatureBarre) return;
     signatureBarre = sig;
@@ -1111,6 +1137,7 @@
       el.innerHTML = '<div class="socle"><img src="' + ASSETS[d.sprite] + '" alt=""></div>' +
         (fait ? '<div class="prix fait">✓</div>' : '<div class="prix"><span class="piece">🪙</span>' + d.cout + '</div>') +
         (n && !fait ? '<div class="nombre">' + n + '</div>' : '') +
+        (d.travail && ui.nouveaux.indexOf(type) < 0 ? '<div class="produit ' + d.travail.produit + '">' + EMOJI[d.travail.produit] + '</div>' : '') +
         (ui.nouveaux.indexOf(type) >= 0 ? '<div class="neuf">Nouveau</div>' : '');
       el.addEventListener('pointerdown', function (ev) {
         ev.stopPropagation();
@@ -1466,8 +1493,13 @@
     var am = o.bat ? M.amelioration(monde, o.bat) : null, ba = $('info-ameliorer');
     ba.hidden = !am;
     if (am) {
-      ba.innerHTML = (am.genre === 'maison' ? '⬆ Transformer en ' + D.batiments[am.vers].nom.replace(/^Une? /, '').toLowerCase()
-        : am.genre === 'etape' ? '🏛 Étape ' + am.etape : '⬆ Niveau ' + am.niveau + ' : un travailleur de plus') + ' · 🪙 ' + am.cout;
+      // on montre à quoi il ressemblera (ADR-038)
+      var apres = am.genre === 'maison' ? D.batiments[am.vers].sprite : am.genre === 'niveau' ? 'niveaux/' + o.bat.type + '-' + am.niveau : null;
+      var trA = D.batiments[o.bat.type].travail;
+      ba.innerHTML = (apres && ASSETS[apres] ? '<img src="' + ASSETS[apres] + '" alt="">' : '') + '<span>' +
+        (am.genre === 'maison' ? '⬆ Transformer en ' + D.batiments[am.vers].nom.replace(/^Une? /, '').toLowerCase()
+        : am.genre === 'etape' ? '🏛 Étape ' + am.etape
+        : '⬆ Niveau ' + am.niveau + ' · 👷 +1' + (trA ? ' · ' + EMOJI[trA.produit] + ' +' + M.quantite(o.bat, monde) : '')) + ' · 🪙 ' + am.cout + '</span>';
       ba.classList.toggle('non', monde.pieces < am.cout);
       ba.onclick = function (e) {
         e.stopPropagation();
@@ -1594,6 +1626,9 @@
       } else son('non');
       return;
     }
+    for (var f = 0; f < fleches.length; f++) {
+      if (Math.hypot(x - fleches[f].x, y - fleches[f].y) < fleches[f].r) { var bf = M.bat(monde, fleches[f].bat); if (bf) { son('clic'); infoBatiment(bf); } return; }
+    }
     for (var i = 0; i < bulles.length; i++) {
       var bu = bulles[i];
       if (Math.hypot(x - bu.x, y - bu.y) < bu.r) {
@@ -1675,6 +1710,13 @@
         var b = M.bat(monde, e.bat);
         if (b) { var t = tailleBat(b); pouf(b.x, b.y - t.h / V.s * 0.3, 14); son('fini'); }
         if (b && D.batiments[b.type].lits) aideUneFois('maison', A.maison);
+        if (b && (b.niveau || 1) > 1 && b.__niv !== b.niveau) {
+          // un niveau de plus : on le voit et on le fête (ADR-038)
+          b.__niv = b.niveau;
+          var tn = tailleBat(b);
+          pouf(b.x, b.y - tn.h / V.s * 0.4, 22, '255,210,63');
+          particule({ type: 'gain', texte: '⭐ Niveau ' + b.niveau + ' !', x: b.x, y: b.y - tn.h / V.s * 0.9, vy: -18, max: 2.2 });
+        }
         if (b && D.batiments[b.type].merveille && !M.merveilleFinie(b)) aide(A.merveilleEtape);
       } else if (e.type === 'merveille') {
         feteMerveille(M.bat(monde, e.bat));
@@ -1686,7 +1728,7 @@
         var cpt = $('c-' + e.produit); if (cpt) { cpt.classList.remove('tilt'); void cpt.offsetWidth; cpt.classList.add('tilt'); }
       } else if (e.type === 'perdu') {
         // la réserve est pleine : ce qui arrive est perdu (ADR-036) ; on dit quoi faire, de temps en temps
-        if (!enScene && monde.t - (ui.perduA || -999) > 180) {
+        if (!enScene && monde.t - (ui.perduA || -999) > 360) {
           ui.perduA = monde.t;
           var trop = M.besoinRepas(monde, monde.habitants.length + 1) > M.reserveMax(monde);
           aide(trop ? (monde.epoque >= 2 ? A.reserveTropPetite2 : A.reserveTropPetite1) : A.reserveDeborde);
@@ -1698,8 +1740,7 @@
         if (hg) bark(hg, 'J\'ai grandi !');
       } else if (e.type === 'bulle') {
         var bb = M.bat(monde, e.bat);
-        if (bb && D.batiments[bb.type].travail.produit === 'nourriture') aideUneFois('nourriture', A.nourriture);
-        else aideUneFois('bulle', A.bulle);
+        aideUneFois('bulle', A.bulle);
       } else if (e.type === 'arrivee') {
         aideUneFois('arrivee', A.arrivee);
       }

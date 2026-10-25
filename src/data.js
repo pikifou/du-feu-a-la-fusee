@@ -214,8 +214,8 @@ var Donnees = (function () {
       explication: "Le tas de bois. Au début, on ramasse les branches tombées dans la forêt. Avec une hache de pierre, le bûcheron pourra couper les arbres. Le bois sert à construire et à faire du feu.",
       vignettes: [{ img: 'bois', texte: "Avec sa hache de pierre, le bûcheron abat un arbre, puis il range les bûches." }],
       nom: 'Le tas de bois', sprite: '01-pierre/tas-bois', epoque: 1, jusqua: 9,
-      zone: 'pre', cout: null, prixNiveau: 40, largeur: 130, taille: 1,
-      travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 3, 2: 6 } }
+      zone: 'pre', cout: 40, prixNiveau: 40, largeur: 130, taille: 1,
+      travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 10 } }
     },
     tente: {
       evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }],
@@ -245,7 +245,7 @@ var Donnees = (function () {
       vignettes: [{ img: 'silex', texte: "Le tailleur frappe le silex avec un caillou : les éclats tranchants deviennent des pointes de lance et des couteaux." }],
       nom: "L'atelier de silex", sprite: '01-pierre/atelier-silex', epoque: 1, jusqua: 9, debloque: 'outils',
       zone: 'grotte', cout: 35, bois: 2, largeur: 130, taille: 1,
-      travail: { metier: 'tailleur', aller: 'grotte', porte: 'silex', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 8 } }
+      travail: { metier: 'tailleur', aller: 'grotte', porte: 'silex', duree: 4, produit: 'pieces', qte: { 1: 7, 2: 12 } }
     },
     feu: {
       resume: "Il chauffe et éclaire : on peut veiller le soir.",
@@ -261,7 +261,7 @@ var Donnees = (function () {
       nom: 'Le râtelier des chasseurs', sprite: '01-pierre/ratelier-lances', epoque: 1, jusqua: 9, debloque: 'chasse',
       zone: 'pre', cout: 25, bois: 2, largeur: 125, taille: 1,
       finitAvec: 'elevage',
-      travail: { metier: 'chasseur', aller: 'gibier', porte: 'viande', duree: 6, produit: 'nourriture', qte: 4 }
+      travail: { metier: 'chasseur', aller: 'gibier', porte: 'viande', duree: 6, produit: 'nourriture', qte: 3 }
     },
     'sechoir-poissons': {
       resume: "On y fait sécher les poissons pour les garder : la réserve grandit.",
@@ -330,7 +330,7 @@ var Donnees = (function () {
       vignettes: [{ img: 'poterie', texte: "La potière façonne l'argile, puis elle cuit les pots dans le four." }],
       nom: "L'atelier du potier", sprite: '02-neolithique/atelier-potier', epoque: 2, jusqua: 9, debloque: 'poterie',
       zone: 'pre', cout: 110, bois: 2, largeur: 210, taille: 2,
-      travail: { metier: 'potier', aller: 'riviere', porte: 'argile', livre: 'pot', duree: 4, produit: 'pieces', qte: 10 }
+      travail: { metier: 'potier', aller: 'riviere', porte: 'argile', livre: 'pot', duree: 4, produit: 'pieces', qte: 18 }
     },
     meule: {
       resume: "On y écrase le blé pour faire de la farine.",
@@ -552,7 +552,8 @@ var Donnees = (function () {
       cocorico: 'Cocorico ! Le soleil se lève, tout le monde au travail !',
       chantier: 'Regarde : les habitants vont chercher du bois pour construire !',
       maison: 'Une nouvelle maison ! Une famille va bientôt arriver.',
-      bulle: 'Touche les bulles pour ramasser les pièces et les idées !',
+      bulle: 'Touche les bulles pour ramasser les pièces, la nourriture et les idées !',
+      flecheVerte: 'Regarde la flèche verte : touche ce bâtiment et améliore-le pour gagner plus de pièces !',
       arrivee: "Quelqu'un arrive dans la vallée !",
       nuitFeu: 'La nuit tombe. Autour du feu, on a chaud et on y voit clair : le travail continue !',
       nuitSansFeu: 'Il fait nuit et tout le monde dort… Construis un feu de camp près du village !',

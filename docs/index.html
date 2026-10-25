@@ -246,6 +246,12 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #info-ameliorer { border: 0; background: var(--vert, #5a9a3c); color: #fff; font-family: inherit; font-weight: 700; font-size: 15px; border-radius: 999px;
   padding: 6px 14px; margin-top: 7px; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.25); }
 #info-ameliorer.non { filter: grayscale(.8); opacity: .65; }
+#info-ameliorer { display: inline-flex; align-items: center; gap: 8px; }
+#info-ameliorer img { width: 54px; height: 42px; object-fit: contain; background: rgba(255,255,255,.25); border-radius: 10px; padding: 2px; }
+/* ce que produit un bâtiment, en haut à gauche de sa carte (ADR-037) */
+.carte-bat .produit { position: absolute; top: -7px; left: -7px; width: 24px; height: 24px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 3px rgba(60,40,20,.3); display: grid; place-items: center; font-size: 14px; }
+.carte-bat .produit.pieces { background: #fff2c2; }
 #info-plus:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--orange-fonce); }
 .dec.faite { cursor: pointer; }
 #scene-illu { width: 100%; max-height: 42vh; object-fit: cover; border-radius: 18px; margin: 4px 0 8px; display: block; }
@@ -569,8 +575,8 @@ var Donnees = (function () {
       explication: "Le tas de bois. Au début, on ramasse les branches tombées dans la forêt. Avec une hache de pierre, le bûcheron pourra couper les arbres. Le bois sert à construire et à faire du feu.",
       vignettes: [{ img: 'bois', texte: "Avec sa hache de pierre, le bûcheron abat un arbre, puis il range les bûches." }],
       nom: 'Le tas de bois', sprite: '01-pierre/tas-bois', epoque: 1, jusqua: 9,
-      zone: 'pre', cout: null, prixNiveau: 40, largeur: 130, taille: 1,
-      travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 3, 2: 6 } }
+      zone: 'pre', cout: 40, prixNiveau: 40, largeur: 130, taille: 1,
+      travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 10 } }
     },
     tente: {
       evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }],
@@ -600,7 +606,7 @@ var Donnees = (function () {
       vignettes: [{ img: 'silex', texte: "Le tailleur frappe le silex avec un caillou : les éclats tranchants deviennent des pointes de lance et des couteaux." }],
       nom: "L'atelier de silex", sprite: '01-pierre/atelier-silex', epoque: 1, jusqua: 9, debloque: 'outils',
       zone: 'grotte', cout: 35, bois: 2, largeur: 130, taille: 1,
-      travail: { metier: 'tailleur', aller: 'grotte', porte: 'silex', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 8 } }
+      travail: { metier: 'tailleur', aller: 'grotte', porte: 'silex', duree: 4, produit: 'pieces', qte: { 1: 7, 2: 12 } }
     },
     feu: {
       resume: "Il chauffe et éclaire : on peut veiller le soir.",
@@ -616,7 +622,7 @@ var Donnees = (function () {
       nom: 'Le râtelier des chasseurs', sprite: '01-pierre/ratelier-lances', epoque: 1, jusqua: 9, debloque: 'chasse',
       zone: 'pre', cout: 25, bois: 2, largeur: 125, taille: 1,
       finitAvec: 'elevage',
-      travail: { metier: 'chasseur', aller: 'gibier', porte: 'viande', duree: 6, produit: 'nourriture', qte: 4 }
+      travail: { metier: 'chasseur', aller: 'gibier', porte: 'viande', duree: 6, produit: 'nourriture', qte: 3 }
     },
     'sechoir-poissons': {
       resume: "On y fait sécher les poissons pour les garder : la réserve grandit.",
@@ -685,7 +691,7 @@ var Donnees = (function () {
       vignettes: [{ img: 'poterie', texte: "La potière façonne l'argile, puis elle cuit les pots dans le four." }],
       nom: "L'atelier du potier", sprite: '02-neolithique/atelier-potier', epoque: 2, jusqua: 9, debloque: 'poterie',
       zone: 'pre', cout: 110, bois: 2, largeur: 210, taille: 2,
-      travail: { metier: 'potier', aller: 'riviere', porte: 'argile', livre: 'pot', duree: 4, produit: 'pieces', qte: 10 }
+      travail: { metier: 'potier', aller: 'riviere', porte: 'argile', livre: 'pot', duree: 4, produit: 'pieces', qte: 18 }
     },
     meule: {
       resume: "On y écrase le blé pour faire de la farine.",
@@ -907,7 +913,8 @@ var Donnees = (function () {
       cocorico: 'Cocorico ! Le soleil se lève, tout le monde au travail !',
       chantier: 'Regarde : les habitants vont chercher du bois pour construire !',
       maison: 'Une nouvelle maison ! Une famille va bientôt arriver.',
-      bulle: 'Touche les bulles pour ramasser les pièces et les idées !',
+      bulle: 'Touche les bulles pour ramasser les pièces, la nourriture et les idées !',
+      flecheVerte: 'Regarde la flèche verte : touche ce bâtiment et améliore-le pour gagner plus de pièces !',
       arrivee: "Quelqu'un arrive dans la vallée !",
       nuitFeu: 'La nuit tombe. Autour du feu, on a chaud et on y voit clair : le travail continue !',
       nuitSansFeu: 'Il fait nuit et tout le monde dort… Construis un feu de camp près du village !',
@@ -1205,7 +1212,7 @@ var Monde = (function () {
   function nouveau(graine) {
     var m = {
       t: 0, graine: graine || 12345, prochainId: 1,
-      pieces: 20, idees: 0, nourriture: 20, faim: 0, epoque: 1, decouvertes: {},
+      pieces: 30, idees: 0, nourriture: 20, faim: 0, epoque: 1, decouvertes: {},
       batiments: [], habitants: [], animaux: [],
       arrivee: 0, evenements: [], fini: false, repousse: 0,
       cycle: { phase: 'jour', t: 20 },
@@ -1598,16 +1605,6 @@ var Monde = (function () {
     return best ? centreTuile(best) : p;
   }
 
-  // là où l'on rapporte ce qu'on a produit, une fois sédentaires (ADR-029) : la place du village,
-  // ou le grenier le plus proche pour la nourriture
-  function depot(m, produit, p) {
-    var l = m.batiments.filter(function (b) {
-      return b.etat === 'fini' && (b.type === 'cercle-pierres' || (produit === 'nourriture' && b.type === 'grenier'));
-    });
-    var best = null, bd = 1e9;
-    l.forEach(function (b) { var d = dist(p, [b.x, b.y]); if (d < bd) { bd = d; best = b; } });
-    return best;
-  }
   // la lisière de la forêt où les chasseurs disparaissent (ADR-033) : loin du village, contre les arbres
   function lisiere(m, p) {
     var T = m.terrain, l = [];
@@ -1629,24 +1626,8 @@ var Monde = (function () {
     return { p: q, loin: [q[0] + ax / k * 40, q[1] + ay / k * 20] };
   }
 
-  var LOT = 3; // au néolithique, on travaille trois fois avant d'aller livrer au village
-  function planTravail(m, h, b, nomade) {
+  function planTravail(m, h, b) {
     var tr = D.batiments[b.type].travail;
-    // sédentaires : quelques tournées de travail, puis une seule livraison groupée (ADR-029)
-    if (!nomade && m.epoque >= 2 && tr.aller !== 'gibier') {
-      var dp = depot(m, tr.produit, [b.x, b.y]);
-      if (dp && dp.id !== b.id) {
-        var lot = [];
-        for (var k = 0; k < LOT; k++) lot = lot.concat(planTravail(m, h, b, true).filter(function (e) { return e.fait !== 'produire'; }));
-        var obj = tr.livre || tr.porte;
-        if (obj) lot.push({ fait: 'prendre', objet: obj });
-        lot.push({ fait: 'aller', p: pointLibre(m, devant(m, dp), 1) });
-        lot.push({ fait: 'attendre', d: 0.5, anim: 'repos' });
-        lot.push({ fait: 'deposer' });
-        lot.push({ fait: 'rapporter', bat: b.id, fois: LOT });
-        return lot;
-      }
-    }
     var et = [], lieu = null, arbre = null, objet = tr.porte || null;
     var pose = (D.poses[m.epoque] || {})[tr.metier] || null; // ADR-017 : on voit ce qu'il fait
     var depuis = [b.x, b.y];
@@ -1688,44 +1669,29 @@ var Monde = (function () {
       var champs = m.batiments.filter(function (c) { return c.type === 'champ-ble' && c.etat === 'fini'; });
       if (champs.length) { var c = choisir(m, champs); lieu = [c.x + (hasard(m) - 0.5) * 120, c.y + (hasard(m) - 0.5) * 40]; }
     }
-    var sedentaire = m.epoque >= 2 && !nomade; // fin du nomadisme : on rapporte soi-même au village (ADR-029)
-    var dep = sedentaire ? depot(m, tr.produit, depuis) : null;
-    var sur = dep && dep.id === b.id; // le sage est déjà sur la place
+    // fin du nomadisme : ce qu'on produit va tout seul au village, un peu à chaque tournée (ADR-029, ADR-037)
+    var sedentaire = m.epoque >= 2;
     if (lieu) {
       et.push({ fait: 'aller', p: lieu });
       et.push({ fait: 'attendre', d: fois > 1 ? tr.duree * 2 : tr.duree, anim: 'travail', pose: pose });
       if (arbre) et.push({ fait: 'couper', i: arbre.i, j: arbre.j });
       if (proie) et.push({ fait: 'chasser', animal: proie.id });
       et.push({ fait: 'prendre', objet: objet });
-      if (dep && tr.livre) {
-        // on rapporte la matière à l'atelier, on la travaille, puis on livre l'objet fini au village
-        et.push({ fait: 'aller', p: devant(m, b) });
-        et.push({ fait: 'deposer' });
-        et.push({ fait: 'attendre', d: 2, anim: 'travail', pose: pose });
-        et.push({ fait: 'prendre', objet: tr.livre });
-      }
     } else if (!foret) {
       var dedans = b.type === 'cercle-pierres'; // le sage s'assoit au milieu du cercle
       var p = b.type === 'champ-ble' || b.type === 'enclos-moutons'
         ? [b.x + (hasard(m) - 0.5) * 120, b.y + (hasard(m) - 0.5) * 40] : dedans ? [b.x, b.y] : devant(m, b);
       et.push({ fait: 'aller', p: p });
       et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose, dans: dedans ? b.id : null });
-      if (dep && !sur && (tr.livre || objet)) et.push({ fait: 'prendre', objet: tr.livre || objet });
-    }
-    if (dep) {
-      if (!sur) {
-        et.push({ fait: 'aller', p: pointLibre(m, devant(m, dep), 1) });
-        et.push({ fait: 'attendre', d: 0.5, anim: 'repos' });
-      }
-      et.push({ fait: 'deposer' });
-      et.push({ fait: 'rapporter', bat: b.id, fois: fois });
-      return et;
     }
     if (lieu || foret) {
       et.push({ fait: 'aller', p: devant(m, b) });
       et.push({ fait: 'attendre', d: 0.6, anim: 'repos' });
       et.push({ fait: 'deposer' });
+      // à l'atelier, on transforme la matière (l'argile devient un pot)
+      if (sedentaire && tr.livre) et.push({ fait: 'attendre', d: 2, anim: 'travail', pose: pose });
     }
+    if (sedentaire) { et.push({ fait: 'rapporter', bat: b.id, fois: fois }); return et; }
     for (var k = 0; k < fois; k++) et.push({ fait: 'produire', bat: b.id });
     return et;
   }
@@ -2347,7 +2313,7 @@ if (typeof module !== 'undefined') module.exports = Monde;
   var T = 0;
   var TAILLE_HAB = { sage: 66, enfant: 48, adulte: 62 }; // ADR-014 : bien plus petits que les huttes
   // l'image d'un bâtiment change avec son niveau (ADR-031)
-  var GRANDIT = { 2: 1.12, 3: 1.24 };
+  var GRANDIT = { 2: 1.16, 3: 1.32 };
   function tailleBat(b) {
     var d = D.batiments[b.type], n = b.niveau || 1, im = IMG[d.sprite], k = 1;
     if (n > 1 && IMG['niveaux/' + b.type + '-' + n]) { im = IMG['niveaux/' + b.type + '-' + n]; k = GRANDIT[n] / (b.k > 1 ? 1.06 : 1); }
@@ -2786,7 +2752,29 @@ if (typeof module !== 'undefined') module.exports = Monde;
   }
 
   var EMOJI = { pieces: '🪙', idees: '💡', nourriture: '🍖' };
-  var bulles = [];
+  var bulles = [], fleches = [];
+  // la flèche verte : ce bâtiment peut monter de niveau, et on a de quoi payer (ADR-038)
+  function dessinerFleches() {
+    fleches = [];
+    if (choix) return;
+    monde.batiments.forEach(function (b) {
+      var trF = D.batiments[b.type].travail;
+      var a = b.etat === 'fini' && trF && trF.produit === 'pieces' ? M.amelioration(monde, b) : null; // ce qui rapporte des pièces
+      if (!a || a.genre !== 'niveau' || a.cout > monde.pieces) return;
+      var t = tailleBat(b), p = E(b.x, basBat(b));
+      var r = Math.max(13, Math.min(20, 24 * V.s));
+      var x = p[0] + t.w * 0.38, y = p[1] - t.h * 0.75 - Math.abs(Math.sin(T * 3.2 + b.id)) * 8;
+      if (!visible(b.x, b.y, 100)) return;
+      fleches.push({ bat: b.id, x: x, y: y, r: r * 1.5 });
+      ctx.fillStyle = 'rgba(40,70,20,.22)'; ctx.beginPath(); ctx.arc(x, y + 4, r, 0, 7); ctx.fill();
+      ctx.fillStyle = '#5a9a3c'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath();
+      ctx.moveTo(x, y - r * 0.62); ctx.lineTo(x + r * 0.55, y); ctx.lineTo(x + r * 0.22, y); ctx.lineTo(x + r * 0.22, y + r * 0.55);
+      ctx.lineTo(x - r * 0.22, y + r * 0.55); ctx.lineTo(x - r * 0.22, y); ctx.lineTo(x - r * 0.55, y); ctx.closePath(); ctx.fill();
+    });
+    if (fleches.length && !enScene) aideUneFois('fleche-verte', A.flecheVerte);
+  }
   function dessinerBulles() {
     bulles = [];
     monde.batiments.forEach(function (b) {
@@ -3116,6 +3104,7 @@ if (typeof module !== 'undefined') module.exports = Monde;
     fumees(dt);
     dessinerParts(dt);
     dessinerNuit();
+    dessinerFleches();
     dessinerBulles();
     barks();
     dessinerParoles();
@@ -3164,6 +3153,9 @@ if (typeof module !== 'undefined') module.exports = Monde;
     var decos = tout.filter(function (k) { return D.batiments[k].deco; });
     if (!decos.length) onglet = 'construire';
     var liste = tout.filter(function (k) { return !!D.batiments[k].deco === (onglet === 'embellir'); });
+    // d'abord ce qui rapporte des pièces, puis les maisons, puis la nourriture, puis le reste (ADR-037)
+    var rangCarte = function (k) { var d = D.batiments[k], tr = d.travail; return tr && tr.produit === 'pieces' ? 0 : d.lits ? 1 : tr && tr.produit === 'nourriture' ? 2 : 3; };
+    liste.sort(function (a, b) { return (rangCarte(a) - rangCarte(b)) || ((D.batiments[a].cout || 0) - (D.batiments[b].cout || 0)); });
     var sig = tout.join() + '|' + onglet + '|' + monde.pieces + '|' + choix + '|' + ui.nouveaux.join() + '|' + monde.batiments.length;
     if (sig === signatureBarre) return;
     signatureBarre = sig;
@@ -3197,6 +3189,7 @@ if (typeof module !== 'undefined') module.exports = Monde;
       el.innerHTML = '<div class="socle"><img src="' + ASSETS[d.sprite] + '" alt=""></div>' +
         (fait ? '<div class="prix fait">✓</div>' : '<div class="prix"><span class="piece">🪙</span>' + d.cout + '</div>') +
         (n && !fait ? '<div class="nombre">' + n + '</div>' : '') +
+        (d.travail && ui.nouveaux.indexOf(type) < 0 ? '<div class="produit ' + d.travail.produit + '">' + EMOJI[d.travail.produit] + '</div>' : '') +
         (ui.nouveaux.indexOf(type) >= 0 ? '<div class="neuf">Nouveau</div>' : '');
       el.addEventListener('pointerdown', function (ev) {
         ev.stopPropagation();
@@ -3552,8 +3545,13 @@ if (typeof module !== 'undefined') module.exports = Monde;
     var am = o.bat ? M.amelioration(monde, o.bat) : null, ba = $('info-ameliorer');
     ba.hidden = !am;
     if (am) {
-      ba.innerHTML = (am.genre === 'maison' ? '⬆ Transformer en ' + D.batiments[am.vers].nom.replace(/^Une? /, '').toLowerCase()
-        : am.genre === 'etape' ? '🏛 Étape ' + am.etape : '⬆ Niveau ' + am.niveau + ' : un travailleur de plus') + ' · 🪙 ' + am.cout;
+      // on montre à quoi il ressemblera (ADR-038)
+      var apres = am.genre === 'maison' ? D.batiments[am.vers].sprite : am.genre === 'niveau' ? 'niveaux/' + o.bat.type + '-' + am.niveau : null;
+      var trA = D.batiments[o.bat.type].travail;
+      ba.innerHTML = (apres && ASSETS[apres] ? '<img src="' + ASSETS[apres] + '" alt="">' : '') + '<span>' +
+        (am.genre === 'maison' ? '⬆ Transformer en ' + D.batiments[am.vers].nom.replace(/^Une? /, '').toLowerCase()
+        : am.genre === 'etape' ? '🏛 Étape ' + am.etape
+        : '⬆ Niveau ' + am.niveau + ' · 👷 +1' + (trA ? ' · ' + EMOJI[trA.produit] + ' +' + M.quantite(o.bat, monde) : '')) + ' · 🪙 ' + am.cout + '</span>';
       ba.classList.toggle('non', monde.pieces < am.cout);
       ba.onclick = function (e) {
         e.stopPropagation();
@@ -3680,6 +3678,9 @@ if (typeof module !== 'undefined') module.exports = Monde;
       } else son('non');
       return;
     }
+    for (var f = 0; f < fleches.length; f++) {
+      if (Math.hypot(x - fleches[f].x, y - fleches[f].y) < fleches[f].r) { var bf = M.bat(monde, fleches[f].bat); if (bf) { son('clic'); infoBatiment(bf); } return; }
+    }
     for (var i = 0; i < bulles.length; i++) {
       var bu = bulles[i];
       if (Math.hypot(x - bu.x, y - bu.y) < bu.r) {
@@ -3761,6 +3762,13 @@ if (typeof module !== 'undefined') module.exports = Monde;
         var b = M.bat(monde, e.bat);
         if (b) { var t = tailleBat(b); pouf(b.x, b.y - t.h / V.s * 0.3, 14); son('fini'); }
         if (b && D.batiments[b.type].lits) aideUneFois('maison', A.maison);
+        if (b && (b.niveau || 1) > 1 && b.__niv !== b.niveau) {
+          // un niveau de plus : on le voit et on le fête (ADR-038)
+          b.__niv = b.niveau;
+          var tn = tailleBat(b);
+          pouf(b.x, b.y - tn.h / V.s * 0.4, 22, '255,210,63');
+          particule({ type: 'gain', texte: '⭐ Niveau ' + b.niveau + ' !', x: b.x, y: b.y - tn.h / V.s * 0.9, vy: -18, max: 2.2 });
+        }
         if (b && D.batiments[b.type].merveille && !M.merveilleFinie(b)) aide(A.merveilleEtape);
       } else if (e.type === 'merveille') {
         feteMerveille(M.bat(monde, e.bat));
@@ -3772,7 +3780,7 @@ if (typeof module !== 'undefined') module.exports = Monde;
         var cpt = $('c-' + e.produit); if (cpt) { cpt.classList.remove('tilt'); void cpt.offsetWidth; cpt.classList.add('tilt'); }
       } else if (e.type === 'perdu') {
         // la réserve est pleine : ce qui arrive est perdu (ADR-036) ; on dit quoi faire, de temps en temps
-        if (!enScene && monde.t - (ui.perduA || -999) > 180) {
+        if (!enScene && monde.t - (ui.perduA || -999) > 360) {
           ui.perduA = monde.t;
           var trop = M.besoinRepas(monde, monde.habitants.length + 1) > M.reserveMax(monde);
           aide(trop ? (monde.epoque >= 2 ? A.reserveTropPetite2 : A.reserveTropPetite1) : A.reserveDeborde);
@@ -3784,8 +3792,7 @@ if (typeof module !== 'undefined') module.exports = Monde;
         if (hg) bark(hg, 'J\'ai grandi !');
       } else if (e.type === 'bulle') {
         var bb = M.bat(monde, e.bat);
-        if (bb && D.batiments[bb.type].travail.produit === 'nourriture') aideUneFois('nourriture', A.nourriture);
-        else aideUneFois('bulle', A.bulle);
+        aideUneFois('bulle', A.bulle);
       } else if (e.type === 'arrivee') {
         aideUneFois('arrivee', A.arrivee);
       }

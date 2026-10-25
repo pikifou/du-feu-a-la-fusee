@@ -237,3 +237,15 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée sur le principe. Les chiffres sont à proposer par Claude.
 - **Décision** : la réserve de nourriture a un maximum, lié aux moyens de conserver ; au-delà, ce qui arrive est perdu. Les bâtiments de stockage agrandissent la réserve.
 - **Contexte** : Julien : « il n'y a rien qui empêche d'avoir trop de bouffe » ; « Je suis d'accord avec le max de bouffe (qui est lié au stockage), très bonne idée. »
+
+## ADR-037 : plus de pièces, des gains petits et réguliers, moins de nourriture au début
+- **Date** : 2026-10-25
+- **Statut** : acceptée. Précise ADR-029 et ADR-035 ; les chiffres sont une proposition de Claude.
+- **Décision** : (1) on gagne un peu plus de pièces par minute. (2) Quand le gain est automatique (néolithique), il arrive en petites quantités régulières plutôt qu'en gros paquets (pas de « +24 » après une longue attente). (3) Au début du jeu, la nourriture prend moins de place : il y a trop de nourriture et pas assez de pièces pour construire.
+- **Contexte** : Julien, sur la v0.12 : « Il faudrait avoir un peu plus de pièces par minute. Et faire progresser les pièces quand c'est gain automatique (pas attendre le +24 mais en faire des plus petits plus réguliers) » ; « On a beaucoup de choses autour de la bouffe au début […] on a beaucoup trop de bouffe et pas assez de pièces pour faire. »
+
+## ADR-038 : on voit ce qu'on améliore, et le jeu pousse à améliorer ce qui produit
+- **Date** : 2026-10-25
+- **Statut** : acceptée. Précise ADR-021 et ADR-031.
+- **Décision** : (1) ce qu'on améliore a un visuel nettement différent. (2) Le jeu encourage à améliorer les bâtiments qui produisent, pour que Joshua sache quoi faire pour gagner plus de pièces.
+- **Contexte** : Julien : « avoir des visuels différents pour les trucs qu'on améliore » ; « encourage à améliorer les éléments qui produisent pour que mon fils sache quoi faire pour gagner plus d'argent ».

@@ -3,15 +3,15 @@ title: État courant
 domain: canon
 type: doc
 status: active
-updated: 2026-10-21
+updated: 2026-10-25
 ---
 
-# Où on en est (21/10/2026)
+# Où on en est (25/10/2026)
 
 **Phase** : préproduction.
 
 ## Fait
-- Intention posée (`canon/vision.md`) et 36 décisions consignées (`canon/decisions.md`).
+- Intention posée (`canon/vision.md`) et 38 décisions consignées (`canon/decisions.md`).
 - Direction artistique choisie : diorama 3D cosy (ADR-005).
 - Concepts de la même vallée à 4 époques (pierre, antiquité, vapeur, moderne) : la continuité tient.
 - Plateau vide généré (la vallée sans rien) : base du jeu.
@@ -19,6 +19,7 @@ updated: 2026-10-21
 - Sprites détourés : 12 de l'âge de pierre, 12 du néolithique, 8 habitants, 24 éléments de nature, 12 poses de travail, 8 éléments de nuit ; 16 vignettes illustrées pour les fiches.
 - Test d'intégration des sprites sur le plateau concluant (`assets/raw/test-integration.jpg`).
 
+- **v0.13** : retours de Julien (ADR-037, ADR-038). Plus de pièces (environ 32 par minute à l'âge de pierre, 44 au néolithique) : bûcheron et tailleur rapportent plus, on peut construire d'autres tas de bois, on démarre avec 30 pièces ; au néolithique, le gain arrive à chaque tournée de travail au lieu de gros paquets ; le bandeau montre ce que produit chaque bâtiment et range d'abord ce qui rapporte des pièces ; flèche verte au-dessus des bâtiments à pièces qu'on peut améliorer, aperçu du niveau suivant dans la fiche, « ⭐ Niveau 2 ! » ; images de niveau affichées plus grandes ; moins d'aides sur la nourriture.
 - **v0.12** : économie refondue avec Julien (ADR-035, ADR-036). Les prix suivent ce que rapporte chaque bâtiment et la richesse de l'époque : l'âge de pierre redevient bon marché, le néolithique est plus riche (hache polie, livraisons groupées) et plus cher ; plus de multiplicateur unique. La réserve de nourriture a un maximum (30, plus le séchoir, le grenier et le potier) ; ce qui dépasse est perdu et une aide dit quoi faire. Le grenier conserve au lieu de produire. Plus de génération de voix : les nouvelles phrases passent par la voix du navigateur (ADR-034). 14 tests.
 - **v0.11** : retours de Julien (ADR-026 à 033). Économie beaucoup plus lente (prix environ triplés) ; la nourriture 🍖 (on mange chaque soir, le village ne grandit que s'il y a à manger, les enfants grandissent) ; dès le néolithique, chacun rapporte lui-même sa production au village (plus de bulles à toucher) ; un bouton doré pour changer d'époque quand on veut ; plus d'amélioration automatique des huttes ; chaque niveau ajoute un travailleur et change l'image du bâtiment (24 nouvelles images) ; les merveilles ont leur bouton 🏛 et se bâtissent en 3 étapes, avec une fête à la fin ; 9 nouvelles décorations et une nouvelle merveille (les cercles de Bruniquel) ; les chasseurs disparaissent au loin dans la forêt. 73 nouvelles phrases enregistrées.
 - **v0.10** : la chasse (ADR-025) : des lapins sautillent près de la forêt et réapparaissent de temps en temps (jusqu'à 5 à l'âge de pierre, 3 au néolithique), trois mammouths broutent sur l'autre rive ; le chasseur du râtelier part chasser un lapin (ou parfois un mammouth) et le rapporte dans ses bras ; un mammouth chassé ne revient pas ; après l'élevage, le râtelier n'a plus de chasseur.

@@ -38,7 +38,7 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 
 ## Boucle principale
 1. Les bâtiments produisent : une bulle 🪙 ou 💡 apparaît au-dessus.
-2. À l'âge de pierre, Joshua tape les bulles pour récolter ; dès le néolithique, chacun rapporte lui-même sa production à la place du village (ADR-029).
+2. À l'âge de pierre, Joshua tape les bulles pour récolter ; dès le néolithique, le gain arrive tout seul à chaque tournée de travail, en petites quantités régulières (« +10 🪙 » au-dessus du bâtiment) (ADR-029, ADR-037).
 3. Il dépense ses pièces pour poser un bâtiment sur un emplacement de son choix (ADR-008).
 4. La ville fait le reste d'elle-même : chemins, habitants, fumée, détails, améliorations (ADR-004, ADR-008).
 5. Quand il a assez d'idées : **une découverte**. Nouveaux bâtiments, les anciens peuvent s'améliorer.
@@ -83,12 +83,13 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 
 ## Les prix et la richesse (ADR-026, ADR-035)
 - Règle : un bâtiment qui produit coûte environ 3 minutes de ce qu'il rapporte. Un bâtiment identique coûte toujours le même prix.
-- L'âge de pierre est pauvre : buisson 15, râtelier 25, séchoir 30, atelier de silex 35, feu 20, grotte peinte 40. On démarre avec 20 pièces.
-- Le néolithique est plus riche et plus cher : pirogue 35, meule 50, enclos 70, champ 75, grenier 80, atelier du potier 110. La hache en pierre polie double presque ce que rapportent le bûcheron (3 puis 6) et le tailleur (5 puis 8).
+- L'âge de pierre est pauvre : buisson 15, râtelier 25, séchoir 30, atelier de silex 35, tas de bois 40 (on peut en construire d'autres depuis la v0.13), feu 20, grotte peinte 40. On démarre avec 30 pièces.
+- Le néolithique est plus riche et plus cher : pirogue 35, meule 50, enclos 70, champ 75, grenier 80, atelier du potier 110. La hache en pierre polie fait passer le bûcheron de 5 à 10 pièces par tournée et le tailleur de 7 à 12 ; la potière rapporte 18.
 - Maisons, selon l'époque et la qualité : tente 10 (2 places), hutte de branches 20 (3), hutte en peaux 40 (3), maison en torchis 80 (4), maison longue 150 (6). Transformations : vers hutte en peaux 30, vers maison en torchis 70, vers maison longue 80.
 - Niveaux : 1,5 puis 3 fois le prix du bâtiment.
 - Le frein naturel : la nourriture (production et réserve) limite le nombre d'habitants, donc de travailleurs ; les gains de chaque époque se stabilisent, et le surplus part dans les niveaux, les décorations et les merveilles. Le néolithique relève tout.
-- Mesure (joueur automatique qui épargne, v0.12) : environ 20 pièces par minute à l'âge de pierre et 30 au néolithique ; un achat toutes les 1 à 2 minutes ; les pièces en poche ne dépassent pas le prix du prochain achat.
+- Mesure (joueur automatique qui épargne, v0.13) : environ 32 pièces par minute à l'âge de pierre et 44 au néolithique (v0.12 : 20 et 30) ; un achat toutes les 50 s environ à l'âge de pierre, toutes les 80 à 100 s au néolithique.
+- Pour savoir quoi faire (ADR-038) : chaque carte du bandeau montre ce que le bâtiment produit (🪙, 🍖 ou 💡) ; le bandeau range d'abord ce qui rapporte des pièces, puis les maisons, puis la nourriture. Une flèche verte apparaît au-dessus d'un bâtiment qui rapporte des pièces quand on peut payer son niveau suivant ; la fiche montre l'image du niveau suivant et ce qu'il rapporte en plus ; « ⭐ Niveau 2 ! » s'affiche quand c'est fait.
 
 ## La réserve de nourriture (ADR-036)
 - La réserve tient 30 parts ; chaque séchoir à poissons ajoute 20, chaque grenier 60, chaque atelier du potier 30. Ce qui dépasse est perdu. Le compteur affiche « 🍖 24 / 30 », en vert quand c'est plein.
@@ -111,7 +112,7 @@ Nombres petits (des dizaines, pas des milliers) : Joshua sait compter, il doit p
 - Dans la fiche courte d'un bâtiment : « ⬆ Niveau 2 : un travailleur de plus · 🪙 prix » ou « ⬆ Transformer en … ».
 - Bâtiments qui produisent : niveaux 1 à 3 ; chaque niveau ajoute un travailleur et change l'image du bâtiment (deux buissons puis trois, deux séchoirs, un abri sur le tas de bois…). Prix : voir « Les prix et la richesse ».
 - Maisons, toujours à la main : vers hutte en peaux après « Les huttes en peaux » ; vers maison en torchis après « L'agriculture » ; maison en torchis vers maison longue après « Le grenier ».
-- Au néolithique, chacun travaille trois fois avant d'aller livrer au village (une livraison groupée), pour que la marche ne mange pas tout le travail.
+- Les images des niveaux 2 et 3 sont affichées un peu plus grandes (×1,16 puis ×1,32) pour bien voir la différence.
 
 ## Comprendre ce qu'on voit (ADR-015)
 Toucher un bâtiment, un arbre, la grotte, le mammouth, le gué ou un sentier ouvre une petite fiche lue à voix haute : à quoi ça sert, qui y travaille, ce que ça change. Choisir un bâtiment à construire montre la même fiche.

@@ -44,7 +44,7 @@ var Monde = (function () {
   function nouveau(graine) {
     var m = {
       t: 0, graine: graine || 12345, prochainId: 1,
-      pieces: 20, idees: 0, nourriture: 20, faim: 0, epoque: 1, decouvertes: {},
+      pieces: 30, idees: 0, nourriture: 20, faim: 0, epoque: 1, decouvertes: {},
       batiments: [], habitants: [], animaux: [],
       arrivee: 0, evenements: [], fini: false, repousse: 0,
       cycle: { phase: 'jour', t: 20 },
@@ -437,16 +437,6 @@ var Monde = (function () {
     return best ? centreTuile(best) : p;
   }
 
-  // là où l'on rapporte ce qu'on a produit, une fois sédentaires (ADR-029) : la place du village,
-  // ou le grenier le plus proche pour la nourriture
-  function depot(m, produit, p) {
-    var l = m.batiments.filter(function (b) {
-      return b.etat === 'fini' && (b.type === 'cercle-pierres' || (produit === 'nourriture' && b.type === 'grenier'));
-    });
-    var best = null, bd = 1e9;
-    l.forEach(function (b) { var d = dist(p, [b.x, b.y]); if (d < bd) { bd = d; best = b; } });
-    return best;
-  }
   // la lisière de la forêt où les chasseurs disparaissent (ADR-033) : loin du village, contre les arbres
   function lisiere(m, p) {
     var T = m.terrain, l = [];
@@ -468,24 +458,8 @@ var Monde = (function () {
     return { p: q, loin: [q[0] + ax / k * 40, q[1] + ay / k * 20] };
   }
 
-  var LOT = 3; // au néolithique, on travaille trois fois avant d'aller livrer au village
-  function planTravail(m, h, b, nomade) {
+  function planTravail(m, h, b) {
     var tr = D.batiments[b.type].travail;
-    // sédentaires : quelques tournées de travail, puis une seule livraison groupée (ADR-029)
-    if (!nomade && m.epoque >= 2 && tr.aller !== 'gibier') {
-      var dp = depot(m, tr.produit, [b.x, b.y]);
-      if (dp && dp.id !== b.id) {
-        var lot = [];
-        for (var k = 0; k < LOT; k++) lot = lot.concat(planTravail(m, h, b, true).filter(function (e) { return e.fait !== 'produire'; }));
-        var obj = tr.livre || tr.porte;
-        if (obj) lot.push({ fait: 'prendre', objet: obj });
-        lot.push({ fait: 'aller', p: pointLibre(m, devant(m, dp), 1) });
-        lot.push({ fait: 'attendre', d: 0.5, anim: 'repos' });
-        lot.push({ fait: 'deposer' });
-        lot.push({ fait: 'rapporter', bat: b.id, fois: LOT });
-        return lot;
-      }
-    }
     var et = [], lieu = null, arbre = null, objet = tr.porte || null;
     var pose = (D.poses[m.epoque] || {})[tr.metier] || null; // ADR-017 : on voit ce qu'il fait
     var depuis = [b.x, b.y];
@@ -527,44 +501,29 @@ var Monde = (function () {
       var champs = m.batiments.filter(function (c) { return c.type === 'champ-ble' && c.etat === 'fini'; });
       if (champs.length) { var c = choisir(m, champs); lieu = [c.x + (hasard(m) - 0.5) * 120, c.y + (hasard(m) - 0.5) * 40]; }
     }
-    var sedentaire = m.epoque >= 2 && !nomade; // fin du nomadisme : on rapporte soi-même au village (ADR-029)
-    var dep = sedentaire ? depot(m, tr.produit, depuis) : null;
-    var sur = dep && dep.id === b.id; // le sage est déjà sur la place
+    // fin du nomadisme : ce qu'on produit va tout seul au village, un peu à chaque tournée (ADR-029, ADR-037)
+    var sedentaire = m.epoque >= 2;
     if (lieu) {
       et.push({ fait: 'aller', p: lieu });
       et.push({ fait: 'attendre', d: fois > 1 ? tr.duree * 2 : tr.duree, anim: 'travail', pose: pose });
       if (arbre) et.push({ fait: 'couper', i: arbre.i, j: arbre.j });
       if (proie) et.push({ fait: 'chasser', animal: proie.id });
       et.push({ fait: 'prendre', objet: objet });
-      if (dep && tr.livre) {
-        // on rapporte la matière à l'atelier, on la travaille, puis on livre l'objet fini au village
-        et.push({ fait: 'aller', p: devant(m, b) });
-        et.push({ fait: 'deposer' });
-        et.push({ fait: 'attendre', d: 2, anim: 'travail', pose: pose });
-        et.push({ fait: 'prendre', objet: tr.livre });
-      }
     } else if (!foret) {
       var dedans = b.type === 'cercle-pierres'; // le sage s'assoit au milieu du cercle
       var p = b.type === 'champ-ble' || b.type === 'enclos-moutons'
         ? [b.x + (hasard(m) - 0.5) * 120, b.y + (hasard(m) - 0.5) * 40] : dedans ? [b.x, b.y] : devant(m, b);
       et.push({ fait: 'aller', p: p });
       et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose, dans: dedans ? b.id : null });
-      if (dep && !sur && (tr.livre || objet)) et.push({ fait: 'prendre', objet: tr.livre || objet });
-    }
-    if (dep) {
-      if (!sur) {
-        et.push({ fait: 'aller', p: pointLibre(m, devant(m, dep), 1) });
-        et.push({ fait: 'attendre', d: 0.5, anim: 'repos' });
-      }
-      et.push({ fait: 'deposer' });
-      et.push({ fait: 'rapporter', bat: b.id, fois: fois });
-      return et;
     }
     if (lieu || foret) {
       et.push({ fait: 'aller', p: devant(m, b) });
       et.push({ fait: 'attendre', d: 0.6, anim: 'repos' });
       et.push({ fait: 'deposer' });
+      // à l'atelier, on transforme la matière (l'argile devient un pot)
+      if (sedentaire && tr.livre) et.push({ fait: 'attendre', d: 2, anim: 'travail', pose: pose });
     }
+    if (sedentaire) { et.push({ fait: 'rapporter', bat: b.id, fois: fois }); return et; }
     for (var k = 0; k < fois; k++) et.push({ fait: 'produire', bat: b.id });
     return et;
   }
