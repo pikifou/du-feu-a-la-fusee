@@ -214,7 +214,7 @@ var Donnees = (function () {
       explication: "Le tas de bois. Au début, on ramasse les branches tombées dans la forêt. Avec une hache de pierre, le bûcheron pourra couper les arbres. Le bois sert à construire et à faire du feu.",
       vignettes: [{ img: 'bois', texte: "Avec sa hache de pierre, le bûcheron abat un arbre, puis il range les bûches." }],
       nom: 'Le tas de bois', sprite: '01-pierre/tas-bois', epoque: 1, jusqua: 9,
-      zone: 'pre', cout: 40, prixNiveau: 40, largeur: 130, taille: 1,
+      zone: 'pre', cout: 40, prixNiveau: 40, largeur: 130, taille: 1, grandit: { 2: 1.5, 3: 1.85 },
       travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 10 } }
     },
     tente: {
@@ -244,7 +244,7 @@ var Donnees = (function () {
       explication: "L'atelier du tailleur, près de la grotte. Il frappe le silex avec un caillou pour faire des lames, des grattoirs et des pointes bien tranchantes.",
       vignettes: [{ img: 'silex', texte: "Le tailleur frappe le silex avec un caillou : les éclats tranchants deviennent des pointes de lance et des couteaux." }],
       nom: "L'atelier de silex", sprite: '01-pierre/atelier-silex', epoque: 1, jusqua: 9, debloque: 'outils',
-      zone: 'grotte', cout: 35, bois: 2, largeur: 130, taille: 1,
+      zone: 'grotte', cout: 35, bois: 2, largeur: 130, taille: 1, grandit: { 2: 1.5, 3: 1.85 },
       travail: { metier: 'tailleur', aller: 'grotte', porte: 'silex', duree: 4, produit: 'pieces', qte: { 1: 7, 2: 12 } }
     },
     feu: {
@@ -329,7 +329,7 @@ var Donnees = (function () {
       explication: "L'atelier du potier. Il prend de l'argile au bord de la rivière, façonne des pots et les cuit dans le four pour qu'ils deviennent durs.",
       vignettes: [{ img: 'poterie', texte: "La potière façonne l'argile, puis elle cuit les pots dans le four." }],
       nom: "L'atelier du potier", sprite: '02-neolithique/atelier-potier', epoque: 2, jusqua: 9, debloque: 'poterie',
-      zone: 'pre', cout: 110, bois: 2, largeur: 210, taille: 2,
+      zone: 'pre', cout: 110, bois: 2, largeur: 210, taille: 2, grandit: { 2: 1.15, 3: 1.35 },
       travail: { metier: 'potier', aller: 'riviere', porte: 'argile', livre: 'pot', duree: 4, produit: 'pieces', qte: 18 }
     },
     meule: {

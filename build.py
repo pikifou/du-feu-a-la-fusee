@@ -73,7 +73,7 @@ def assets() -> dict:
             # images des niveaux 2 et 3 (ADR-031) : un peu plus grandes que le bâtiment de base
             base = f.stem.rsplit("-", 1)[0]
             l = next((v for k, v in larg.items() if k.endswith("/" + base)), 200)
-            cible_l = min(im.width, round(l * 2.6 * 1.3))
+            cible_l = min(im.width, round(l * 2.6 * 1.9))
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
         elif f.parent.name in ("poses", "nuit"):
             # facteur unique : les tailles relatives de la planche sont gardées

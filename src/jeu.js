@@ -264,7 +264,7 @@
   var GRANDIT = { 2: 1.16, 3: 1.32 };
   function tailleBat(b) {
     var d = D.batiments[b.type], n = b.niveau || 1, im = IMG[d.sprite], k = 1;
-    if (n > 1 && IMG['niveaux/' + b.type + '-' + n]) { im = IMG['niveaux/' + b.type + '-' + n]; k = GRANDIT[n] / (b.k > 1 ? 1.06 : 1); }
+    if (n > 1 && IMG['niveaux/' + b.type + '-' + n]) { im = IMG['niveaux/' + b.type + '-' + n]; k = d.grandit ? d.grandit[n] : GRANDIT[n] / (b.k > 1 ? 1.06 : 1); }
     var w = d.largeur * V.s * k;
     return { w: w, h: im ? w * im.height / im.width : w, im: im };
   }
