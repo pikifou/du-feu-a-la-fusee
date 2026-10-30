@@ -1395,6 +1395,7 @@
     try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {}
   }
   function pleinEcran() {
+    if (DANS_LUDI) return true; // dans Ludiworld, c'est Ludiworld qui décide du plein écran
     var d = document.documentElement;
     var f = d.requestFullscreen || d.webkitRequestFullscreen;
     if (!f) return false;
@@ -1411,6 +1412,7 @@
     }
     if (!pleinEcran()) aide(A.iphone, true);
   }
+  if (DANS_LUDI) { $('btn-plein').style.display = 'none'; $('tourner-plein').style.display = 'none'; }
   $('btn-plein').addEventListener('click', basculerPleinEcran);
   $('tourner-plein').addEventListener('click', basculerPleinEcran);
   document.addEventListener('fullscreenchange', function () { $('btn-plein').textContent = estPleinEcran() ? '✕' : '⛶'; });
