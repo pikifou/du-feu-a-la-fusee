@@ -36,6 +36,30 @@
   var nouvellePartie = !monde;
   if (!monde) monde = M.nouveau((Date.now() % 100000) + 1);
 
+  // ---------- Ludiworld (kit ludi.js) ----------
+  // Ouvert seul, le kit garde tout dans le navigateur et le jeu ne change pas.
+  // Ouvert depuis le launcher Ludiworld, l'époque et les découvertes lui remontent, et il sait où le jeu
+  // peut s'arrêter sans rien perdre (fin douce quand le temps du jour est écoulé).
+  var LUDI = window.Ludi ? window.Ludi.init({ game: 'du-feu-a-la-fusee' }) : null;
+  var DANS_LUDI = !!(LUDI && LUDI.inLauncher());
+  // le bouton « ← Ludiworld » occupe le coin haut gauche : les compteurs se décalent (CSS .ludi)
+  if (DANS_LUDI) document.documentElement.classList.add('ludi');
+  function ludiProgression() {
+    if (!LUDI) return;
+    LUDI.progress('epoque', monde.epoque);
+    LUDI.progress('decouvertes', Object.keys(monde.decouvertes).length);
+  }
+  // un moment où l'on peut s'arrêter : découverte lue, nouvelle époque, merveille finie, village endormi
+  function ludiArret(quoi) {
+    if (!LUDI) return;
+    sauver();
+    LUDI.checkpoint(quoi);
+  }
+  // le launcher demande une pause (temps écoulé) : on sauve et le monde s'arrête jusqu'au prochain toucher
+  var ludiPause = false, ludiNuit = null;
+  if (LUDI) LUDI.onPause(function () { ludiPause = true; sauver(); });
+  addEventListener('pointerdown', function () { ludiPause = false; }, true);
+
   // ---------- vue (caméra rapprochée, glisser pour se déplacer, pincer pour zoomer) ----------
   var V = { s: 1, ox: 0, oy: 0, W: 0, H: 0, dpr: 1, cx: 0, cy: 0, sMin: 0.3, sMax: 1.6, init: false };
   // la caméra reste au-dessus de l'île (qui grandit à chaque époque)
@@ -1249,8 +1273,9 @@
     var d = D.decouvertes[id];
     var debloques = Object.keys(D.batiments).filter(function (k) { return D.batiments[k].debloque === id; });
     debloques.forEach(function (k) { if (ui.nouveaux.indexOf(k) < 0) ui.nouveaux.push(k); });
-    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); } });
+    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); ludiArret('decouverte'); } });
     sauver();
+    ludiProgression();
   }
   function apresDecouverte() {
     if (!M.epoqueTerminee(monde)) return;
@@ -1277,6 +1302,7 @@
         choisir(null);
         montrerEpoque();
         sauver();
+        ludiProgression();
       }
     });
   });
@@ -1290,6 +1316,8 @@
         setTimeout(function () { aideUneFois('hache-polie', A.hachePolie); }, 8000);
         setTimeout(function () { aideUneFois('maisons-a-main', A.maisonsAMain); }, 16000);
       }
+      // une nouvelle époque commence (on n'arrive ici au-delà de la première que par le bouton d'époque)
+      if (monde.epoque > 1) ludiArret('epoque');
     } });
   }
 
@@ -1359,6 +1387,8 @@
     fermer('menu');
     montrerEpoque();
     sauver();
+    ludiNuit = null;
+    ludiProgression();
   });
   function estPleinEcran() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function verrouiller() {
@@ -1686,7 +1716,7 @@
     monde.habitants.filter(function (h) { return !h.dort && !h.cache; }).slice(0, 4).forEach(function (h, i) { setTimeout(function () { bark(h, auHasard(['Hourra !', 'Magnifique !', 'Bravo !', 'Quelle merveille !'])); }, 300 + i * 400); });
     centrerSur(b.x, b.y);
     aide(A.merveilleFinie);
-    setTimeout(function () { ouvrirPage(d.page, { nouveau: true, bandeau: '🏛 Merveille terminée !' }); }, 2600);
+    setTimeout(function () { ouvrirPage(d.page, { nouveau: true, bandeau: '🏛 Merveille terminée !', ensuite: function () { ludiArret('merveille'); } }); }, 2600);
   }
   function voler(emoji, x, y, cible, n) {
     var el = document.createElement('div');
@@ -1759,6 +1789,8 @@
     if (coq !== !$('btn-reveil').hidden) {
       $('btn-reveil').hidden = !coq;
       if (coq) aideUneFois('reveil', A.reveil);
+      // tout le village dort : la fin naturelle d'une journée (une fois par nuit)
+      if (coq && ludiNuit !== (monde.jour || 0)) { ludiNuit = monde.jour || 0; ludiArret('nuit'); }
     }
     if (!ui.aide.idee && monde.idees >= 4 && !Object.keys(monde.decouvertes).length && !enScene) {
       aideUneFois('idee', A.idee);
@@ -1778,7 +1810,7 @@
     var dt = Math.min(0.1, (now - avant) / 1000);
     avant = now;
     T += dt;
-    var simu = dt * VITESSE;
+    var simu = ludiPause ? 0 : dt * VITESSE;
     while (simu > 0) { var d = Math.min(0.1, simu); M.pas(monde, d); simu -= d; }
     traiterEvenements();
     dessiner(dt);
@@ -1798,6 +1830,7 @@
     redim();
     $('epoque-nom').textContent = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0].nom;
     if (nouvellePartie && !params.has('test')) montrerEpoque();
+    ludiProgression();
     requestAnimationFrame(function (t) { avant = t; boucle(t); });
   });
   if (window.speechSynthesis) speechSynthesis.getVoices();

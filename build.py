@@ -1,15 +1,19 @@
 """Construit le jeu en une page autonome.
 
 python3 build.py            -> dist/index.html (images intégrées, pour l'artefact)
-python3 build.py --pwa docs -> appli installable pour GitHub Pages (manifest, service worker, icônes)
+python3 build.py --pwa docs -> appli installable pour GitHub Pages (manifest, service worker, icônes),
+                               avec la fiche Ludiworld ludi.json
 
 Les sprites et le plateau sont réduits et convertis en webp, puis intégrés en base64.
+src/ludi.js est le kit Ludiworld, copié tel quel depuis https://pikifou.github.io/ludiworld/kit/ludi.js,
+intégré à la page (marche hors ligne). Ouvert seul, le jeu ne change pas.
 """
 import base64
 import hashlib
 import io
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -124,6 +128,7 @@ def construire(sortie: Path) -> None:
     )
     a = assets()
     gabarit = gabarit.replace("<!--PWA-->\n", "")
+    gabarit = gabarit.replace("/*LUDI*/", (RACINE / "src" / "ludi.js").read_text(encoding="utf-8"))
     voix = voix_enregistrees()
     page = gabarit.replace("/*ASSETS*/", "var ASSETS = " + json.dumps(a) + ";\nvar VOIX = " + json.dumps(voix, ensure_ascii=False) + ";").replace("/*SCRIPTS*/", scripts)
     sortie.parent.mkdir(parents=True, exist_ok=True)
@@ -193,6 +198,8 @@ self.addEventListener('fetch', e => {{
 """
     (dossier / "sw.js").write_text(sw, encoding="utf-8")
     (dossier / ".nojekyll").write_text("")
+    # fiche Ludiworld, à la racine du site publié (pas dans le cache du service worker : toujours fraîche)
+    shutil.copy(RACINE / "ludi.json", dossier / "ludi.json")
     print(f"{dossier} : appli version {version}")
 
 
