@@ -29,8 +29,16 @@
     } catch (e) {}
     return null;
   }
-  function sauver() {
+  var figee = false; // une sauvegarde venue d'un autre appareil vient d'être rangée : on ne l'écrase pas avant de recharger
+  var dernierLudi = 0;
+  function sauver(maintenant) {
+    if (figee) return;
     try { localStorage.setItem(CLE, JSON.stringify({ v: 2, monde: M.exporter(monde), ui: ui })); } catch (e) {}
+    // Ludiworld en garde une copie légère (dans le compte du parent), au plus toutes les 20 s, et à chaque arrêt possible.
+    if (window.Ludi && (maintenant || Date.now() - dernierLudi > 20000)) {
+      dernierLudi = Date.now();
+      try { window.Ludi.save({ v: 2, monde: M.exporterLeger(monde), ui: ui }); } catch (e) {}
+    }
   }
   var monde = params.has('neuf') ? null : charger();
   var nouvellePartie = !monde;
@@ -52,12 +60,25 @@
   // un moment où l'on peut s'arrêter : découverte lue, nouvelle époque, merveille finie, village endormi
   function ludiArret(quoi) {
     if (!LUDI) return;
-    sauver();
+    sauver(true);
     LUDI.checkpoint(quoi);
   }
   // le launcher demande une pause (temps écoulé) : on sauve et le monde s'arrête jusqu'au prochain toucher
   var ludiPause = false, ludiNuit = null;
-  if (LUDI) LUDI.onPause(function () { ludiPause = true; sauver(); });
+  if (LUDI) LUDI.onPause(function () { ludiPause = true; sauver(true); });
+  // Une partie plus récente venue d'un autre appareil : on la range comme la nôtre (sauf la voix, propre à l'appareil) et on recharge.
+  if (LUDI) LUDI.onRestore(function (d) {
+    try {
+      if (!d || d.v !== 2 || !d.monde) return;
+      var m = M.developper(d.monde);
+      if (!m) return;
+      figee = true;
+      localStorage.setItem(CLE, JSON.stringify({ v: 2, monde: m, ui: Object.assign({}, d.ui || {}, { voix: ui.voix }) }));
+      location.reload();
+    } catch (e) { figee = false; }
+  });
+  // Une partie commencée avant ce changement : on la confie aussi à Ludiworld (sans écraser une plus récente venue d'ailleurs).
+  if (LUDI && !nouvellePartie) { try { LUDI.save({ v: 2, monde: M.exporterLeger(monde), ui: ui }, { existante: true }); } catch (e) {} }
   addEventListener('pointerdown', function () { ludiPause = false; }, true);
 
   // ---------- vue (caméra rapprochée, glisser pour se déplacer, pincer pour zoomer) ----------

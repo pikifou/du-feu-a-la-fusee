@@ -367,7 +367,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 </div>
 
 <script>/*!
- * Ludiworld kit (ludi.js) v0.2.0
+ * Ludiworld kit (ludi.js) v0.3.0
  * Temps de jeu, scores, progression et notions apprises, pour les jeux Ludiworld.
  * N'envoie rien sur le réseau. Ne parle qu'au launcher Ludiworld qui a ouvert le jeu.
  * Spec : https://github.com/pikifou/ludiworld/blob/main/spec/kit.md
@@ -375,11 +375,12 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 (function () {
   'use strict';
 
-  var VERSION = '0.2.0';
-  var DEFAULT_LAUNCHERS = ['https://pikifou.github.io'];
+  var VERSION = '0.3.0';
+  var DEFAULT_LAUNCHERS = ['https://ludiworld.app', 'https://pikifou.github.io'];
   var LOCAL_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
   var MAX_EVENTS = 300;
   var FLUSH_MS = 30000;
+  var MAX_SAVE = 250000; // taille maximale d'une sauvegarde (texte JSON)
 
   function createLudi(win, opts) {
     opts = opts || {};
@@ -467,12 +468,37 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
       if (m.type === 'ludi:welcome') {
         var name = m.player && typeof m.player.name === 'string' ? m.player.name.slice(0, 40) : null;
         st.player = name ? { name: name } : null;
+        receiveSave(m.save);
       } else if (m.type === 'ludi:pause') {
         flush();
         st.pauseFns.forEach(function (fn) { try { fn(m.reason || null); } catch (err) { warn(err); } });
       } else if (m.type === 'ludi:wrapup') {
         var min = Number(m.minutes);
         st.wrapFns.forEach(function (fn) { try { fn(isFinite(min) ? min : null); } catch (err) { warn(err); } });
+      }
+    }
+
+    // Sauvegarde du jeu, gardée par Ludiworld dans le compte du parent : voir Ludi.save et Ludi.onRestore.
+    function validSave(sv) {
+      return !!(sv && typeof sv === 'object' && isFinite(Number(sv.at)) && sv.data !== undefined && sv.data !== null);
+    }
+    function saveSize(data) { try { return JSON.stringify(data).length; } catch (e) { return Infinity; } }
+    function restoreNow(fn, data) { try { fn(JSON.parse(JSON.stringify(data))); } catch (err) { warn(err); } }
+    // Le launcher donne la sauvegarde qu'il garde pour cet enfant. Plus récente que celle de cet appareil : on la rend au jeu.
+    // Absente alors que cet appareil en a une : on la lui confie (première fois, ou appareil qui reprend le fil).
+    function receiveSave(remote) {
+      var local = st.data.save;
+      if (validSave(remote) && saveSize(remote.data) <= MAX_SAVE) {
+        if (!validSave(local) || Number(remote.at) > Number(local.at)) {
+          st.data.save = { data: remote.data, at: Number(remote.at) };
+          save();
+          st.pending = st.data.save.data;
+          if (st.restoreFns.length) { var d = st.pending; st.pending = null; st.restoreFns.forEach(function (fn) { restoreNow(fn, d); }); }
+        } else if (Number(remote.at) < Number(local.at)) {
+          post('ludi:event', { event: { kind: 'save', data: local.data, at: local.at } });
+        }
+      } else if (validSave(local)) {
+        post('ludi:event', { event: { kind: 'save', data: local.data, at: local.at } });
       }
     }
 
@@ -493,7 +519,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
         var data = load(key) || emptyData();
         var t = now();
         st = {
-          game: game, key: key, data: data, player: null, pauseFns: [], wrapFns: [],
+          game: game, key: key, data: data, player: null, pauseFns: [], wrapFns: [], restoreFns: [], pending: null,
           launcher: findLauncher(o.launchers),
           sessionId: t, activeSince: visible() ? t : null
         };
@@ -547,6 +573,33 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
       checkpoint: function (label) {
         if (!ready('checkpoint')) return;
         record({ kind: 'checkpoint', label: label === undefined || label === null ? null : String(label).slice(0, 60) });
+      },
+
+      // Sauvegarde complète du jeu (n'importe quoi qui passe par JSON, 250 000 caractères au plus) : étage, village, leçons faites.
+      // Ludiworld la garde dans le compte du parent si la copie en ligne est active, pour que l'enfant reprenne sur un autre appareil.
+      // À appeler quand le jeu enregistre sa propre sauvegarde. Garde la dernière. Renvoie true si elle est gardée.
+      // Option { existante: true } : à l'ouverture, pour confier à Ludiworld une sauvegarde qui date d'avant le kit. Elle est
+      // alors réputée très ancienne : si Ludiworld en a déjà une, c'est la sienne qui revient ; sinon il garde celle-ci.
+      save: function (data, o) {
+        if (!ready('save')) return false;
+        if (o && o.existante && st.data.save) return false;
+        if (data === undefined || data === null) { warn('save : rien à garder'); return false; }
+        if (saveSize(data) > MAX_SAVE) { warn('save : sauvegarde trop grosse (' + MAX_SAVE + ' caractères au plus)'); return false; }
+        var copy = JSON.parse(JSON.stringify(data));
+        var at = o && o.existante ? 1 : Math.max(now(), st.data.save ? Number(st.data.save.at) + 1 : 0);
+        st.data.save = { data: copy, at: at };
+        save();
+        post('ludi:event', { event: { kind: 'save', data: copy, at: at } });
+        return true;
+      },
+
+      // Le jeu s'abonne pour recevoir une sauvegarde venue d'un autre appareil : fn(data), appelée au plus une fois par ouverture,
+      // seulement si la sauvegarde de Ludiworld est plus récente que celle de cet appareil. Le jeu la range comme la sienne
+      // (et se redessine, ou recharge sa page) ; il n'a rien d'autre à faire. Appelée aussitôt si elle est déjà arrivée.
+      onRestore: function (fn) {
+        if (!ready('onRestore') || typeof fn !== 'function') return;
+        st.restoreFns.push(fn);
+        if (st.pending) { var d = st.pending; st.pending = null; restoreNow(fn, d); }
       },
 
       player: function () { return st && st.player ? { name: st.player.name } : null; },
@@ -2243,6 +2296,28 @@ var Monde = (function () {
   }
 
   function exporter(m) { var c = JSON.parse(JSON.stringify(m)); c.evenements = []; return c; }
+  // Pour la sauvegarde confiée à Ludiworld : la carte est la même au départ pour toutes les parties (elle pèse 200 000 caractères),
+  // on n'en garde que les cases qui ont changé (arbres abattus, chemins, bâtiments, île agrandie).
+  function exporterLeger(m) {
+    var c = exporter(m), T = c.terrain, base = TR.generer(), delta = [], meta = {};
+    T.tuiles.forEach(function (t, i) { if (JSON.stringify(t) !== JSON.stringify(base.tuiles[i])) delta.push([i, t]); });
+    Object.keys(T).forEach(function (k) { if (k !== 'tuiles') meta[k] = T[k]; });
+    c.terrain = { leger: true, n: T.tuiles.length, meta: meta, delta: delta };
+    return c;
+  }
+  // Rend un monde complet, ou null si la sauvegarde ne correspond plus à la carte de ce jeu.
+  function developper(o) {
+    var L = o && o.terrain;
+    if (!L || !L.leger) return o || null;
+    var base = TR.generer();
+    if (base.tuiles.length !== L.n) return null;
+    var T = {};
+    Object.keys(L.meta).forEach(function (k) { T[k] = L.meta[k]; });
+    T.tuiles = base.tuiles;
+    L.delta.forEach(function (d) { T.tuiles[d[0]] = d[1]; });
+    o.terrain = T;
+    return o;
+  }
   function importer(o) {
     o.evenements = [];
     if (o.nourriture == null) { o.nourriture = 30; o.faim = 0; }
@@ -2259,7 +2334,7 @@ var Monde = (function () {
     peutConstruire: peutConstruire, aDeLaPlace: aDeLaPlace,
     decouvertesEpoque: decouvertesEpoque, etatDecouverte: etatDecouverte, decouvrir: decouvrir,
     epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter,
-    lits: lits, bat: bat, exporter: exporter, importer: importer, BULLES_MAX: BULLES_MAX,
+    lits: lits, bat: bat, exporter: exporter, importer: importer, exporterLeger: exporterLeger, developper: developper, BULLES_MAX: BULLES_MAX,
     heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
     phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES,
     amelioration: amelioration, ameliorer: ameliorer, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX,
@@ -2299,8 +2374,16 @@ if (typeof module !== 'undefined') module.exports = Monde;
     } catch (e) {}
     return null;
   }
-  function sauver() {
+  var figee = false; // une sauvegarde venue d'un autre appareil vient d'être rangée : on ne l'écrase pas avant de recharger
+  var dernierLudi = 0;
+  function sauver(maintenant) {
+    if (figee) return;
     try { localStorage.setItem(CLE, JSON.stringify({ v: 2, monde: M.exporter(monde), ui: ui })); } catch (e) {}
+    // Ludiworld en garde une copie légère (dans le compte du parent), au plus toutes les 20 s, et à chaque arrêt possible.
+    if (window.Ludi && (maintenant || Date.now() - dernierLudi > 20000)) {
+      dernierLudi = Date.now();
+      try { window.Ludi.save({ v: 2, monde: M.exporterLeger(monde), ui: ui }); } catch (e) {}
+    }
   }
   var monde = params.has('neuf') ? null : charger();
   var nouvellePartie = !monde;
@@ -2322,12 +2405,25 @@ if (typeof module !== 'undefined') module.exports = Monde;
   // un moment où l'on peut s'arrêter : découverte lue, nouvelle époque, merveille finie, village endormi
   function ludiArret(quoi) {
     if (!LUDI) return;
-    sauver();
+    sauver(true);
     LUDI.checkpoint(quoi);
   }
   // le launcher demande une pause (temps écoulé) : on sauve et le monde s'arrête jusqu'au prochain toucher
   var ludiPause = false, ludiNuit = null;
-  if (LUDI) LUDI.onPause(function () { ludiPause = true; sauver(); });
+  if (LUDI) LUDI.onPause(function () { ludiPause = true; sauver(true); });
+  // Une partie plus récente venue d'un autre appareil : on la range comme la nôtre (sauf la voix, propre à l'appareil) et on recharge.
+  if (LUDI) LUDI.onRestore(function (d) {
+    try {
+      if (!d || d.v !== 2 || !d.monde) return;
+      var m = M.developper(d.monde);
+      if (!m) return;
+      figee = true;
+      localStorage.setItem(CLE, JSON.stringify({ v: 2, monde: m, ui: Object.assign({}, d.ui || {}, { voix: ui.voix }) }));
+      location.reload();
+    } catch (e) { figee = false; }
+  });
+  // Une partie commencée avant ce changement : on la confie aussi à Ludiworld (sans écraser une plus récente venue d'ailleurs).
+  if (LUDI && !nouvellePartie) { try { LUDI.save({ v: 2, monde: M.exporterLeger(monde), ui: ui }, { existante: true }); } catch (e) {} }
   addEventListener('pointerdown', function () { ludiPause = false; }, true);
 
   // ---------- vue (caméra rapprochée, glisser pour se déplacer, pincer pour zoomer) ----------

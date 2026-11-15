@@ -241,3 +241,24 @@ test('au néolithique, la hache polie rapporte plus (ADR-035)', () => {
   Monde.passerEpoque(m);
   assert.ok(Monde.quantite(tas, m) > avant);
 });
+
+// ---------- Sauvegarde légère confiée à Ludiworld ----------
+test('sauvegarde légère : la carte revient à l\'identique, en bien plus petit', () => {
+  const m = Monde.nouveau(7);
+  for (let i = 0; i < 4000; i++) Monde.pas(m, 0.1);
+  m.evenements.length = 0;
+  const complet = JSON.stringify(Monde.exporter(m));
+  const leger = JSON.parse(JSON.stringify(Monde.exporterLeger(m)));
+  assert.ok(JSON.stringify(leger).length < complet.length / 5, 'bien plus petit : ' + JSON.stringify(leger).length + ' contre ' + complet.length);
+  assert.ok(JSON.stringify(leger).length < 60000);
+  const rendu = Monde.developper(leger);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(rendu)), JSON.parse(complet));
+});
+
+test('sauvegarde légère : refusée si la carte du jeu a changé de taille', () => {
+  const leger = JSON.parse(JSON.stringify(Monde.exporterLeger(Monde.nouveau(3))));
+  leger.terrain.n += 1;
+  assert.strictEqual(Monde.developper(leger), null);
+  const complet = Monde.exporter(Monde.nouveau(3));
+  assert.strictEqual(Monde.developper(complet), complet, 'une sauvegarde complète passe telle quelle');
+});

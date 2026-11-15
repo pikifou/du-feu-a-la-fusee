@@ -857,6 +857,28 @@ var Monde = (function () {
   }
 
   function exporter(m) { var c = JSON.parse(JSON.stringify(m)); c.evenements = []; return c; }
+  // Pour la sauvegarde confiée à Ludiworld : la carte est la même au départ pour toutes les parties (elle pèse 200 000 caractères),
+  // on n'en garde que les cases qui ont changé (arbres abattus, chemins, bâtiments, île agrandie).
+  function exporterLeger(m) {
+    var c = exporter(m), T = c.terrain, base = TR.generer(), delta = [], meta = {};
+    T.tuiles.forEach(function (t, i) { if (JSON.stringify(t) !== JSON.stringify(base.tuiles[i])) delta.push([i, t]); });
+    Object.keys(T).forEach(function (k) { if (k !== 'tuiles') meta[k] = T[k]; });
+    c.terrain = { leger: true, n: T.tuiles.length, meta: meta, delta: delta };
+    return c;
+  }
+  // Rend un monde complet, ou null si la sauvegarde ne correspond plus à la carte de ce jeu.
+  function developper(o) {
+    var L = o && o.terrain;
+    if (!L || !L.leger) return o || null;
+    var base = TR.generer();
+    if (base.tuiles.length !== L.n) return null;
+    var T = {};
+    Object.keys(L.meta).forEach(function (k) { T[k] = L.meta[k]; });
+    T.tuiles = base.tuiles;
+    L.delta.forEach(function (d) { T.tuiles[d[0]] = d[1]; });
+    o.terrain = T;
+    return o;
+  }
   function importer(o) {
     o.evenements = [];
     if (o.nourriture == null) { o.nourriture = 30; o.faim = 0; }
@@ -873,7 +895,7 @@ var Monde = (function () {
     peutConstruire: peutConstruire, aDeLaPlace: aDeLaPlace,
     decouvertesEpoque: decouvertesEpoque, etatDecouverte: etatDecouverte, decouvrir: decouvrir,
     epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter,
-    lits: lits, bat: bat, exporter: exporter, importer: importer, BULLES_MAX: BULLES_MAX,
+    lits: lits, bat: bat, exporter: exporter, importer: importer, exporterLeger: exporterLeger, developper: developper, BULLES_MAX: BULLES_MAX,
     heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
     phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES,
     amelioration: amelioration, ameliorer: ameliorer, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX,
