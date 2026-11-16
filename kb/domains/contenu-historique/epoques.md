@@ -39,6 +39,8 @@ Chaque découverte répond à un **problème** de la vie quotidienne : c'est le 
 | Monnaie | Écriture, Bronze | Échanger un mouton contre du blé, c'est compliqué → des pièces | Marché |
 | Voile | Élevage (laine, tissage) | On ne va pas loin en pirogue → des bateaux à voile | Port |
 
+Dans le jeu depuis le 16/11/2026 (branche `age-des-metaux`, cf. `journal/2026-11-session-03.md`) : les cinq découvertes ci-dessus, avec l'atelier du charron, la forge, la maison des scribes, le marché et le port ; la maison en pierre et la maison à cour. La roue change aussi les chemins les plus usés en routes de pierre.
+
 Piste (ADR-013) : une découverte « Les routes » à cette époque, qui transforme les chemins de terre en routes empierrées et permet les charrettes et les chevaux.
 
 ## 4. Moyen Âge

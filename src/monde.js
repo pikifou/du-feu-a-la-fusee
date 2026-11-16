@@ -303,8 +303,13 @@ var Monde = (function () {
     return a;
   }
   // ce que rapporte une tournée ; certains outils s'améliorent au néolithique (la hache polie)
-  function qteDe(tr, epoque) { return typeof tr.qte === 'object' ? (tr.qte[epoque] || tr.qte[1]) : tr.qte; }
-  function quantite(b, m) { return qteDe(D.batiments[b.type].travail, m ? m.epoque : 1); }
+  // et à l'âge des métaux, certaines découvertes font mieux travailler (la hache de bronze, le tour du potier)
+  function qteDe(tr, epoque, m) {
+    var q = typeof tr.qte === 'object' ? (tr.qte[epoque] || tr.qte[1]) : tr.qte;
+    if (tr.avec && m) Object.keys(tr.avec).forEach(function (k) { if (m.decouvertes[k]) q = Math.max(q, tr.avec[k]); });
+    return q;
+  }
+  function quantite(b, m) { return qteDe(D.batiments[b.type].travail, m ? m.epoque : 1, m); }
   function merveilleFinie(b) { return !D.batiments[b.type].merveille || (b.etape == null ? 3 : b.etape) >= 3; }
 
   function recolter(m, id) {
@@ -344,7 +349,7 @@ var Monde = (function () {
     }
   }
   // la réserve de nourriture : ce qu'on sait conserver (ADR-036)
-  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30 };
+  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40 };
   function reserveMax(m) {
     return m.batiments.reduce(function (s, b) { return s + (b.etat === 'fini' || b.niveau ? (RESERVE[b.type] || 0) : 0); }, RESERVE.base);
   }
@@ -881,6 +886,12 @@ var Monde = (function () {
   }
   function importer(o) {
     o.evenements = [];
+    // l'île grandit d'une époque de plus : on reprend de la carte de départ à quelle époque chaque case rejoint l'île
+    // (une partie sauvée avant l'âge des métaux n'avait pas le dernier anneau)
+    if (o.terrain && o.terrain.tuiles) {
+      var base = TR.generer();
+      if (base.tuiles.length === o.terrain.tuiles.length) o.terrain.tuiles.forEach(function (t, i) { t.ile = base.tuiles[i].ile; });
+    }
     if (o.nourriture == null) { o.nourriture = 30; o.faim = 0; }
     o.batiments.forEach(function (b) {
       if (!b.ouvriers) { b.ouvriers = b.ouvrier ? [b.ouvrier] : []; delete b.ouvrier; }

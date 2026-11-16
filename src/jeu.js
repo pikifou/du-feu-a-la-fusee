@@ -214,11 +214,12 @@
     if (usureT < 1.5) return;
     usureT = 0;
     var T = monde.terrain, u = usureCv.getContext('2d');
+    var routes = !!monde.decouvertes.roue; // avec la roue, les chemins les plus usés deviennent des routes de pierre
     u.clearRect(0, 0, usureCv.width, usureCv.height);
     T.tuiles.forEach(function (t) {
       if (t.sol !== 'herbe' || t.usure < 0.1 || !TR.surIle(T, t)) return;
       var e = TR.etatHerbe(t);
-      var col = e <= 1 ? [200, 192, 118] : e === 2 ? [190, 156, 104] : [172, 130, 86];
+      var col = e <= 1 ? [200, 192, 118] : e === 2 ? [190, 156, 104] : routes ? [166, 156, 142] : [172, 130, 86];
       var a = e <= 1 ? 0.3 + t.usure * 0.8 : e === 2 ? 0.7 : 0.9;
       var p = TR.centre(t.i, t.j), x = p[0] * G, y = p[1] * G;
       u.save(); u.translate(x, y); u.scale(1, 0.5);
@@ -504,6 +505,11 @@
       ctx.strokeStyle = '#d9a63a'; ctx.lineWidth = 3;
       for (var j = -2; j <= 2; j++) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(j * 5, -20); ctx.stroke(); }
       ctx.fillStyle = '#e8b94a'; for (var k = -2; k <= 2; k++) { ctx.beginPath(); ctx.ellipse(k * 5, -21, 3, 5, 0, 0, 7); ctx.fill(); }
+    } else if (objet === 'minerai') {
+      [[-8, -6, '#6f8f7a'], [5, -8, '#8a8f96'], [-2, -15, '#5f9b80'], [9, -16, '#9a8f86']].forEach(function (q) { ctx.fillStyle = q[2]; ctx.beginPath(); ctx.ellipse(q[0], q[1], 7, 5.5, 0, 0, 7); ctx.fill(); });
+    } else if (objet === 'outil') {
+      ctx.fillStyle = '#8a5a32'; ctx.fillRect(-2, -24, 4, 22);
+      ctx.fillStyle = '#c9963c'; ctx.beginPath(); ctx.moveTo(-2, -24); ctx.lineTo(-13, -26); ctx.lineTo(-13, -14); ctx.lineTo(-2, -17); ctx.closePath(); ctx.fill();
     } else if (objet === 'argile') {
       ctx.fillStyle = '#b8714a'; ctx.beginPath(); ctx.ellipse(0, -9, 13, 9, 0, 0, 7); ctx.fill();
     } else if (objet === 'baies') {
@@ -521,12 +527,16 @@
 
   // la nuit, les maisons qui ont des dormeurs s'ouvrent en coupe et on les voit couchés dedans (ADR-019)
   // COUCHAGES : places des couchages dans l'image en coupe (fractions de largeur et de hauteur)
+  var COUCHAGES_PIERRE = [[0.36, 0.62], [0.6, 0.56], [0.44, 0.8], [0.66, 0.7]];
+  var COUCHAGES_COUR = [[0.27, 0.53], [0.22, 0.61], [0.37, 0.65], [0.53, 0.6], [0.48, 0.82], [0.66, 0.74]];
   var COUCHAGES = {
     'tente': [[0.43, 0.56], [0.66, 0.54]],
     'hutte-branches': [[0.36, 0.6], [0.66, 0.57], [0.52, 0.5]],
     'hutte-peaux': [[0.38, 0.5], [0.66, 0.48], [0.68, 0.66]],
     'maison-torchis': [[0.4, 0.6], [0.56, 0.5], [0.72, 0.58]],
-    'maison-longue': [[0.42, 0.6], [0.5, 0.5], [0.6, 0.44], [0.7, 0.55], [0.8, 0.48]]
+    'maison-longue': [[0.42, 0.6], [0.5, 0.5], [0.6, 0.44], [0.7, 0.55], [0.8, 0.48]],
+    'maison-pierre': COUCHAGES_PIERRE,
+    'maison-cour': COUCHAGES_COUR
   };
   function enCoupe(b) { return b && b.etat === 'fini' && COUCHAGES[b.type] && IMG['coupe/' + b.type] && dormeursChez[b.id] > 0; }
   function cadreCoupe(b) {
@@ -604,7 +614,8 @@
   var POSE_REF = 220; // hauteur d'un habitant debout sur la planche des poses, une fois réduite
   // vitesse de l'animation en deux images, par pose (images par seconde)
   var CADENCE = { bucheron: 2.4, tailleur: 3, chasseur: 1.3, pecheur: 1.3, cueilleuse: 1.2, peintre: 1.2, 'sage-assis': 0.6,
-    'allume-feu': 1.6, 'paysan-faucille': 1.6, 'berger-agneau': 0.9, potiere: 1.1, meuniere: 1.8 };
+    'allume-feu': 1.6, 'paysan-faucille': 1.6, 'berger-agneau': 0.9, potiere: 1.1, meuniere: 1.8,
+    'e3-forgeron': 2.6, 'e3-scribe': 0.8, 'e3-marchande': 0.9, 'e3-marin': 1.2, 'e3-charron': 2.2, 'e3-bucheron': 2.4, 'e3-faucille': 1.6, 'e3-tour-potier': 1.4 };
   function spritePorteur(h) {
     var l = D.porteurs[monde.epoque] || {}, x = h.porte && l[h.porte];
     if (x && typeof x === 'object') x = D.femmes.indexOf(h.allure) >= 0 ? x.f : x.h;
@@ -827,11 +838,13 @@
       cueilleur: ['Miam !', 'Qu\'elles sont rouges !'], tailleur: ['Toc, toc !', 'Ça coupe !'],
       chasseur: ['Chuuut…', 'Le voilà !'], pecheur: ['Ça mord !', 'Un poisson !'], peintre: ['Un mammouth !', 'Joli !'],
       paysan: ['Le blé est doré !', 'Belle récolte !'], berger: ['Bêêê !', 'Viens, petit !'], porteur: ['Au grenier !'],
-      potier: ['Un beau pot !', 'Tout rond !'], meunier: ['Bientôt du pain !', 'Ça fait de la farine !']
+      potier: ['Un beau pot !', 'Tout rond !'], meunier: ['Bientôt du pain !', 'Ça fait de la farine !'],
+      forgeron: ['Ding, ding !', 'Du bon bronze !'], scribe: ['Douze sacs…', 'Je note tout !'], marchand: ['Trois pièces !', 'Qui veut des figues ?'],
+      marin: ['Hissez la voile !', 'Bon vent !'], charron: ['Encore un rayon !', 'Elle roule !']
     },
     faim: ['J\'ai faim !', 'Mon ventre gargouille…', 'Il reste à manger ?'],
     porte: { baies: ['Plein de baies !'], lait: ['Du bon lait !'], pot: ['Un pot tout neuf !'], farine: ['De la farine !'], bois: ['Lourd, ce bois !', 'Du bois !'], viande: ['Ce soir, on mange !'], lapin: ['Un lapin pour ce soir !'], poisson: ['Regardez ma pêche !'],
-      silex: ['Des cailloux tout neufs !'], ble: ['Plein de blé !'], argile: ['De la bonne argile !'] },
+      silex: ['Des cailloux tout neufs !'], ble: ['Plein de blé !'], argile: ['De la bonne argile !'], minerai: ['Du cuivre pour la forge !'], outil: ['Une hache toute neuve !'] },
     chantier: ['On construit !', 'Encore un peu !', 'Ça avance !'],
     veillee: ['Qu\'il fait bon !', 'On se raconte une histoire ?', 'Ça sent bon la viande !'],
     coucher: ['Bonne nuit !', 'Au lit !', 'Je suis fatigué…'],
@@ -1053,8 +1066,10 @@
   }
   function dessinerPirogue(p) {
     var nom = p.filet ? 'pirogue-filet' : (p.marche && Math.floor(T * 2.6 + p.id) % 2 ? 'pirogue-b' : 'pirogue-a');
+    var voile = !p.filet && monde.decouvertes.voile && IMG['eau/bateau-voile']; // avec la voile, les bateaux vont plus loin
+    if (voile) nom = 'bateau-voile';
     var im = IMG['eau/' + nom]; if (!im) return;
-    var w = 92 * V.s, h = w * im.height / im.width, e = E(p.x, p.y), bob = Math.sin(T * 2 + p.id * 2) * 1.5 * V.s;
+    var w = (voile ? 105 : 92) * V.s, h = w * im.height / im.width, e = E(p.x, p.y), bob = Math.sin(T * 2 + p.id * 2) * 1.5 * V.s;
     // remous sur l'eau
     ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = Math.max(1, 2 * V.s);
     if (p.marche) { ctx.beginPath(); ctx.ellipse(e[0] - p.dir * w * 0.45, e[1] + 2 * V.s, w * 0.18, 3 * V.s, 0, 0, 7); ctx.stroke(); }
@@ -1137,6 +1152,7 @@
   }
 
   var ICONE_EPOQUE = { 2: '🌾', 3: '⚒️' };
+  var ILLU_EPOQUE = { 1: 'scenes/cueilleurs', 2: 'scenes/agriculture', 3: 'scenes/metaux' };
   var signatureBarre = '';
   // le bandeau : deux onglets, construire et embellir (ADR-023)
   function majBarre() {
@@ -1262,7 +1278,8 @@
   var LANGUE = /^en/i.test(document.documentElement.lang) ? 'en' : 'fr';
   var H = D.textes.histoire;
   var MOUVEMENT_REDUIT = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var CINE_IMAGES = { intro: 'histoire/debut', fin: 'histoire/fin' };
+  var CINE_IMAGES = { intro: 'histoire/debut', village: 'histoire/village', fin: 'histoire/fin' };
+  var PASSAGE = { 2: 'village' }; // la petite scène qui clôt une époque (avant le bouton doré)
   function cinematique(nom, ensuite) {
     var t = H[nom][LANGUE], box = $('cine'), vid = box.querySelector('video'), img = box.querySelector('img');
     var lu = nom === 'intro' ? D.epoques[0].intro : t.l1 + ' ' + t.l2; // l'intro garde sa phrase enregistrée
@@ -1272,7 +1289,7 @@
     box.querySelector('.l2').textContent = t.l2;
     box.querySelector('.go').textContent = t.go;
     box.querySelector('.passer').textContent = H.passer[LANGUE];
-    box.classList.toggle('haut', nom === 'fin'); // la fin : le texte dans le ciel étoilé, le village reste visible
+    box.classList.toggle('haut', nom !== 'intro'); // le passage et la fin : le texte dans le ciel étoilé, le village reste visible
     img.src = ASSETS[CINE_IMAGES[nom]] || '';
     box.classList.remove('texte');
     box.hidden = false;
@@ -1305,19 +1322,22 @@
   function partieFinie() {
     return !D.epoques.some(function (x) { return x.id === monde.epoque + 1; }) && M.epoqueTerminee(monde);
   }
+  // Ludiworld n'enlève jamais « Fini » : un enfant qui a fini le jeu quand il s'arrêtait au néolithique garde sa marque,
+  // et la nouvelle époque l'attend derrière le bouton doré.
   function majFini() {
     var f = partieFinie();
-    $('marque-fini').hidden = !f;
+    if (f) ui.fini = true;
+    $('marque-fini').hidden = !(f || ui.fini);
     $('marque-fini-mot').textContent = H.fini[LANGUE];
     if (f && LUDI) LUDI.fini();
   }
-  $('marque-fini').addEventListener('click', function () { son('clic'); cinematique('fin'); });
+  $('marque-fini').addEventListener('click', function () { son('clic'); cinematique(partieFinie() ? 'fin' : 'village'); });
 
   function ouvrirDecouvertes() {
     var e = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0];
     var derniere = !D.epoques.some(function (x) { return x.id === monde.epoque + 1; });
     $('dec-sous').textContent = derniere && M.epoqueTerminee(monde)
-      ? 'Tu as tout découvert ! Fin de la démo : la suite, l\'âge des métaux, arrive bientôt.'
+      ? 'Tu as tout découvert ! La suite de l\'histoire arrivera plus tard.'
       : e.nom + ' · tu as ' + monde.idees + ' 💡';
     var g = $('grille-dec');
     g.innerHTML = '';
@@ -1351,7 +1371,7 @@
     var d = D.decouvertes[id];
     var debloques = Object.keys(D.batiments).filter(function (k) { return D.batiments[k].debloque === id; });
     debloques.forEach(function (k) { if (ui.nouveaux.indexOf(k) < 0) ui.nouveaux.push(k); });
-    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); ludiArret('decouverte'); } });
+    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'bronze' && monde.batiments.some(function (b) { return b.type === 'tas-bois'; })) aideUneFois('hache-bronze', A.hacheBronze); if (id === 'roue') { aideUneFois('routes', A.routes); if (monde.batiments.some(function (b) { return b.type === 'atelier-potier'; })) setTimeout(function () { aideUneFois('tour-potier', A.tourPotier); }, 5500); } if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); ludiArret('decouverte'); } });
     sauver();
     ludiProgression();
   }
@@ -1364,7 +1384,10 @@
       cinematique('fin');
       return;
     }
-    scene({ titre: 'Bravo !', images: ['habitants/sage', '01-pierre/peintures-rupestres'], texte: A.finEpoque[monde.epoque], bouton: 'Super !' });
+    var bravo = function () { scene({ titre: 'Bravo !', images: ['habitants/sage', '01-pierre/peintures-rupestres'], texte: A.finEpoque[monde.epoque], bouton: 'Super !' }); };
+    // la fin du néolithique : la petite tribu est devenue un village (le passage vers l'âge des métaux)
+    if (PASSAGE[monde.epoque]) cinematique(PASSAGE[monde.epoque], bravo);
+    else bravo();
   }
   $('btn-epoque').addEventListener('click', function (e) {
     e.stopPropagation();
@@ -1372,7 +1395,7 @@
     if (!suiv || !M.epoqueTerminee(monde)) return;
     son('clic');
     scene({
-      titre: suiv.nom, illustration: suiv.id === 2 ? 'scenes/agriculture' : null, texte: A.pretEpoque,
+      titre: suiv.nom, illustration: ILLU_EPOQUE[suiv.id] || null, texte: A.pretEpoque[suiv.id] || '',
       bouton: 'En avant !', non: 'Pas encore',
       ensuite: function () {
         M.passerEpoque(monde);
@@ -1389,11 +1412,15 @@
     $('epoque-nom').textContent = e.nom;
     if (monde.epoque === 1) { majFini(); cinematique('intro'); return; } // le début de la partie : l'intro de l'histoire
     var images = ['02-neolithique/champ-ble', 'habitants/paysan'];
-    scene({ titre: e.nom, images: images, illustration: monde.epoque === 1 ? 'scenes/cueilleurs' : 'scenes/agriculture', texte: e.intro, bouton: 'C\'est parti !', ensuite: function () {
+    scene({ titre: e.nom, images: images, illustration: ILLU_EPOQUE[monde.epoque], texte: e.intro, bouton: 'C\'est parti !', ensuite: function () {
       if (monde.epoque === 2) {
         aideUneFois('epoque2', A.epoque2);
         setTimeout(function () { aideUneFois('hache-polie', A.hachePolie); }, 8000);
         setTimeout(function () { aideUneFois('maisons-a-main', A.maisonsAMain); }, 16000);
+      }
+      if (monde.epoque === 3) {
+        aideUneFois('epoque3', A.epoque3);
+        setTimeout(function () { aideUneFois('maisons-pierre', A.maisonsPierre); }, 12000);
       }
       // une nouvelle époque commence (on n'arrive ici au-delà de la première que par le bouton d'époque)
       if (monde.epoque > 1) ludiArret('epoque');
@@ -1589,7 +1616,8 @@
   var METIERS = {
     sage: 'le sage', bucheron: 'le bûcheron', cueilleur: 'la cueilleuse', tailleur: 'le tailleur de silex',
     chasseur: 'le chasseur', pecheur: 'le pêcheur', peintre: 'la peintre', paysan: 'le paysan',
-    berger: 'le berger', porteur: 'le porteur', potier: 'la potière', meunier: 'la meunière'
+    berger: 'le berger', porteur: 'le porteur', potier: 'la potière', meunier: 'la meunière',
+    forgeron: 'le forgeron', scribe: 'le scribe', marchand: 'la marchande', marin: 'le marin', charron: 'le charron'
   };
   var infoMinuteur = null;
   function montrerInfo(o) {
@@ -1692,7 +1720,7 @@
   function resumeType(type) {
     var d = D.batiments[type], l = [];
     if (d.lits) l.push('👥 ' + d.lits + ' personnes y dorment');
-    if (d.travail) l.push(EMOJI[d.travail.produit] + ' +' + M.qteDe(d.travail, monde.epoque) + ' à chaque fois · ' + METIERS[d.travail.metier]);
+    if (d.travail) l.push(EMOJI[d.travail.produit] + ' +' + M.qteDe(d.travail, monde.epoque, monde) + ' à chaque fois · ' + METIERS[d.travail.metier]);
     if (d.merveille) l.push('🏛 Merveille en 3 étapes');
     if (M.RESERVE[type]) l.push('🍖 La réserve grandit de ' + M.RESERVE[type]);
     if (d.cout != null) l.push((d.merveille ? 'Chaque étape coûte 🪙 ' : 'Coûte 🪙 ') + d.cout);
@@ -1782,7 +1810,7 @@
     }
     var ici = TR.tuile(T0, tc[0], tc[1]);
     if (ici && ici.gue && !T0.passerelle) { infoNature('gue'); return; }
-    if (ici && ici.sol === 'herbe' && ici.usure >= 0.4) { infoNature('sentier'); return; }
+    if (ici && ici.sol === 'herbe' && ici.usure >= 0.4) { infoNature(monde.decouvertes.roue && TR.etatHerbe(ici) === 3 ? 'route' : 'sentier'); return; }
     cacherInfo();
   }
 
@@ -1845,7 +1873,7 @@
           aide(trop ? (monde.epoque >= 2 ? A.reserveTropPetite2 : A.reserveTropPetite1) : A.reserveDeborde);
         }
       } else if (e.type === 'faim') {
-        aide(monde.epoque >= 2 ? A.faim2 : A.faim1);
+        aide(monde.epoque >= 3 ? A.faim3 : monde.epoque >= 2 ? A.faim2 : A.faim1);
       } else if (e.type === 'grandi') {
         var hg = monde.habitants.filter(function (q) { return q.id === e.hab; })[0];
         if (hg) bark(hg, 'J\'ai grandi !');
@@ -1910,6 +1938,15 @@
   chargerImages(function () {
     redim();
     $('epoque-nom').textContent = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0].nom;
+    // Une partie finie quand le jeu s'arrêtait au néolithique (avant l'âge des métaux) : elle garde sa marque « Fini »
+    // (Ludiworld ne l'enlève jamais), et on lui annonce la suite de l'histoire.
+    if (!ui.epoque3) {
+      ui.epoque3 = true;
+      if (!nouvellePartie && monde.epoque === 2 && M.epoqueTerminee(monde)) {
+        ui.fini = true;
+        setTimeout(function () { aideUneFois('metaux-arrive', A.metauxArrive); }, 1500);
+      }
+    }
     majFini(); // une partie déjà finie : la marque « Fini », et Ludiworld le sait
     if (nouvellePartie && !params.has('test')) montrerEpoque();
     ludiProgression();

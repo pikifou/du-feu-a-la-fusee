@@ -24,10 +24,16 @@ def alpha_depuis_blanc(rgb: np.ndarray) -> np.ndarray:
     return (a * 255).astype(np.uint8)
 
 
-def decoupe(src: Path, out: Path, noms: list[str], marge: int = 12, grille=None) -> None:
+def decoupe(src: Path, out: Path, noms: list[str], marge: int = 12, grille=None, boucher: bool = False) -> None:
     im = Image.open(src).convert("RGB")
     rgb = np.asarray(im)
     alpha = alpha_depuis_blanc(rgb)
+    if boucher:
+        # un toit ou un mur blanchi à la chaux, à l'intérieur de l'objet, n'est pas du fond : on le rend opaque
+        # (le vrai fond, blanc pur, reste transparent, même entre deux colonnes)
+        d = 255.0 - rgb.min(axis=2).astype(np.float32)
+        dedans = ndimage.binary_erosion(ndimage.binary_fill_holes(alpha > 40), iterations=2)
+        alpha = np.where(dedans & (d >= 8), 255, alpha).astype(np.uint8)
 
     masque = alpha > 40
     masque = ndimage.binary_dilation(masque, iterations=10)

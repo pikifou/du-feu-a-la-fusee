@@ -5,7 +5,7 @@ var Terrain = (function () {
   var TW = 64, TH = 32;    // demi-largeur et demi-hauteur d'une tuile (losange 128 x 64)
   var OX = N * TW, OY = 120;
   var CI = 22, CJ = 22;    // tuile du centre du village
-  var RAYONS = { 1: 12.5, 2: 16.5 }; // rayon de l'île par époque
+  var RAYONS = { 1: 12.5, 2: 16.5, 3: 19.5 }; // rayon de l'île par époque
 
   // ---------- coordonnées ----------
   function centre(i, j) { return [(i - j) * TW + OX, (i + j + 1) * TH + OY]; }
@@ -38,7 +38,7 @@ var Terrain = (function () {
       var d = Math.hypot(i - CI, j - CJ) + (bruit(i / 3, j / 3, 7) - 0.5) * 3;
       var t = {
         i: i, j: j, sol: 'herbe', obj: null, vari: Math.floor(h2(i, j, 3) * 1000),
-        usure: 0, bat: null, ile: d < RAYONS[2] ? (d < RAYONS[1] ? 1 : 2) : 0,
+        usure: 0, bat: null, ile: d < RAYONS[1] ? 1 : d < RAYONS[2] ? 2 : d < RAYONS[3] ? 3 : 0,
         sauvage: false
       };
       var ru = riviereU(v);
