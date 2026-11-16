@@ -4,8 +4,8 @@
   "status": "draft",
   "title": { "fr": "Du Feu à la Fusée", "en": "From Fire to Rocket" },
   "pitch": {
-    "fr": "Un petit village qui traverse l'histoire. On construit, on découvre le feu, les outils, l'agriculture, et le village grandit tout seul sous ses yeux. La démo va jusqu'au néolithique.",
-    "en": "A small village travelling through history. Build, discover fire, tools and farming, and watch the village grow. The demo goes up to the Neolithic."
+    "fr": "Un petit village qui traverse l'histoire. On construit, on découvre le feu, les outils, l'agriculture, et le village grandit tout seul sous ses yeux. Le jeu va pour l'instant jusqu'au Moyen Âge.",
+    "en": "A small village travelling through history. Build, discover fire, tools and farming, and watch the village grow. For now the game goes up to the Middle Ages."
   },
   "url": "https://pikifou.github.io/du-feu-a-la-fusee/",
   "icon": "https://pikifou.github.io/du-feu-a-la-fusee/icone-512.png",

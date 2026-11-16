@@ -72,6 +72,8 @@ var Monde = (function () {
     return m;
   }
 
+  // les ponts du gué (la passerelle, puis le pont de pierre) ne prennent pas de place sur les tuiles
+  function surGue(type) { return type === 'passerelle' || type === 'pont-pierre'; }
   function poser(m, type, i, j, fini) {
     var def = D.batiments[type], k = def.taille || 1, T = m.terrain;
     var c = TR.centreEmpreinte(i, j, k);
@@ -80,7 +82,7 @@ var Monde = (function () {
       etat: fini ? 'fini' : 'chantier', livre: 0, besoin: def.bois || 0, enRoute: 0,
       stock: 0, ouvriers: [], apparu: fini ? -10 : null, cree: m.t
     };
-    if (type !== 'passerelle') {
+    if (!surGue(type)) {
       (TR.empreinte(T, i, j, k) || []).forEach(function (t) { t.bat = bat.id; t.deco = null; if (t.obj === 'souche') t.obj = null; t.usure = 0; });
     }
     m.batiments.push(bat);
@@ -156,7 +158,7 @@ var Monde = (function () {
     for (var a = -1; a <= k; a++) for (var b2 = -1; b2 <= k; b2++) {
       if (a >= 0 && a < k && b2 >= 0 && b2 < k) continue;
       var v = TR.tuile(T, i + a, j + b2);
-      if (v && v.bat) { var vb = bat(m, v.bat); if (vb && vb.type !== 'passerelle') return false; }
+      if (v && v.bat) { var vb = bat(m, v.bat); if (vb && !surGue(vb.type)) return false; }
     }
     var t0 = tuiles[0];
     if (d.zone === 'rive' || d.zone === 'plage') return tuiles.some(function (t) { return TR.pres(T, t, 'eau'); });
@@ -225,6 +227,7 @@ var Monde = (function () {
     m.idees -= D.decouvertes[id].idees;
     m.decouvertes[id] = m.t;
     m.evenements.push({ type: 'decouverte', id: id });
+    if (id === 'pont') poserPontPierre(m);
     if (epoqueTerminee(m)) m.evenements.push({ type: 'fin-epoque', epoque: m.epoque });
     return true;
   }
@@ -251,9 +254,45 @@ var Monde = (function () {
         m.animaux.push({ id: m.prochainId++, espece: 'chevre', x: p[0], y: p[1], etapes: [], dir: 1, marche: false });
       }
     }
+    if (m.epoque === 4) {
+      // le petit problème du Moyen Âge (epoques.md) : bientôt, une crue emporte la passerelle en bois
+      if (m.batiments.some(function (b) { return b.type === 'passerelle'; })) m.crue = m.t + DELAI_CRUE;
+      // des chevaux dans la vallée
+      for (var c = 0; c < 2; c++) {
+        var pc = pointLibre(m, TR.centre(TR.CI + 2, TR.CJ + 5), 3);
+        m.animaux.push({ id: m.prochainId++, espece: 'cheval', x: pc[0], y: pc[1], etapes: [], dir: 1, marche: false });
+      }
+    }
     m.habitants.forEach(function (h) { h.changeTenue = hasard(m) * 8; });
     m.evenements.push({ type: 'epoque', epoque: m.epoque });
     return true;
+  }
+
+  // ---------- le pont emporté, puis le pont de pierre (le petit problème du Moyen Âge) ----------
+  var DELAI_CRUE = 45;
+  function crue(m) {
+    if (m.crue == null || m.t < m.crue) return;
+    m.crue = null;
+    if (m.decouvertes.pont) return; // le pont de pierre est déjà là
+    var p = m.batiments.filter(function (b) { return b.type === 'passerelle'; })[0];
+    if (!p) return;
+    m.habitants.forEach(function (h) { if (h.reserve === p.id) lacher(m, h); });
+    m.batiments = m.batiments.filter(function (b) { return b !== p; });
+    m.terrain.passerelle = false;
+    m.pontEmporte = true;
+    m.evenements.push({ type: 'crue', x: p.x, y: p.y });
+  }
+  function poserPontPierre(m) {
+    var g = m.terrain.gue;
+    if (!g || m.batiments.some(function (b) { return b.type === 'pont-pierre'; })) return;
+    // la passerelle (si la crue ne l'a pas encore emportée) laisse la place au pont de pierre
+    var vieux = m.batiments.filter(function (b) { return b.type === 'passerelle'; })[0];
+    if (vieux) { m.habitants.forEach(function (h) { if (h.reserve === vieux.id) lacher(m, h); }); m.batiments = m.batiments.filter(function (b) { return b !== vieux; }); }
+    m.crue = null;
+    m.terrain.passerelle = false;
+    var pont = poser(m, 'pont-pierre', g[0], g[1], false);
+    pont.automatique = true;
+    m.evenements.push({ type: 'chantier', bat: pont.id });
   }
 
   // ---------- améliorations payantes (ADR-021) ----------
@@ -349,7 +388,7 @@ var Monde = (function () {
     }
   }
   // la réserve de nourriture : ce qu'on sait conserver (ADR-036)
-  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40 };
+  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40, moulin: 50 };
   function reserveMax(m) {
     return m.batiments.reduce(function (s, b) { return s + (b.etat === 'fini' || b.niveau ? (RESERVE[b.type] || 0) : 0); }, RESERVE.base);
   }
@@ -560,8 +599,8 @@ var Monde = (function () {
       et.push({ fait: 'attendre', d: 1, anim: 'travail' });
     }
     et.push({ fait: 'prendre', objet: 'bois' });
-    var autour = b.type === 'passerelle' ? TR.centre(m.terrain.gues[0][0], m.terrain.gues[0][1]) : [b.x, b.y];
-    et.push({ fait: 'aller', p: b.type === 'passerelle' ? autour : [b.x + (hasard(m) - 0.5) * 120, b.y + b.k * 26 + hasard(m) * 20] });
+    var autour = surGue(b.type) ? TR.centre(m.terrain.gues[0][0], m.terrain.gues[0][1]) : [b.x, b.y];
+    et.push({ fait: 'aller', p: surGue(b.type) ? autour : [b.x + (hasard(m) - 0.5) * 120, b.y + b.k * 26 + hasard(m) * 20] });
     et.push({ fait: 'deposer' });
     et.push({ fait: 'attendre', d: 2.2, anim: 'marteau' });
     et.push({ fait: 'livrer', bat: b.id });
@@ -722,7 +761,7 @@ var Monde = (function () {
                 c.etape = c.etapeVisee; c.etapeVisee = null;
                 if (c.etape >= 3) m.evenements.push({ type: 'merveille', bat: c.id });
               }
-              if (c.type === 'passerelle') m.terrain.passerelle = true;
+              if (surGue(c.type)) { m.terrain.passerelle = true; if (c.type === 'pont-pierre') m.pontEmporte = false; }
               m.evenements.push({ type: 'fini', bat: c.id });
             }
           }
@@ -854,6 +893,7 @@ var Monde = (function () {
     embaucher(m);
     m.habitants.forEach(function (h) { avancer(m, h, dt); });
     lapins(m, dt);
+    crue(m);
     m.animaux.forEach(function (a) { bougerAnimal(m, a, dt); });
     m.animaux = m.animaux.filter(function (a) { return !a.parti; });
     arrivees(m, dt);

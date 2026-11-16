@@ -17,6 +17,11 @@ var Donnees = (function () {
       id: 3,
       nom: "L'âge des métaux",
       intro: "Des milliers d'années ont encore passé. On a appris à faire fondre les métaux : c'est le temps des forgerons, des marchands et des premières villes !"
+    },
+    {
+      id: 4,
+      nom: 'Le Moyen Âge',
+      intro: "Plus de mille ans ont passé. Voici le Moyen Âge : le temps des moulins, des maisons à colombages, des horloges et des premiers livres imprimés !"
     }
   ];
 
@@ -97,6 +102,32 @@ var Donnees = (function () {
       scene: 'scenes/voile', faits: ["Les Égyptiens naviguaient à la voile sur le Nil il y a plus de 5 000 ans.", "Les voiles étaient tissées en laine ou en lin, souvent à bandes de couleurs.", "Avec les bateaux à voile, on a pu commercer avec des pays lointains."],
       nom: 'La voile', epoque: 3, idees: 20, prerequis: ['elevage'], icone: '03-metaux/port',
       texte: "Avant, en pirogue, on ne pouvait pas aller bien loin. Maintenant, on tisse la laine des moutons pour faire une voile : le vent pousse le bateau !"
+    },
+    // 4. Le Moyen Âge (kb/domains/contenu-historique/epoques.md, section 4)
+    moulin: {
+      scene: 'scenes/moulin', faits: ["Il y a plus de 2 000 ans, les Grecs et les Romains connaissaient déjà le moulin à eau. Au Moyen Âge, il y en a partout : des milliers rien qu'en Angleterre !", "Le courant fait tourner la grande roue, la roue fait tourner la meule, et la meule écrase le grain.", "Le meunier pouvait moudre en une heure ce qu'une personne mettait des jours à moudre à la main."],
+      nom: 'Le moulin à eau', epoque: 4, idees: 28, prerequis: ['roue', 'meule'], icone: '04-moyen-age/moulin',
+      texte: "Avant, on écrasait le blé à la main, et c'était long. Maintenant, la rivière fait tourner une grande roue, et la roue fait tourner la meule toute la journée !"
+    },
+    fer: {
+      scene: 'scenes/fer', faits: ["Pour faire du fer, on chauffe des pierres rouges, le minerai, dans un four rempli de charbon de bois.", "Le fer est bien plus courant que le cuivre et l'étain : on peut en faire beaucoup d'outils.", "Le forgeron chauffe le fer jusqu'à ce qu'il soit rouge, puis il le tape sur l'enclume pour lui donner sa forme."],
+      nom: 'Le fer', epoque: 4, idees: 28, prerequis: ['bronze'], icone: '04-moyen-age/marechal',
+      texte: "Avant, le bronze était rare et cher. Maintenant, on fait du fer, un métal qu'on trouve presque partout : des fers à cheval, des clous, des charrues pour labourer !"
+    },
+    pont: {
+      scene: 'scenes/pont', faits: ["Pour bâtir un pont en arche, on posait les pierres sur un gabarit en bois en forme d'arc, qu'on retirait à la fin.", "Les pierres de l'arche se poussent les unes contre les autres : c'est ce qui la fait tenir, sans colle.", "Certains ponts de pierre du Moyen Âge sont encore debout aujourd'hui, après 800 ans !"],
+      nom: 'Le pont de pierre', epoque: 4, idees: 30, prerequis: ['outils', 'roue'], icone: 'eau/pont-pierre',
+      texte: "Avant, la rivière en crue emportait le pont de bois. Maintenant, on construit un pont en arches de pierre : il est solide, et les charrettes passent dessus !"
+    },
+    horloge: {
+      scene: 'scenes/horloge', faits: ["Les premières horloges mécaniques sont apparues en Europe il y a environ 700 ans.", "Au début, elles n'avaient pas de cadran : elles sonnaient seulement les heures avec une cloche.", "Elles marchaient avec un gros poids de pierre, attaché à une corde, qui descendait tout doucement."],
+      nom: "L'horloge", epoque: 4, idees: 34, prerequis: ['fer'], icone: '04-moyen-age/tour-horloge',
+      texte: "Avant, on ne savait l'heure qu'en regardant le soleil. Maintenant, une horloge en fer sonne les heures pour toute la ville !"
+    },
+    imprimerie: {
+      scene: 'scenes/imprimerie', faits: ["Vers 1450, en Allemagne, Gutenberg a eu l'idée de petites lettres en métal qu'on range pour faire des pages.", "Avant, il fallait des mois pour copier un seul livre à la main.", "Avec une presse, on pouvait imprimer des centaines de pages par jour !"],
+      nom: "L'imprimerie", epoque: 4, idees: 36, prerequis: ['ecriture', 'fer'], icone: '04-moyen-age/imprimerie',
+      texte: "Avant, on copiait chaque livre à la main, lettre par lettre. Maintenant, on range des petites lettres en métal, on met de l'encre, et la presse imprime la page d'un coup !"
     }
   };
 
@@ -273,6 +304,72 @@ var Donnees = (function () {
       texte: "Il y a environ 2 000 ans, les Romains ont construit des aqueducs pour amener l'eau des montagnes jusqu'aux fontaines des villes.",
       faits: ["Chacun venait y remplir ses cruches.", "Le pont du Gard, en France, est un morceau d'aqueduc romain : l'eau coulait tout en haut !"]
     },
+    // Le Moyen Âge
+    'deco-notre-dame': {
+      nom: 'Notre-Dame de Paris', epoque: 4, image: 'deco/notre-dame', deco: true,
+      texte: "À Paris, la cathédrale Notre-Dame a été commencée en 1163. Il a fallu presque 200 ans pour la finir !",
+      faits: ["Sa grande rosace est un vitrail rond, comme une fleur de verre de toutes les couleurs.", "Ses deux tours mesurent 69 mètres de haut : on y monte par 387 marches.", "En 2019, son toit a brûlé. Des centaines d'artisans l'ont réparée, et elle a rouvert en 2024."]
+    },
+    'deco-mont-saint-michel': {
+      nom: 'Le Mont-Saint-Michel', epoque: 4, image: 'deco/mont-saint-michel', deco: true,
+      texte: "En Normandie, une abbaye a été bâtie tout en haut d'un rocher, il y a plus de 1 000 ans. Autour, les maisons du village grimpent sur la pente.",
+      faits: ["Quand la mer monte, le rocher devient une île !", "La marée y va très vite : on dit qu'elle arrive à la vitesse d'un cheval au galop.", "Les pierres de l'abbaye venaient des îles voisines : on les apportait en bateau, puis on les hissait tout en haut avec des cordes."]
+    },
+    'deco-tour-pise': {
+      nom: 'La tour de Pise', epoque: 4, image: 'deco/tour-pise', deco: true,
+      texte: "En Italie, la tour de Pise est le clocher de la cathédrale. On a commencé à la construire en 1173, et elle s'est mise à pencher pendant les travaux !",
+      faits: ["Le sol en dessous est mou : d'un côté, la tour s'est enfoncée.", "Il a fallu environ 200 ans pour la finir.", "Aujourd'hui, des ingénieurs l'ont redressée un tout petit peu pour qu'elle ne tombe pas."]
+    },
+    'deco-angkor': {
+      nom: 'Angkor Vat', epoque: 4, image: 'deco/angkor', deco: true,
+      texte: "Au Cambodge, il y a environ 900 ans, on a bâti Angkor Vat, un immense temple en pierre avec cinq tours en forme de bouton de fleur de lotus.",
+      faits: ["C'est le plus grand monument religieux du monde.", "Ses murs sont couverts de sculptures : des danseuses, des éléphants, des histoires.", "Il est entouré d'un grand fossé rempli d'eau, comme un lac carré."]
+    },
+    'deco-moulin-vent': {
+      nom: 'Un moulin à vent', epoque: 4, image: 'deco/moulin-vent', deco: true,
+      texte: "Les moulins à vent sont arrivés en Europe il y a environ 850 ans. Là où il n'y avait pas de rivière, c'est le vent qui faisait tourner la meule.",
+      faits: ["Dans ce moulin sur pivot, toute la cabane tourne autour d'un gros poteau pour faire face au vent.", "Le meunier tendait des toiles sur les ailes, comme des voiles de bateau."]
+    },
+    'deco-pigeonnier': {
+      nom: 'Un pigeonnier', epoque: 4, image: 'deco/pigeonnier', deco: true,
+      texte: "Un pigeonnier est une tour ronde où vivent des centaines de pigeons. Chaque petit trou dans le mur est un nid.",
+      faits: ["Les pigeons donnaient des œufs et de la viande.", "Leurs crottes étaient un très bon engrais pour faire pousser les champs !"]
+    },
+    'deco-gargouille': {
+      nom: 'Une gargouille', epoque: 4, image: 'deco/gargouille', deco: true,
+      texte: "Une gargouille est une gouttière sculptée en forme de monstre. Quand il pleut, l'eau du toit sort par sa bouche, loin des murs.",
+      faits: ["Le mot vient de « gargouiller », le bruit de l'eau dans la gorge.", "Sur les cathédrales, il y en a des dizaines : des dragons, des chiens, des lions, et même des singes !"]
+    },
+    'deco-astrolabe': {
+      nom: "L'astrolabe", epoque: 4, image: 'deco/astrolabe', deco: true,
+      texte: "L'astrolabe est un instrument en métal pour lire le ciel : il aide à trouver l'heure et le chemin en regardant le soleil et les étoiles.",
+      faits: ["Il a été perfectionné par les savants du monde arabe, puis il est arrivé en Europe il y a environ 1 000 ans.", "Les marins s'en servaient pour savoir où ils étaient sur la mer."]
+    },
+    'deco-licorne': {
+      nom: 'La Dame à la licorne', epoque: 4, image: 'deco/licorne', deco: true,
+      texte: "La Dame à la licorne, ce sont six grandes tapisseries tissées vers l'an 1500. On y voit une dame, un lion et une licorne, sur un fond rouge couvert de fleurs.",
+      faits: ["Cinq tapisseries parlent des cinq sens : le toucher, le goût, l'odorat, l'ouïe et la vue.", "On peut les voir au musée de Cluny, à Paris.", "Il y a aussi des lapins, des chiens et des oiseaux cachés dans les fleurs !"]
+    },
+    'deco-echecs-lewis': {
+      nom: 'Les échecs de Lewis', epoque: 4, image: 'deco/echecs-lewis', deco: true,
+      texte: "En 1831, sur l'île de Lewis, en Écosse, on a trouvé dans le sable 78 pièces d'échecs sculptées il y a environ 850 ans, en ivoire de morse.",
+      faits: ["Le roi et la reine sont assis sur leur trône, l'air un peu inquiet.", "Certains soldats mordent leur bouclier, pour faire peur !"]
+    },
+    'deco-moai': {
+      nom: 'Un moaï', epoque: 4, image: 'deco/moai', deco: true,
+      texte: "Sur l'île de Pâques, au milieu de l'océan Pacifique, on a sculpté près de 1 000 grandes statues de pierre, les moaïs, il y a 500 à 800 ans.",
+      faits: ["Ils sont taillés dans la pierre d'un ancien volcan.", "Pour les déplacer, on les faisait « marcher » debout en les balançant avec des cordes."]
+    },
+    'deco-pont-avignon': {
+      nom: "Le pont d'Avignon", epoque: 4, image: 'deco/pont-avignon', deco: true,
+      texte: "Le pont Saint-Bénézet, à Avignon, a été construit il y a environ 850 ans. Il traversait tout le Rhône avec 22 arches.",
+      faits: ["Les crues du Rhône ont emporté ses arches, l'une après l'autre : il n'en reste que quatre.", "C'est lui qu'on chante dans « Sur le pont d'Avignon, on y danse, on y danse » !"]
+    },
+    'villes-medievales': {
+      nom: 'Les villes du Moyen Âge', epoque: 4, scene: 'scenes/moyen-age',
+      texte: "Au Moyen Âge, les villes grandissent : des maisons à colombages serrées les unes contre les autres, des artisans dans chaque rue, et un marché sur la place.",
+      faits: ["Les colombages, ce sont les poutres de bois qu'on voit sur le mur ; entre elles, on remplit avec du torchis ou des briques.", "Pour gagner de la place, les étages dépassaient au-dessus de la rue.", "Chaque métier avait souvent sa rue : la rue des boulangers, la rue des forgerons…"]
+    },
     'premieres-villes': {
       nom: 'Les premières villes', epoque: 3, scene: 'scenes/metaux',
       texte: "Avec les métaux, le village grandit : des maisons en pierre aux toits de tuiles, des artisans, un marché. Petit à petit, il devient une ville.",
@@ -312,17 +409,17 @@ var Donnees = (function () {
       vignettes: [{ img: 'bois', texte: "Avec sa hache de pierre, le bûcheron abat un arbre, puis il range les bûches." }],
       nom: 'Le tas de bois', sprite: '01-pierre/tas-bois', epoque: 1, jusqua: 9,
       zone: 'pre', cout: 40, prixNiveau: 40, largeur: 130, taille: 1, grandit: { 2: 1.5, 3: 1.85 },
-      travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 10 }, avec: { bronze: 14 } }
+      travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 10 }, avec: { bronze: 14, fer: 18 } }
     },
     tente: {
-      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 120 }],
+      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 120 }, { vers: 'maison-colombages', cout: 170 }],
       resume: "Une petite maison pour 2 personnes.", page: 'cueilleurs',
       explication: "Une tente en peaux tendues sur des bâtons. Deux personnes y dorment à l'abri du vent. Plus il y a de maisons, plus de familles viennent vivre au village.",
       nom: 'Une tente', sprite: '01-pierre/tente', epoque: 1, jusqua: 1,
       zone: 'pre', cout: 10, bois: 2, lits: 2, largeur: 200, taille: 2
     },
     'hutte-branches': {
-      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 110 }],
+      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 110 }, { vers: 'maison-colombages', cout: 160 }],
       resume: "Une maison de branches pour 3 personnes.", page: 'cueilleurs',
       explication: 'Une hutte de branches entrecroisées. Trois personnes peuvent y dormir.',
       nom: 'Une hutte de branches', sprite: '01-pierre/hutte-branches', epoque: 1, jusqua: 1,
@@ -371,7 +468,7 @@ var Donnees = (function () {
     'hutte-peaux': {
       resume: "Une maison chaude en peaux, pour 3 personnes.",
       explication: 'Une grande hutte couverte de peaux cousues entre elles. Bien chaude, elle accueille trois personnes, même en hiver.',
-      evolue: [{ vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 100 }],
+      evolue: [{ vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 100 }, { vers: 'maison-colombages', cout: 150 }],
       nom: 'Une hutte en peaux', sprite: '01-pierre/hutte-peaux', epoque: 1, jusqua: 1, debloque: 'abri',
       zone: 'pre', cout: 40, bois: 3, lits: 3, largeur: 220, taille: 2
     },
@@ -384,7 +481,7 @@ var Donnees = (function () {
       travail: { metier: 'peintre', aller: null, duree: 14, produit: 'idees', qte: 2 }
     },
     'maison-torchis': {
-      evolue: [{ vers: 'maison-longue', cout: 80, decouverte: 'grenier' }, { vers: 'maison-cour', cout: 220, decouverte: 'monnaie' }],
+      evolue: [{ vers: 'maison-longue', cout: 80, decouverte: 'grenier' }, { vers: 'maison-cour', cout: 220, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 140 }],
       resume: "Une maison en terre et en paille, pour 4 personnes.",
       explication: "Une maison en torchis : de la terre, de la paille et de l'eau collées sur des branches. Les paysans y vivent toute l'année, près de leurs champs.",
       vignettes: [{ img: 'torchis', texte: "On tresse des branches, puis on les couvre de terre mêlée de paille : c'est le torchis." }],
@@ -397,7 +494,7 @@ var Donnees = (function () {
       vignettes: [{ img: 'semer', texte: "Le paysan sème les graines de blé dans la terre." }, { img: 'moisson', texte: "Quand le blé est doré, on le coupe avec une faucille et on fait des gerbes." }],
       nom: 'Un champ de blé', sprite: '02-neolithique/champ-ble', epoque: 2, jusqua: 9, debloque: 'agriculture',
       zone: 'pre', cout: 75, bois: 1, largeur: 240, taille: 2,
-      travail: { metier: 'paysan', aller: null, porte: 'ble', duree: 8, produit: 'nourriture', qte: 5 }
+      travail: { metier: 'paysan', aller: null, porte: 'ble', duree: 8, produit: 'nourriture', qte: 5, avec: { fer: 8 } }
     },
     'enclos-moutons': {
       resume: "Le berger y garde les moutons et les chèvres.",
@@ -415,7 +512,7 @@ var Donnees = (function () {
       zone: 'pre', cout: 80, bois: 3, largeur: 140, taille: 1, reserve: 60
     },
     'maison-longue': {
-      evolue: [{ vers: 'maison-cour', cout: 140, decouverte: 'monnaie' }],
+      evolue: [{ vers: 'maison-cour', cout: 140, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 120 }],
       resume: "Une grande maison pour 6 personnes.",
       explication: "Une maison longue. Plusieurs familles vivent ensemble sous le même toit : jusqu'à six personnes.",
       vignettes: [{ img: 'torchis', texte: "Tout le monde aide à construire la maison : branches tressées, terre et toit de paille." }],
@@ -559,7 +656,7 @@ var Donnees = (function () {
     },
     // 3. L'âge des métaux et l'Antiquité
     'maison-pierre': {
-      evolue: [{ vers: 'maison-cour', cout: 130, decouverte: 'monnaie' }],
+      evolue: [{ vers: 'maison-cour', cout: 130, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 110 }],
       resume: "Une maison en pierre au toit de tuiles, pour 5 personnes.", page: 'premieres-villes',
       explication: "Une maison en pierre. Ses murs épais gardent la fraîcheur l'été et la chaleur l'hiver, et son toit de tuiles en terre cuite ne laisse pas passer la pluie.",
       vignettes: [{ img: 'maison-pierre', texte: "On empile les pierres pour les murs, puis on pose les tuiles sur le toit." }],
@@ -567,6 +664,7 @@ var Donnees = (function () {
       zone: 'pre', cout: 160, bois: 4, lits: 5, largeur: 210, taille: 2
     },
     'maison-cour': {
+      evolue: [{ vers: 'maison-etages', cout: 200, decouverte: 'horloge' }],
       resume: "Une grande maison autour d'une cour, pour 8 personnes.", page: 'premieres-villes',
       explication: "Une maison à cour. Les pièces entourent une petite cour avec un olivier : toute la famille y vit, et on y travaille à l'ombre.",
       nom: 'Une maison à cour', sprite: '03-metaux/maison-cour', epoque: 3, jusqua: 9, debloque: 'monnaie',
@@ -615,63 +713,186 @@ var Donnees = (function () {
     // décorations et merveilles de l'âge des métaux (ADR-023, ADR-024)
     'fontaine': {
       resume: "Une fontaine où l'on vient chercher l'eau.", page: 'deco-fontaine',
-      nom: "Une fontaine", sprite: 'deco/fontaine', epoque: 3, jusqua: 9,
+      nom: "Une fontaine", sprite: 'deco/fontaine', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 90, bois: 2, largeur: 105, taille: 1, deco: true
     },
     'obelisque': {
       resume: "Une grande pierre taillée en pointe.", page: 'deco-obelisque',
-      nom: "Un obélisque", sprite: 'deco/obelisque', epoque: 3, jusqua: 9,
+      nom: "Un obélisque", sprite: 'deco/obelisque', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 120, bois: 2, largeur: 62, taille: 1, deco: true
     },
     'char-solaire': {
       resume: "Un cheval de bronze qui tire le soleil.", page: 'deco-char-solaire',
-      nom: "Le char du soleil", sprite: 'deco/char-solaire', epoque: 3, jusqua: 9,
+      nom: "Le char du soleil", sprite: 'deco/char-solaire', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 140, bois: 2, largeur: 110, taille: 1, deco: true, unique: true
     },
     'aurige': {
       resume: "Une statue de bronze qui tient des rênes.", page: 'deco-aurige',
-      nom: "L'Aurige de Delphes", sprite: 'deco/aurige', epoque: 3, jusqua: 9,
+      nom: "L'Aurige de Delphes", sprite: 'deco/aurige', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 150, bois: 2, largeur: 70, taille: 1, deco: true, unique: true
     },
     'vase-vix': {
       resume: "Un vase de bronze géant.", page: 'deco-vase-vix',
-      nom: "Le vase de Vix", sprite: 'deco/vase-vix', epoque: 3, jusqua: 9,
+      nom: "Le vase de Vix", sprite: 'deco/vase-vix', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 170, bois: 2, largeur: 85, taille: 1, deco: true, unique: true
     },
     'lamassu': {
       resume: "Un taureau ailé qui garde les portes.", page: 'deco-lamassu',
-      nom: "Le lamassu", sprite: 'deco/lamassu', epoque: 3, jusqua: 9,
+      nom: "Le lamassu", sprite: 'deco/lamassu', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 200, bois: 3, largeur: 115, taille: 1, deco: true, unique: true
     },
     'porte-ishtar': {
       resume: "Une porte de briques bleues, avec des lions.", page: 'deco-porte-ishtar',
-      nom: "La porte d'Ishtar", sprite: 'deco/porte-ishtar', epoque: 3, jusqua: 9,
+      nom: "La porte d'Ishtar", sprite: 'deco/porte-ishtar', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 240, bois: 4, largeur: 190, taille: 2, deco: true, unique: true
     },
     'sphinx': {
       resume: "Un lion couché à tête d'homme.", page: 'deco-sphinx',
-      nom: "Le grand Sphinx", sprite: 'deco/sphinx', epoque: 3, jusqua: 9,
+      nom: "Le grand Sphinx", sprite: 'deco/sphinx', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 280, bois: 4, largeur: 210, taille: 2, deco: true, unique: true
     },
     'ziggourat': {
       resume: "Une merveille : une montagne de briques en escaliers.", page: 'deco-ziggourat',
-      nom: "La ziggourat d'Ur", sprite: 'deco/ziggourat', epoque: 3, jusqua: 9,
+      nom: "La ziggourat d'Ur", sprite: 'deco/ziggourat', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 220, bois: 5, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
     },
     'pyramide': {
       resume: "Une merveille : la grande pyramide d'Égypte.", page: 'deco-pyramide',
-      nom: "La grande pyramide", sprite: 'deco/pyramide', epoque: 3, jusqua: 9,
+      nom: "La grande pyramide", sprite: 'deco/pyramide', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 260, bois: 6, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
     },
     'parthenon': {
       resume: "Une merveille : un temple grec en marbre blanc.", page: 'deco-parthenon',
-      nom: "Le Parthénon", sprite: 'deco/parthenon', epoque: 3, jusqua: 9,
+      nom: "Le Parthénon", sprite: 'deco/parthenon', epoque: 3, jusqua: 3,
       zone: 'pre', cout: 300, bois: 6, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
     },
     'phare': {
       resume: "Une merveille : un grand phare au bord de la mer.", page: 'deco-phare',
-      nom: "Le phare d'Alexandrie", sprite: 'deco/phare', epoque: 3, jusqua: 9,
+      nom: "Le phare d'Alexandrie", sprite: 'deco/phare', epoque: 3, jusqua: 3,
       zone: 'plage', cout: 340, bois: 6, largeur: 150, taille: 1, deco: true, merveille: true, unique: true
+    },
+    // 4. Le Moyen Âge
+    'maison-colombages': {
+      evolue: [{ vers: 'maison-etages', cout: 220, decouverte: 'horloge' }],
+      resume: "Une maison à colombages, pour 7 personnes.", page: 'villes-medievales',
+      explication: "Une maison à colombages. On monte d'abord une charpente de grosses poutres, puis on remplit les trous avec du torchis. À l'étage, on dort au chaud sous le toit.",
+      vignettes: [{ img: 'colombages', texte: "Les charpentiers montent les poutres, puis on remplit les murs de torchis." }],
+      nom: 'Une maison à colombages', sprite: '04-moyen-age/maison-colombages', epoque: 4, jusqua: 9,
+      zone: 'pre', cout: 240, bois: 4, lits: 7, largeur: 195, taille: 2
+    },
+    'maison-etages': {
+      resume: "Une grande maison de ville à trois étages, pour 10 personnes.", page: 'villes-medievales',
+      explication: "Une maison de ville à étages. Pour gagner de la place, on construit en hauteur, et chaque étage dépasse un peu au-dessus de la rue.",
+      nom: 'Une maison à étages', sprite: '04-moyen-age/maison-etages', epoque: 4, jusqua: 9, debloque: 'horloge',
+      zone: 'pre', cout: 380, bois: 5, lits: 10, largeur: 205, taille: 2
+    },
+    moulin: {
+      resume: "Au bord de la rivière, l'eau fait tourner la roue et la meule : on fait la farine. On y range des sacs : la réserve grandit.",
+      explication: "Le moulin à eau. Le courant de la rivière fait tourner la grande roue, la roue fait tourner la meule, et la meule écrase le blé. Le meunier va chercher le blé aux champs et rapporte de la farine.",
+      vignettes: [{ img: 'moulin', texte: "La rivière fait tourner la grande roue, et le meunier remplit les sacs de farine." }],
+      nom: 'Le moulin à eau', sprite: '04-moyen-age/moulin', epoque: 4, jusqua: 9, debloque: 'moulin',
+      zone: 'rive', cout: 190, bois: 4, largeur: 215, taille: 2, grandit: { 2: 1.12, 3: 1.3 },
+      travail: { metier: 'moulinier', aller: 'champ', porte: 'ble', livre: 'farine', duree: 6, produit: 'nourriture', qte: 10 }
+    },
+    boulangerie: {
+      resume: "La boulangère cuit le pain dans le grand four.",
+      explication: "La boulangerie. La boulangère pétrit la farine avec de l'eau et du levain, puis elle cuit les pains dans le grand four en pierre, chauffé au bois.",
+      vignettes: [{ img: 'boulangerie', texte: "La boulangère enfourne les pains avec sa grande pelle en bois." }],
+      nom: 'La boulangerie', sprite: '04-moyen-age/boulangerie', epoque: 4, jusqua: 9, debloque: 'moulin',
+      zone: 'pre', cout: 160, bois: 3, largeur: 185, taille: 1, grandit: { 2: 1.15, 3: 1.32 },
+      travail: { metier: 'boulanger', aller: null, duree: 6, produit: 'nourriture', qte: 8 }
+    },
+    marechal: {
+      resume: "Le maréchal-ferrant forge le fer : des fers à cheval, des clous, des outils.",
+      explication: "La forge du maréchal-ferrant. Il va chercher du minerai de fer dans les collines, le chauffe jusqu'à ce qu'il soit rouge, puis le tape sur l'enclume : des fers à cheval, des clous, des socs de charrue.",
+      vignettes: [{ img: 'marechal', texte: "Le maréchal-ferrant tape le fer rouge sur l'enclume pour faire un fer à cheval." }],
+      nom: 'La forge du maréchal-ferrant', sprite: '04-moyen-age/marechal', epoque: 4, jusqua: 9, debloque: 'fer',
+      zone: 'pre', cout: 240, bois: 3, largeur: 210, taille: 2, grandit: { 2: 1.1, 3: 1.25 },
+      travail: { metier: 'marechal', aller: 'grotte', porte: 'minerai', livre: 'outil', duree: 5, produit: 'pieces', qte: 40 }
+    },
+    'tour-horloge': {
+      resume: "L'horloger y fait marcher la grande horloge qui sonne les heures.",
+      explication: "La tour de l'horloge. Tout en haut, la cloche sonne les heures pour toute la ville. L'horloger remonte les poids, graisse les roues dentées et fabrique de nouvelles horloges.",
+      vignettes: [{ img: 'horloger', texte: "L'horloger ajuste les roues dentées de l'horloge." }],
+      nom: "La tour de l'horloge", sprite: '04-moyen-age/tour-horloge', epoque: 4, jusqua: 9, debloque: 'horloge',
+      zone: 'pre', cout: 280, bois: 4, largeur: 115, taille: 1, grandit: { 2: 1.15, 3: 1.35 },
+      travail: { metier: 'horloger', aller: null, duree: 6, produit: 'pieces', qte: 46 }
+    },
+    imprimerie: {
+      resume: "L'imprimeur y imprime des livres : il a des idées 💡.",
+      explication: "L'imprimerie. L'imprimeur range des petites lettres en métal pour faire une page, met de l'encre, puis serre la presse : la page est imprimée. Les livres font voyager les idées.",
+      vignettes: [{ img: 'imprimeur', texte: "L'imprimeur tire la barre de la presse : la page sort, toute imprimée." }],
+      nom: "L'imprimerie", sprite: '04-moyen-age/imprimerie', epoque: 4, jusqua: 9, debloque: 'imprimerie',
+      zone: 'pre', cout: 260, bois: 3, largeur: 195, taille: 2, grandit: { 2: 1.1, 3: 1.25 },
+      travail: { metier: 'imprimeur', aller: null, duree: 12, produit: 'idees', qte: 4 }
+    },
+    // décorations et merveilles du Moyen Âge (ADR-023, ADR-024)
+    'moulin-vent': {
+      resume: "Un moulin que le vent fait tourner.", page: 'deco-moulin-vent',
+      nom: 'Un moulin à vent', sprite: 'deco/moulin-vent', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 130, bois: 3, largeur: 120, taille: 1, deco: true
+    },
+    'pigeonnier': {
+      resume: "Une tour ronde pleine de pigeons.", page: 'deco-pigeonnier',
+      nom: 'Un pigeonnier', sprite: 'deco/pigeonnier', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 140, bois: 2, largeur: 95, taille: 1, deco: true
+    },
+    'gargouille': {
+      resume: "Un petit monstre de pierre qui crache l'eau de pluie.", page: 'deco-gargouille',
+      nom: 'Une gargouille', sprite: 'deco/gargouille', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 150, bois: 2, largeur: 70, taille: 1, deco: true, unique: true
+    },
+    'astrolabe': {
+      resume: "Un instrument en métal pour lire le ciel.", page: 'deco-astrolabe',
+      nom: "L'astrolabe", sprite: 'deco/astrolabe', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 170, bois: 2, largeur: 80, taille: 1, deco: true, unique: true
+    },
+    'licorne': {
+      resume: "Une grande tapisserie avec une licorne.", page: 'deco-licorne',
+      nom: 'La Dame à la licorne', sprite: 'deco/licorne', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 190, bois: 2, largeur: 105, taille: 1, deco: true, unique: true
+    },
+    'echecs-lewis': {
+      resume: "Un roi et une reine des échecs, en ivoire.", page: 'deco-echecs-lewis',
+      nom: 'Les échecs de Lewis', sprite: 'deco/echecs-lewis', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 210, bois: 2, largeur: 100, taille: 1, deco: true, unique: true
+    },
+    'moai': {
+      resume: "Une grande statue de pierre de l'île de Pâques.", page: 'deco-moai',
+      nom: 'Un moaï', sprite: 'deco/moai', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 250, bois: 3, largeur: 75, taille: 1, deco: true, unique: true
+    },
+    'pont-avignon': {
+      resume: "Le pont qui s'arrête au milieu, celui de la chanson.", page: 'deco-pont-avignon',
+      nom: "Le pont d'Avignon", sprite: 'deco/pont-avignon', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 300, bois: 4, largeur: 230, taille: 2, deco: true, unique: true
+    },
+    'notre-dame': {
+      resume: "Une merveille : la grande cathédrale de Paris.", page: 'deco-notre-dame',
+      nom: 'Notre-Dame de Paris', sprite: 'deco/notre-dame', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 340, bois: 6, largeur: 250, taille: 2, deco: true, merveille: true, unique: true
+    },
+    'tour-pise': {
+      resume: "Une merveille : la tour qui penche.", page: 'deco-tour-pise',
+      nom: 'La tour de Pise', sprite: 'deco/tour-pise', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 360, bois: 6, largeur: 105, taille: 1, deco: true, merveille: true, unique: true
+    },
+    'mont-saint-michel': {
+      resume: "Une merveille : une abbaye sur un rocher, au bord de la mer.", page: 'deco-mont-saint-michel',
+      nom: 'Le Mont-Saint-Michel', sprite: 'deco/mont-saint-michel', epoque: 4, jusqua: 4,
+      zone: 'plage', cout: 380, bois: 6, largeur: 200, taille: 1, deco: true, merveille: true, unique: true
+    },
+    'angkor': {
+      resume: "Une merveille : le grand temple aux tours en bouton de lotus.", page: 'deco-angkor',
+      nom: 'Angkor Vat', sprite: 'deco/angkor', epoque: 4, jusqua: 4,
+      zone: 'pre', cout: 420, bois: 6, largeur: 255, taille: 2, deco: true, merveille: true, unique: true
+    },
+    // le pont de pierre remplace la passerelle emportée par la crue (le petit problème du Moyen Âge, epoques.md)
+    'pont-pierre': {
+      resume: "Un pont en arches de pierre : la rivière ne peut plus l'emporter.", page: 'pont',
+      explication: "Le pont de pierre. Ses arches sont faites de pierres taillées qui se poussent les unes contre les autres : il résiste aux crues, et les charrettes passent dessus.",
+      nom: 'Le pont de pierre', sprite: 'eau/pont-pierre', epoque: 4, jusqua: 9,
+      zone: 'gue', cout: null, bois: 6, largeur: 230, taille: 1, automatique: true
     },
     passerelle: {
       resume: "Un pont de bois pour traverser la rivière.",
@@ -687,16 +908,20 @@ var Donnees = (function () {
     1: { sage: 'sage-assis', bucheron: 'bucheron', cueilleur: 'cueilleuse', tailleur: 'tailleur', chasseur: 'chasseur', pecheur: 'pecheur', peintre: 'peintre' },
     2: { sage: 'sage-assis', paysan: 'paysan-faucille', porteur: 'paysan-faucille', berger: 'berger-agneau', potier: 'potiere', meunier: 'meuniere' },
     3: { sage: 'sage-assis', bucheron: 'e3-bucheron', paysan: 'e3-faucille', porteur: 'e3-faucille', berger: 'berger-agneau', potier: 'e3-tour-potier', meunier: 'meuniere',
-      forgeron: 'e3-forgeron', scribe: 'e3-scribe', marchand: 'e3-marchande', marin: 'e3-marin', charron: 'e3-charron' }
+      forgeron: 'e3-forgeron', scribe: 'e3-scribe', marchand: 'e3-marchande', marin: 'e3-marin', charron: 'e3-charron' },
+    4: { sage: 'sage-assis', bucheron: 'e4-bucheron', paysan: 'e4-faucille', porteur: 'e4-faucille', berger: 'berger-agneau', potier: 'e3-tour-potier', meunier: 'meuniere', moulinier: 'e4-meunier',
+      forgeron: 'e4-marechal', marechal: 'e4-marechal', scribe: 'e3-scribe', marchand: 'e4-marchande', marin: 'e3-marin', charron: 'e3-charron',
+      boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e4-imprimeur' }
   };
 
   // Ce qu'on porte dans les bras, selon l'époque (h : homme, f : femme)
   var porteurs = {
     1: { bois: { h: 'e1-bois-h', f: 'e1-bois-f' }, viande: 'e1-viande', lapin: 'e1-lapin', poisson: 'e1-poisson', silex: 'e1-silex' },
     2: { bois: { h: 'e2-bois-h', f: 'e2-bois-f' }, ble: { h: 'e2-ble-h', f: 'e2-ble-f' }, argile: { h: 'e2-argile-h', f: 'e2-argile-f' }, poisson: 'e2-poisson' },
-    3: { bois: { h: 'e3-bois-h', f: 'e3-bois-f' }, ble: { h: 'e3-ble-h', f: 'e3-ble-f' }, argile: { h: 'e3-argile-h', f: 'e3-argile-f' }, poisson: 'e3-poisson', minerai: 'e3-minerai' }
+    3: { bois: { h: 'e3-bois-h', f: 'e3-bois-f' }, ble: { h: 'e3-ble-h', f: 'e3-ble-f' }, argile: { h: 'e3-argile-h', f: 'e3-argile-f' }, poisson: 'e3-poisson', minerai: 'e3-minerai' },
+    4: { bois: { h: 'e4-bois-h', f: 'e4-bois-f' }, ble: { h: 'e4-ble-h', f: 'e4-ble-f' }, argile: { h: 'e4-argile-h', f: 'e4-argile-f' }, poisson: 'e4-poisson', minerai: 'e4-minerai' }
   };
-  var femmes = ['cueilleuse', 'porteuse-jarre', 'e3-paysanne', 'e3-marchande'];
+  var femmes = ['cueilleuse', 'porteuse-jarre', 'e3-paysanne', 'e3-marchande', 'e4-paysanne', 'e4-boulangere'];
 
   // L'allure d'un habitant selon son métier et l'époque
   var allures = {
@@ -717,6 +942,14 @@ var Donnees = (function () {
       paysan: 'e3-paysanne', berger: 'e3-paysan', porteur: 'e3-paysan', potier: 'e3-marchande', meunier: 'e3-paysanne',
       forgeron: 'e3-forgeron', scribe: 'e3-scribe', marchand: 'e3-marchande', marin: 'e3-marin', charron: 'e3-charron',
       adulte: ['e3-paysan', 'e3-paysanne', 'e3-charron', 'e3-marchande'], enfant: 'e3-enfant'
+    },
+    4: {
+      sage: 'sage', bucheron: 'e4-paysan', cueilleur: 'e4-paysanne', tailleur: 'e4-marechal',
+      chasseur: 'e4-paysan', pecheur: 'e4-paysan', peintre: 'e4-paysanne',
+      paysan: 'e4-paysan', berger: 'e4-paysan', porteur: 'e4-paysan', potier: 'e4-paysanne', meunier: 'e4-paysanne', moulinier: 'e4-meunier',
+      forgeron: 'e4-marechal', scribe: 'e4-imprimeur', marchand: 'e4-boulangere', marin: 'e4-paysan', charron: 'e4-marechal',
+      marechal: 'e4-marechal', boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e4-imprimeur',
+      adulte: ['e4-paysan', 'e4-paysanne', 'e4-meunier', 'e4-boulangere', 'e4-imprimeur'], enfant: 'e4-enfant'
     }
   };
 
@@ -741,6 +974,11 @@ var Donnees = (function () {
     marchand: ['Des fruits ! De beaux pots !', 'Ça fait trois pièces.'],
     marin: ['Hissez la voile !', 'Le vent nous pousse !'],
     charron: ['Encore un rayon à la roue.', 'Voilà une belle charrette !'],
+    marechal: ['Je ferre le cheval !', "Tac, tac, sur l'enclume !"],
+    boulanger: ['Le pain est tout chaud !', 'Ça sent bon le pain !'],
+    moulinier: ['La roue tourne !', 'Encore un sac de farine !'],
+    horloger: ['Tic, tac, tic, tac…', 'Bientôt midi !'],
+    imprimeur: ["J'imprime un livre !", 'Encore une page !'],
     construit: ['J\'apporte du bois pour construire !', 'On construit une maison !'],
     enfant: ['Youpi !', 'On joue à chat !', 'Tu ne m\'attraperas pas !'],
     libre: ['Bonjour !', 'Il fait bon ici.', 'Quelle belle vallée !']
@@ -755,6 +993,8 @@ var Donnees = (function () {
     chevre: ['02-neolithique/chevre', 'Une chèvre', "Les premiers paysans ont apprivoisé les chèvres : elles donnent du lait et de la laine."],
     gue: ['nature/galets', 'Le gué', "Ici, la rivière est peu profonde : on traverse en marchant sur les pierres."],
     sentier: ['nature/touffe', 'Un sentier', "À force de passer toujours au même endroit, les habitants ont usé l'herbe. Plus tard, on en fera de vraies routes !"],
+    cheval: ['faune/cheval', 'Un cheval', "Au Moyen Âge, les chevaux tirent les charrettes et les charrues. Le maréchal-ferrant leur met des fers aux sabots pour ne pas les abîmer."],
+    gueEmporte: ['nature/galets', 'Le gué', "La crue a emporté la passerelle en bois : on traverse de nouveau en marchant sur les pierres. Il faudrait un pont de pierre !"],
     route: ['nature/galets', 'Une route', "Avec la roue, les chemins les plus usés sont devenus des routes de terre et de pierres : les charrettes y roulent sans s'enfoncer."]
   },
     aides: {
@@ -775,7 +1015,8 @@ var Donnees = (function () {
       chasseursLoin: 'Les chasseurs partent loin dans la forêt pour trouver du gibier. Ils reviendront avec leur prise !',
       pretEpoque: {
         2: "Prêt pour le néolithique ? Les premiers paysans vont planter du blé, élever des moutons et faire des pots. L'île va s'agrandir !",
-        3: "Prêt pour l'âge des métaux ? On va inventer la roue, faire fondre le bronze et écrire. Le village va devenir une ville, et l'île va encore s'agrandir !"
+        3: "Prêt pour l'âge des métaux ? On va inventer la roue, faire fondre le bronze et écrire. Le village va devenir une ville, et l'île va encore s'agrandir !",
+        4: "Prêt pour le Moyen Âge ? On va bâtir des moulins, forger le fer et construire un pont de pierre. La ville va encore grandir, et l'île aussi !"
       },
       epoque3: "Bienvenue à l'âge des métaux ! Construis des maisons en pierre, et regarde dans les découvertes : la roue, le bronze, l'écriture, la monnaie et la voile t'attendent.",
       maisonsPierre: 'Touche une vieille maison pour la transformer en maison en pierre.',
@@ -784,6 +1025,15 @@ var Donnees = (function () {
       tourPotier: "Avec le tour du potier, une roue qui tourne, la potière fait bien plus de pots !",
       routes: "Avec la roue, les chemins les plus usés deviennent des routes de pierre !",
       faim3: "Il n'y avait pas assez à manger ce soir ! Construis un champ de blé, un enclos ou un port.",
+      epoque4: "Bienvenue au Moyen Âge ! Construis des maisons à colombages, et regarde dans les découvertes : le moulin à eau, le fer, le pont de pierre, l'horloge et l'imprimerie t'attendent.",
+      maisonsColombages: 'Touche une vieille maison pour la transformer en maison à colombages.',
+      moyenAgeArrive: "Nouveau : le Moyen Âge est arrivé ! Quand tu veux, touche le bouton doré en haut pour continuer l'histoire.",
+      crue: "Oh non ! Il a beaucoup plu : la rivière a grossi et a emporté la passerelle en bois ! Il faudrait un pont plus solide. Regarde dans les découvertes !",
+      gueSansPont: "La rivière a emporté la passerelle : il faut de nouveau traverser à gué. Découvre le pont de pierre !",
+      pontPierre: "Les habitants construisent un pont de pierre. Celui-là, la rivière ne pourra pas l'emporter !",
+      pontFini: "Le pont de pierre est fini ! On traverse la rivière sans se mouiller, même quand elle grossit.",
+      outilsFer: "Avec le fer, le paysan laboure avec une charrue solide et le bûcheron coupe avec une hache en fer : ils travaillent bien mieux !",
+      faim4: "Il n'y avait pas assez à manger ce soir ! Construis un champ de blé, un moulin, une boulangerie ou un port.",
       merveilles: 'Les merveilles ! De grands monuments qui se construisent en trois étapes. Choisis-en une !',
       merveilleEtape: 'Une étape de la merveille est finie ! Ouvre les merveilles pour lancer la suivante.',
       merveilleFinie: 'Bravo ! Ta merveille est terminée ! Tout le village fait la fête !',
@@ -804,17 +1054,19 @@ var Donnees = (function () {
       construire: "Tu as des pièces : choisis une construction en bas de l'écran !",
       finEpoque: {
         1: "Tu as fait toutes les découvertes de l'âge de pierre ! Ton village est prêt à changer d'époque. Quand tu veux, touche le bouton doré en haut.",
-        2: "Tu as fait toutes les découvertes du néolithique ! Ton village est prêt pour l'âge des métaux. Quand tu veux, touche le bouton doré en haut."
+        2: "Tu as fait toutes les découvertes du néolithique ! Ton village est prêt pour l'âge des métaux. Quand tu veux, touche le bouton doré en haut.",
+        3: "Tu as fait toutes les découvertes de l'âge des métaux ! Ta ville est prête pour le Moyen Âge. Quand tu veux, touche le bouton doré en haut."
       },
       amelioration: "Les habitants vont chercher du bois pour améliorer le bâtiment. Ensuite, une personne de plus y travaillera !",
       outilsBois: 'Avec les outils de pierre, le bûcheron peut maintenant couper les arbres !',
       plusDeChasse: "Avec l'élevage, plus besoin d'aller chasser : la viande vient de l'enclos !",
       embellir: "Embellis ton village avec les monuments de l'époque ! Chacun raconte une vraie histoire.",
       dejaConstruit: 'Tu l\'as déjà ! Il n\'en existe qu\'un seul.',
-      finJeu: "Tu as fait toutes les découvertes de l'âge des métaux ! La suite de l'histoire arrivera plus tard."
+      finJeu: "Tu as fait toutes les découvertes du Moyen Âge ! La suite de l'histoire arrivera plus tard."
     },
     // L'histoire : une intro au début de la partie, un passage à la fin du néolithique (la tribu est devenue un village),
-    // et la fin quand toutes les découvertes de la dernière époque sont faites (le village est devenu une ville).
+    // un passage à la fin de l'âge des métaux (le village est devenu une ville),
+    // et la fin quand toutes les découvertes de la dernière époque sont faites (une ville du Moyen Âge).
     // Le jeu est en français ; l'anglais est prêt pour le jour où il sera traduit (langue de la page, <html lang>).
     histoire: {
       intro: {
@@ -825,9 +1077,13 @@ var Donnees = (function () {
         fr: { titre: 'Bravo !', l1: 'La petite tribu est devenue un vrai village de paysans !', l2: 'Ce soir, tout le monde fait la fête autour du feu, et rêve déjà de la suite du voyage.', go: 'Continuer' },
         en: { titre: 'Well done!', l1: 'The little tribe has become a real farming village!', l2: 'Tonight everyone celebrates around the fire, already dreaming of the rest of the journey.', go: 'Continue' }
       },
-      fin: {
+      ville: {
         fr: { titre: 'Bravo !', l1: 'La petite tribu est devenue un village, puis une vraie petite ville !', l2: 'Ce soir, tout le monde fait la fête sur la place du marché, et regarde la lune en rêvant de la suite du voyage.', go: 'Continuer' },
         en: { titre: 'Well done!', l1: 'The little tribe became a village, and now a real little town!', l2: 'Tonight everyone celebrates in the market square, looking at the moon and dreaming of the rest of the journey.', go: 'Continue' }
+      },
+      fin: {
+        fr: { titre: 'Bravo !', l1: 'La petite tribu est devenue un village, puis une ville, et maintenant une belle ville du Moyen Âge !', l2: "Ce soir, tout le monde fait la fête sous les étoiles, et les enfants rêvent déjà d'aller un jour tout là-haut.", go: 'Continuer' },
+        en: { titre: 'Well done!', l1: 'The little tribe became a village, then a town, and now a beautiful medieval town!', l2: 'Tonight everyone celebrates under the stars, and the children already dream of going all the way up there one day.', go: 'Continue' }
       },
       passer: { fr: 'Passer', en: 'Skip' },
       fini: { fr: 'Fini', en: 'Finished' }

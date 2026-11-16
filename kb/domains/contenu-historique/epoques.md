@@ -52,6 +52,8 @@ Piste (ADR-013) : une découverte « Les routes » à cette époque, qui transfo
 | Horloge | Fer | On ne sait pas l'heure → une horloge pour tout le village | Tour de l'horloge |
 | Imprimerie | Écriture, Fer | Copier un livre à la main prend des mois → on imprime | Imprimerie, école |
 
+Dans le jeu depuis le 16/11/2026 (branche `moyen-age`, cf. `journal/2026-11-session-04.md`) : les cinq découvertes ci-dessus, avec le moulin à eau (et la boulangerie), la forge du maréchal-ferrant, la tour de l'horloge, l'imprimerie ; la maison à colombages et la maison à étages ; le pont de pierre qui remplace la passerelle. Pas d'école (l'imprimerie suffit, proposition de Claude). Le fer fait aussi mieux travailler le bûcheron (hache en fer) et le paysan (charrue). Le petit problème du pont emporté est dans le jeu : une crue emporte la passerelle peu après l'arrivée au Moyen Âge, le pont de pierre la remplace.
+
 ## 5. La vapeur
 | Découverte | Prérequis | Problème résolu | Ce qui pousse |
 |---|---|---|---|
@@ -83,7 +85,7 @@ Piste (ADR-013) : une découverte « Les routes » à cette époque, qui transfo
 | Pierre | Hiver froid | Feu |
 | Néolithique | Blé mangé par les souris | Grenier |
 | Métaux | Crue de la rivière | (digue, à ajouter ?) |
-| Moyen Âge | Pont emporté | Pont de pierre |
+| Moyen Âge | Pont emporté | Pont de pierre (dans le jeu, session 04) |
 | Vapeur | Incendie | (pompiers, à ajouter ?) |
 | Électricité | Nuit noire en ville | Ampoule |
 | Moderne | Air sale | Énergie solaire |

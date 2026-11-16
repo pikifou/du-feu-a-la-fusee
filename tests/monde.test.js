@@ -32,15 +32,18 @@ function jouer(graine, reflexe, maxMin, attente) {
   return { m, jalons, stats };
 }
 
-test('une partie se termine : âge de pierre, néolithique, puis âge des métaux', () => {
+test('une partie se termine : âge de pierre, néolithique, âge des métaux, puis Moyen Âge', () => {
   for (const graine of [1, 2, 3]) {
-    const { m, jalons, stats } = jouer(graine, 5, 120);
+    const { m, jalons, stats } = jouer(graine, 5, 160);
     assert.ok(jalons.epoque1, 'âge de pierre fini (graine ' + graine + ')');
     assert.ok(jalons.epoque2, 'néolithique fini (graine ' + graine + ')');
     assert.ok(jalons.epoque3, 'âge des métaux fini (graine ' + graine + ')');
-    assert.strictEqual(m.epoque, 3);
+    assert.ok(jalons.epoque4, 'Moyen Âge fini (graine ' + graine + ')');
+    assert.strictEqual(m.epoque, 4);
     assert.ok(m.fini, 'fin du jeu atteinte');
-    console.log(`graine ${graine} : pierre ${(jalons.epoque1 / 60).toFixed(1)} min, néolithique ${((jalons.epoque2 - jalons.epoque1) / 60).toFixed(1)} min, métaux ${((jalons.epoque3 - jalons.epoque2) / 60).toFixed(1)} min, ${m.habitants.length} habitants, ${m.batiments.length} bâtiments, nourriture ${m.nourriture}, ${JSON.stringify(stats)}`);
+    const ma = (jalons.epoque4 - jalons.epoque3) / 60;
+    assert.ok(ma > 5 && ma < 16, 'le Moyen Âge dure à peu près comme les autres époques : ' + ma.toFixed(1) + ' min');
+    console.log(`graine ${graine} : pierre ${(jalons.epoque1 / 60).toFixed(1)} min, néolithique ${((jalons.epoque2 - jalons.epoque1) / 60).toFixed(1)} min, métaux ${((jalons.epoque3 - jalons.epoque2) / 60).toFixed(1)} min, Moyen Âge ${ma.toFixed(1)} min, ${m.habitants.length} habitants, ${m.batiments.length} bâtiments, nourriture ${m.nourriture}, ${JSON.stringify(stats)}`);
   }
 });
 
@@ -130,9 +133,10 @@ test('une partie du néolithique sauvée avant l\'âge des métaux continue sans
   for (let i = 0; i < 600; i++) Monde.pas(repris, 0.1);
 });
 
-test('sauvegarde légère d\'une partie finie à l\'âge des métaux : sous 250 000 caractères', () => {
-  const { m } = jouer(5, 5, 160, 8);
-  assert.strictEqual(m.epoque, 3);
+test('sauvegarde légère d\'une partie finie au Moyen Âge : sous 250 000 caractères', () => {
+  const { m } = jouer(5, 5, 200, 8);
+  assert.strictEqual(m.epoque, 4);
+  assert.ok(m.fini);
   for (let i = 0; i < 3000; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); }
   m.evenements.length = 0;
   const leger = JSON.stringify(Monde.exporterLeger(m));
@@ -339,6 +343,131 @@ test('au néolithique, la hache polie rapporte plus (ADR-035)', () => {
   Monde.decouvertesEpoque(m).forEach(id => { m.decouvertes[id] = 1; });
   Monde.passerEpoque(m);
   assert.ok(Monde.quantite(tas, m) > avant);
+});
+
+// ---------- Le Moyen Âge ----------
+test('Moyen Âge : cinq découvertes dans l\'ordre historique, chaque image existe', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const ids = Object.keys(D.decouvertes).filter(k => D.decouvertes[k].epoque === 4);
+  assert.deepStrictEqual(ids.sort(), ['fer', 'horloge', 'imprimerie', 'moulin', 'pont']);
+  ids.forEach(id => D.decouvertes[id].prerequis.forEach(p => assert.ok(D.decouvertes[p] && D.decouvertes[p].epoque <= 4, id + ' : ' + p)));
+  // l'ordre réel (ADR-001) : le moulin après la roue et la meule, l'horloge après le fer, l'imprimerie après l'écriture et le fer
+  assert.deepStrictEqual(D.decouvertes.moulin.prerequis.slice().sort(), ['meule', 'roue']);
+  assert.deepStrictEqual(D.decouvertes.horloge.prerequis, ['fer']);
+  assert.deepStrictEqual(D.decouvertes.imprimerie.prerequis.slice().sort(), ['ecriture', 'fer']);
+  const racine = path.join(__dirname, '..', 'assets');
+  const existe = cle => ['sprites/' + cle + '.png', 'sprites/' + cle + '.jpg', 'raw/' + cle + '.png'].some(f => fs.existsSync(path.join(racine, f)));
+  Object.keys(D.batiments).filter(k => D.batiments[k].epoque === 4).forEach(k => {
+    const b = D.batiments[k];
+    assert.ok(existe(b.sprite), 'sprite de ' + k);
+    if (b.travail) [2, 3].forEach(n => assert.ok(existe('niveaux/' + k + '-' + n), 'niveau ' + n + ' de ' + k));
+    if (b.lits) assert.ok(existe('coupe/' + k), 'maison en coupe : ' + k);
+  });
+  Object.keys(D.allures[4]).forEach(k => [].concat(D.allures[4][k]).forEach(a => assert.ok(existe('habitants/' + a), 'habitant ' + a)));
+  Object.keys(D.poses[4]).forEach(k => { const p = D.poses[4][k]; assert.ok(existe('poses/' + p), 'pose ' + p); if (p.startsWith('e4-')) assert.ok(existe('poses/' + p + '-b'), 'deuxième image de ' + p); });
+  Object.keys(D.porteurs[4]).forEach(k => [].concat(typeof D.porteurs[4][k] === 'object' ? Object.values(D.porteurs[4][k]) : D.porteurs[4][k]).forEach(p => assert.ok(existe('porteurs/' + p), 'porteur ' + p)));
+  assert.ok(existe('faune/cheval') && existe('eau/pont-pierre'));
+  // les métiers nouveaux ont tous une allure et des phrases, et les textes de l'histoire existent en deux langues
+  ['marechal', 'boulanger', 'horloger', 'imprimeur'].forEach(k => assert.ok(D.allures[4][k] && D.textes.phrases[k], k));
+  ['village', 'ville', 'fin'].forEach(k => ['fr', 'en'].forEach(l => assert.ok(D.textes.histoire[k][l].l1 && D.textes.histoire[k][l].l2, k + ' ' + l)));
+  assert.ok(fs.existsSync(path.join(racine, 'histoire', 'ville.png')) && fs.existsSync(path.join(racine, 'cine', 'ville.mp4')), 'l\'ancienne fin devient le passage de l\'âge des métaux');
+});
+
+function auxMetauxFinis(graine) {
+  const m = auNeolithiqueFini(graine);
+  Monde.passerEpoque(m);
+  Monde.decouvertesEpoque(m).forEach(id => { m.decouvertes[id] = 1; });
+  return m;
+}
+function laisser(m, s) { for (let i = 0; i < s * 10; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.length = 0; } }
+
+test('Moyen Âge : l\'île grandit, de nouveaux bâtiments, les monuments de l\'âge des métaux ne se construisent plus (ADR-024)', () => {
+  const m = auxMetauxFinis(31);
+  const surIle = () => m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length;
+  const avant = surIle();
+  assert.ok(Monde.construisibles(m).indexOf('pyramide') >= 0, 'la pyramide se construit à l\'âge des métaux');
+  assert.ok(Monde.passerEpoque(m));
+  assert.strictEqual(m.epoque, 4);
+  assert.ok(surIle() > avant + 60, 'l\'île s\'agrandit : ' + avant + ' -> ' + surIle());
+  const c = Monde.construisibles(m);
+  assert.ok(c.indexOf('maison-colombages') >= 0, 'la maison à colombages dès l\'arrivée');
+  assert.ok(c.indexOf('moulin') < 0 && c.indexOf('maison-etages') < 0, 'le moulin et la maison à étages attendent leur découverte');
+  assert.ok(c.indexOf('pyramide') < 0 && c.indexOf('fontaine') < 0, 'plus de monuments de l\'âge des métaux');
+  assert.ok(c.indexOf('notre-dame') >= 0 && c.indexOf('moai') >= 0, 'les monuments du Moyen Âge');
+  m.pieces = 5000;
+  m.decouvertes.moulin = 1;
+  assert.ok(Monde.emplacementsLibres(m, 'moulin').length > 0, 'le moulin a sa place au bord de la rivière');
+  assert.ok(Monde.emplacementsLibres(m, 'mont-saint-michel').length > 0, 'le Mont-Saint-Michel a sa place sur la plage');
+  // les vieilles maisons se transforment à la main (ADR-028)
+  const tente = m.batiments.find(b => b.type === 'tente');
+  assert.strictEqual(Monde.amelioration(m, tente).vers, 'maison-colombages');
+  m.decouvertes.horloge = 1;
+  assert.strictEqual(Monde.amelioration(m, { type: 'maison-colombages', etat: 'fini' }).vers, 'maison-etages');
+  assert.ok(m.animaux.some(a => a.espece === 'cheval'), 'des chevaux dans la vallée');
+});
+
+test('Moyen Âge : la crue emporte la passerelle, le pont de pierre la remplace (le petit problème)', () => {
+  const m = auxMetauxFinis(32);
+  const passerelle = m.batiments.find(b => b.type === 'passerelle');
+  assert.ok(passerelle, 'la passerelle en bois est là');
+  passerelle.etat = 'fini'; m.terrain.passerelle = true; // on la suppose finie depuis longtemps
+
+  Monde.passerEpoque(m);
+  let crue = 0;
+  for (let i = 0; i < 1200; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.forEach(e => { if (e.type === 'crue') crue++; }); m.evenements.length = 0; }
+  assert.strictEqual(crue, 1, 'une seule crue');
+  assert.ok(!m.batiments.some(b => b.type === 'passerelle'), 'la passerelle est emportée');
+  assert.ok(!m.terrain.passerelle && m.pontEmporte, 'on traverse de nouveau à gué');
+  // le pont de pierre : la découverte lance son chantier sur le gué
+  m.idees = 100;
+  assert.ok(Monde.decouvrir(m, 'pont'));
+  const pont = m.batiments.find(b => b.type === 'pont-pierre');
+  assert.ok(pont && pont.etat === 'chantier', 'le chantier du pont de pierre commence');
+  for (let i = 0; i < 9000 && pont.etat !== 'fini'; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.length = 0; }
+  assert.strictEqual(pont.etat, 'fini', 'les habitants finissent le pont');
+  assert.ok(m.terrain.passerelle && !m.pontEmporte, 'on traverse sur le pont de pierre');
+  laisser(m, 120);
+  assert.strictEqual(m.batiments.filter(b => b.type === 'pont-pierre').length, 1, 'la crue ne revient pas');
+});
+
+test('Moyen Âge : avec le fer, le bûcheron et le paysan travaillent mieux', () => {
+  const m = auxMetauxFinis(33);
+  Monde.passerEpoque(m);
+  const tas = m.batiments.find(b => b.type === 'tas-bois');
+  const avant = Monde.quantite(tas, m);
+  const champ = Monde.qteDe(D.batiments['champ-ble'].travail, 4, m);
+  m.decouvertes.fer = 1;
+  assert.ok(Monde.quantite(tas, m) > avant, 'hache en fer');
+  assert.ok(Monde.qteDe(D.batiments['champ-ble'].travail, 4, m) > champ, 'charrue en fer');
+});
+
+test('une partie de l\'âge des métaux, finie ou en cours, sauvée avant le Moyen Âge, continue sans rien perdre', () => {
+  for (const fini of [true, false]) {
+    const m = fini ? auxMetauxFinis(34) : auNeolithiqueFini(35);
+    if (!fini) Monde.passerEpoque(m);
+    laisser(m, 120);
+    // une sauvegarde de la version d'avant : pas d'anneau 4, ni crue
+    const vieux = JSON.parse(JSON.stringify(Monde.exporter(m)));
+    vieux.terrain.tuiles.forEach(t => { if (t.ile === 4) t.ile = 0; });
+    delete vieux.crue; delete vieux.pontEmporte;
+    // et aussi par la sauvegarde légère confiée à Ludiworld
+    const leger = JSON.parse(JSON.stringify(Monde.exporterLeger(m)));
+    for (const s of [vieux, Monde.developper(leger)]) {
+      const repris = Monde.importer(JSON.parse(JSON.stringify(s)));
+      assert.strictEqual(repris.epoque, 3);
+      assert.strictEqual(repris.habitants.length, m.habitants.length);
+      assert.strictEqual(repris.batiments.length, m.batiments.length);
+      assert.strictEqual(repris.pieces, m.pieces);
+      assert.deepStrictEqual(Object.keys(repris.decouvertes).sort(), Object.keys(m.decouvertes).sort());
+      assert.strictEqual(Monde.epoqueTerminee(repris), fini);
+      if (!fini) Monde.decouvertesEpoque(repris).forEach(id => { repris.decouvertes[id] = 1; });
+      assert.ok(Monde.passerEpoque(repris), 'le bouton doré mène au Moyen Âge');
+      assert.strictEqual(repris.epoque, 4);
+      assert.ok(repris.terrain.tuiles.some(t => t.ile === 4 && Terrain.surIle(repris.terrain, t)), 'et l\'île grandit');
+      laisser(repris, 90);
+      assert.ok(repris.pontEmporte, 'la crue arrive aussi dans une partie reprise');
+    }
+  }
 });
 
 // ---------- Sauvegarde légère confiée à Ludiworld ----------

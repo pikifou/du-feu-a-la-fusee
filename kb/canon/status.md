@@ -3,7 +3,7 @@ title: État courant
 domain: canon
 type: doc
 status: active
-updated: 2026-10-25
+updated: 2026-11-16
 ---
 
 # Où on en est (25/10/2026)
@@ -34,6 +34,7 @@ updated: 2026-10-25
 - **Prototype jouable v0.1** (époques 1 et 2) publié en artefact : habitants qui travaillent et construisent, chantiers, bulles à récolter, 10 découvertes avec voix, changement d'époque avec rénovation automatique des huttes et passerelle (cf. `domains/tech/tech.md`).
 
 ## En cours
+- Branches à jouer par Julien, pas encore validées : `age-des-metaux` (la troisième époque, publiée le 16/11/2026, cf. `journal/2026-11-session-03.md`) puis `moyen-age` (la quatrième époque, le Moyen Âge, avec la crue qui emporte la passerelle et le pont de pierre ; la vraie fin passe à la fin du Moyen Âge ; cf. `journal/2026-11-session-04.md`). Pas poussée.
 - Game design en brouillon : proposition de Claude, pas encore validée par Julien (`domains/game-design/gd.md`).
 
 ## Prochaine étape
