@@ -22,6 +22,11 @@ var Donnees = (function () {
       id: 4,
       nom: 'Le Moyen Âge',
       intro: "Plus de mille ans ont passé. Voici le Moyen Âge : le temps des moulins, des maisons à colombages, des horloges et des premiers livres imprimés !"
+    },
+    {
+      id: 5,
+      nom: "L'âge de la vapeur",
+      intro: "Quelques centaines d'années ont passé. Voici l'âge de la vapeur : le temps du charbon, des machines, des trains et des bateaux qui lâchent de petits nuages blancs !"
     }
   ];
 
@@ -128,6 +133,27 @@ var Donnees = (function () {
       scene: 'scenes/imprimerie', faits: ["Vers 1450, en Allemagne, Gutenberg a eu l'idée de petites lettres en métal qu'on range pour faire des pages.", "Avant, il fallait des mois pour copier un seul livre à la main.", "Avec une presse, on pouvait imprimer des centaines de pages par jour !"],
       nom: "L'imprimerie", epoque: 4, idees: 36, prerequis: ['ecriture', 'fer'], icone: '04-moyen-age/imprimerie',
       texte: "Avant, on copiait chaque livre à la main, lettre par lettre. Maintenant, on range des petites lettres en métal, on met de l'encre, et la presse imprime la page d'un coup !"
+    },
+    // 5. La vapeur (kb/domains/contenu-historique/epoques.md, section 5)
+    charbon: {
+      scene: 'scenes/charbon', faits: ["Le charbon, ce sont des arbres et des plantes d'il y a des millions d'années, écrasés sous la terre jusqu'à devenir une pierre noire qui brûle.", "Un morceau de charbon chauffe bien plus longtemps qu'un morceau de bois de la même taille.", "Pour le trouver, les mineurs creusaient de longs tunnels sous la terre, éclairés par de petites lampes."],
+      nom: 'Le charbon', epoque: 5, idees: 76, prerequis: ['fer'], icone: '05-vapeur/mine',
+      texte: "Avant, on brûlait du bois, et la forêt reculait. Maintenant, on creuse la terre pour trouver le charbon, une pierre noire qui chauffe très fort et très longtemps !"
+    },
+    vapeur: {
+      scene: 'scenes/vapeur', faits: ["Quand l'eau bout, elle devient de la vapeur, et la vapeur pousse très fort : regarde le couvercle d'une casserole qui se soulève !", "Vers 1770, l'Écossais James Watt a beaucoup amélioré la machine à vapeur : elle pouvait faire tourner des roues toute la journée.", "Une seule machine faisait le travail de dizaines de chevaux."],
+      nom: 'La machine à vapeur', epoque: 5, idees: 92, prerequis: ['fer', 'charbon'], icone: '05-vapeur/usine',
+      texte: "Avant, tout se faisait avec les bras ou avec les chevaux. Maintenant, le charbon fait bouillir l'eau, la vapeur pousse, et la machine fait tourner les roues toute seule !"
+    },
+    train: {
+      scene: 'scenes/train', faits: ["En 1829, en Angleterre, la locomotive de George Stephenson a gagné une course : elle s'appelait « la Fusée » !", "Les premiers trains roulaient à peu près à la vitesse d'un cheval au galop, et tout le monde trouvait ça incroyablement rapide.", "Les rails en fer permettent aux roues de rouler sans s'enfoncer, même avec des wagons très lourds."],
+      nom: 'Le train', epoque: 5, idees: 108, prerequis: ['vapeur', 'roue'], icone: '05-vapeur/gare',
+      texte: "Avant, pour aller dans la ville voisine, il fallait marcher des jours. Maintenant, la locomotive à vapeur tire les wagons sur des rails de fer : on y est en quelques heures !"
+    },
+    bateau: {
+      scene: 'scenes/bateau', faits: ["Les bateaux à vapeur avaient souvent de grandes roues à aubes sur les côtés, qui tournaient comme celles d'un moulin.", "En 1838, un bateau à vapeur a traversé tout l'océan Atlantique sans jamais attendre le vent.", "On remplissait leurs cales de charbon pour faire bouillir l'eau pendant tout le voyage."],
+      nom: 'Le bateau à vapeur', epoque: 5, idees: 108, prerequis: ['vapeur', 'voile'], icone: '05-vapeur/port-vapeur',
+      texte: "Avant, sans vent, le bateau à voile restait sur place. Maintenant, la machine à vapeur fait tourner de grandes roues dans l'eau : le bateau avance, même quand il n'y a pas de vent !"
     }
   };
 
@@ -365,6 +391,72 @@ var Donnees = (function () {
       texte: "Le pont Saint-Bénézet, à Avignon, a été construit il y a environ 850 ans. Il traversait tout le Rhône avec 22 arches.",
       faits: ["Les crues du Rhône ont emporté ses arches, l'une après l'autre : il n'en reste que quatre.", "C'est lui qu'on chante dans « Sur le pont d'Avignon, on y danse, on y danse » !"]
     },
+    // L'âge de la vapeur
+    'deco-tour-eiffel': {
+      nom: 'La tour Eiffel', epoque: 5, image: 'deco/tour-eiffel', deco: true,
+      texte: "À Paris, la tour Eiffel a été construite en 1889 pour une grande fête, l'Exposition universelle. Elle est toute en fer !",
+      faits: ["Elle mesure plus de 300 mètres : pendant 40 ans, ce fut la plus haute construction du monde.", "Elle est faite de 18 000 pièces de fer, tenues par des millions de petits clous de fer, les rivets.", "On la repeint à la main tous les sept ans environ."]
+    },
+    'deco-big-ben': {
+      nom: 'Big Ben', epoque: 5, image: 'deco/big-ben', deco: true,
+      texte: "À Londres, la grande tour de l'horloge, qu'on appelle Big Ben, a été finie en 1859. Big Ben, c'est en vrai le nom de sa très grosse cloche !",
+      faits: ["La cloche pèse plus de 13 tonnes, autant que deux éléphants.", "Chaque cadran de l'horloge mesure 7 mètres de large : plus qu'une girafe est haute !"]
+    },
+    'deco-statue-liberte': {
+      nom: 'La statue de la Liberté', epoque: 5, image: 'deco/statue-liberte', deco: true,
+      texte: "La statue de la Liberté a été construite en France, puis envoyée en bateau à New York, en Amérique, en 1886. Elle accueille les bateaux qui arrivent.",
+      faits: ["Elle est en cuivre : au début, elle était couleur orange brillant, puis elle est devenue verte avec le temps.", "Elle est arrivée en 350 morceaux, rangés dans plus de 200 caisses !", "Sa charpente intérieure en fer a été imaginée par Gustave Eiffel, celui de la tour."]
+    },
+    'deco-palais-cristal': {
+      nom: 'Le palais de cristal', epoque: 5, image: 'deco/palais-cristal', deco: true,
+      texte: "À Londres, en 1851, on a construit en quelques mois un immense palais de verre et de fer pour montrer les inventions du monde entier.",
+      faits: ["Il avait près de 300 000 vitres, toutes de la même taille, fabriquées en usine.", "Il était si grand qu'on a pu y laisser de grands arbres du parc, à l'intérieur !"]
+    },
+    'deco-montgolfiere': {
+      nom: 'La montgolfière', epoque: 5, image: 'deco/montgolfiere', deco: true,
+      texte: "En 1783, en France, les frères Montgolfier ont fait voler un grand ballon d'air chaud. Peu après, des humains sont montés dedans : ce sont les premiers à avoir volé dans le ciel !",
+      faits: ["Pour un des premiers essais, on a envoyé un mouton, un canard et un coq. Ils sont revenus en pleine forme !", "Le ballon monte parce que l'air chaud est plus léger que l'air froid."]
+    },
+    'deco-fardier': {
+      nom: 'Le fardier de Cugnot', epoque: 5, image: 'deco/fardier', deco: true,
+      texte: "En 1769, en France, Joseph Cugnot a construit un grand chariot à trois roues qui avançait tout seul grâce à la vapeur : le tout premier véhicule à moteur !",
+      faits: ["Il avançait à peu près à la vitesse d'une personne qui marche.", "On raconte qu'il a renversé un mur pendant un essai : c'était peut-être le premier accident de voiture !", "On peut encore le voir à Paris, au musée des Arts et Métiers."]
+    },
+    'deco-rocket': {
+      nom: 'La Fusée de Stephenson', epoque: 5, image: 'deco/rocket', deco: true,
+      texte: "En 1829, en Angleterre, une course de locomotives a été gagnée par celle de George et Robert Stephenson. Son nom ? « Rocket », c'est-à-dire « la Fusée » !",
+      faits: ["Elle allait presque à 50 kilomètres à l'heure, plus vite qu'un cheval au galop.", "Elle était jaune et noire, avec une grande cheminée blanche."]
+    },
+    'deco-kiosque': {
+      nom: 'Le kiosque à musique', epoque: 5, image: 'deco/kiosque', deco: true,
+      texte: "Le dimanche, dans les parcs des villes, des musiciens jouaient sous un kiosque rond au toit de fer, et tout le monde venait les écouter.",
+      faits: ["Le toit renvoie le son vers les gens, comme un grand chapeau.", "Il y en a encore dans beaucoup de jardins de France."]
+    },
+    'deco-lampadaire': {
+      nom: 'Un réverbère à gaz', epoque: 5, image: 'deco/lampadaire', deco: true,
+      texte: "Au temps de la vapeur, les rues des villes s'éclairent la nuit avec des réverbères à gaz. Plus besoin de marcher dans le noir !",
+      faits: ["Chaque soir, l'allumeur de réverbères passait avec une longue perche pour les allumer un par un.", "Le matin, il repassait pour les éteindre."]
+    },
+    'deco-fontaine-wallace': {
+      nom: 'Une fontaine Wallace', epoque: 5, image: 'deco/fontaine-wallace', deco: true,
+      texte: "En 1872, un Anglais généreux, Richard Wallace, a offert à Paris des fontaines vertes où tout le monde pouvait boire de l'eau gratuitement.",
+      faits: ["Quatre statues de femmes portent le petit toit.", "Il y en a encore plus de cent à Paris, et l'eau coule toujours !"]
+    },
+    'deco-velocipede': {
+      nom: 'Le grand-bi', epoque: 5, image: 'deco/velocipede', deco: true,
+      texte: "Vers 1870, on roulait sur un drôle de vélo : le grand-bi, avec une roue immense devant et une toute petite derrière.",
+      faits: ["Les pédales étaient fixées directement sur la grande roue : plus elle était grande, plus on allait vite.", "Pour monter dessus, il fallait presque grimper !"]
+    },
+    'deco-carrousel': {
+      nom: 'Le carrousel', epoque: 5, image: 'deco/carrousel', deco: true,
+      texte: "Au temps de la vapeur, dans les fêtes foraines, des manèges de chevaux de bois tournaient grâce à une petite machine à vapeur.",
+      faits: ["Les chevaux montaient et descendaient, comme s'ils galopaient.", "Un orgue jouait de la musique pendant que le manège tournait."]
+    },
+    'villes-vapeur': {
+      nom: 'Les villes de la vapeur', epoque: 5, scene: 'scenes/vapeur-ville',
+      texte: "Avec la vapeur, les villes grandissent très vite : des usines, des maisons en briques, des gares, et des rues éclairées le soir par des réverbères.",
+      faits: ["Les briques se fabriquent en grande quantité dans des fours chauffés au charbon : on construit vite, et solide.", "Beaucoup de gens viennent de la campagne pour travailler dans les usines des villes.", "Grâce au train, on reçoit des lettres et des marchandises venues de très loin."]
+    },
     'villes-medievales': {
       nom: 'Les villes du Moyen Âge', epoque: 4, scene: 'scenes/moyen-age',
       texte: "Au Moyen Âge, les villes grandissent : des maisons à colombages serrées les unes contre les autres, des artisans dans chaque rue, et un marché sur la place.",
@@ -412,14 +504,14 @@ var Donnees = (function () {
       travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 10 }, avec: { bronze: 14, fer: 18 } }
     },
     tente: {
-      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 120 }, { vers: 'maison-colombages', cout: 170 }],
+      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 120 }, { vers: 'maison-colombages', cout: 170 }, { vers: 'maison-briques', cout: 220 }],
       resume: "Une petite maison pour 2 personnes.", page: 'cueilleurs',
       explication: "Une tente en peaux tendues sur des bâtons. Deux personnes y dorment à l'abri du vent. Plus il y a de maisons, plus de familles viennent vivre au village.",
       nom: 'Une tente', sprite: '01-pierre/tente', epoque: 1, jusqua: 1,
       zone: 'pre', cout: 10, bois: 2, lits: 2, largeur: 200, taille: 2
     },
     'hutte-branches': {
-      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 110 }, { vers: 'maison-colombages', cout: 160 }],
+      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 110 }, { vers: 'maison-colombages', cout: 160 }, { vers: 'maison-briques', cout: 210 }],
       resume: "Une maison de branches pour 3 personnes.", page: 'cueilleurs',
       explication: 'Une hutte de branches entrecroisées. Trois personnes peuvent y dormir.',
       nom: 'Une hutte de branches', sprite: '01-pierre/hutte-branches', epoque: 1, jusqua: 1,
@@ -468,7 +560,7 @@ var Donnees = (function () {
     'hutte-peaux': {
       resume: "Une maison chaude en peaux, pour 3 personnes.",
       explication: 'Une grande hutte couverte de peaux cousues entre elles. Bien chaude, elle accueille trois personnes, même en hiver.',
-      evolue: [{ vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 100 }, { vers: 'maison-colombages', cout: 150 }],
+      evolue: [{ vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 100 }, { vers: 'maison-colombages', cout: 150 }, { vers: 'maison-briques', cout: 200 }],
       nom: 'Une hutte en peaux', sprite: '01-pierre/hutte-peaux', epoque: 1, jusqua: 1, debloque: 'abri',
       zone: 'pre', cout: 40, bois: 3, lits: 3, largeur: 220, taille: 2
     },
@@ -481,7 +573,7 @@ var Donnees = (function () {
       travail: { metier: 'peintre', aller: null, duree: 14, produit: 'idees', qte: 2 }
     },
     'maison-torchis': {
-      evolue: [{ vers: 'maison-longue', cout: 80, decouverte: 'grenier' }, { vers: 'maison-cour', cout: 220, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 140 }],
+      evolue: [{ vers: 'maison-longue', cout: 80, decouverte: 'grenier' }, { vers: 'maison-cour', cout: 220, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 140 }, { vers: 'maison-briques', cout: 190 }],
       resume: "Une maison en terre et en paille, pour 4 personnes.",
       explication: "Une maison en torchis : de la terre, de la paille et de l'eau collées sur des branches. Les paysans y vivent toute l'année, près de leurs champs.",
       vignettes: [{ img: 'torchis', texte: "On tresse des branches, puis on les couvre de terre mêlée de paille : c'est le torchis." }],
@@ -512,7 +604,7 @@ var Donnees = (function () {
       zone: 'pre', cout: 80, bois: 3, largeur: 140, taille: 1, reserve: 60
     },
     'maison-longue': {
-      evolue: [{ vers: 'maison-cour', cout: 140, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 120 }],
+      evolue: [{ vers: 'maison-cour', cout: 140, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 120 }, { vers: 'maison-briques', cout: 170 }],
       resume: "Une grande maison pour 6 personnes.",
       explication: "Une maison longue. Plusieurs familles vivent ensemble sous le même toit : jusqu'à six personnes.",
       vignettes: [{ img: 'torchis', texte: "Tout le monde aide à construire la maison : branches tressées, terre et toit de paille." }],
@@ -656,7 +748,7 @@ var Donnees = (function () {
     },
     // 3. L'âge des métaux et l'Antiquité
     'maison-pierre': {
-      evolue: [{ vers: 'maison-cour', cout: 130, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 110 }],
+      evolue: [{ vers: 'maison-cour', cout: 130, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 110 }, { vers: 'maison-briques', cout: 160 }],
       resume: "Une maison en pierre au toit de tuiles, pour 5 personnes.", page: 'premieres-villes',
       explication: "Une maison en pierre. Ses murs épais gardent la fraîcheur l'été et la chaleur l'hiver, et son toit de tuiles en terre cuite ne laisse pas passer la pluie.",
       vignettes: [{ img: 'maison-pierre', texte: "On empile les pierres pour les murs, puis on pose les tuiles sur le toit." }],
@@ -664,7 +756,7 @@ var Donnees = (function () {
       zone: 'pre', cout: 160, bois: 4, lits: 5, largeur: 210, taille: 2
     },
     'maison-cour': {
-      evolue: [{ vers: 'maison-etages', cout: 200, decouverte: 'horloge' }],
+      evolue: [{ vers: 'maison-etages', cout: 200, decouverte: 'horloge' }, { vers: 'immeuble', cout: 300, decouverte: 'train' }],
       resume: "Une grande maison autour d'une cour, pour 8 personnes.", page: 'premieres-villes',
       explication: "Une maison à cour. Les pièces entourent une petite cour avec un olivier : toute la famille y vit, et on y travaille à l'ombre.",
       nom: 'Une maison à cour', sprite: '03-metaux/maison-cour', epoque: 3, jusqua: 9, debloque: 'monnaie',
@@ -773,7 +865,7 @@ var Donnees = (function () {
     },
     // 4. Le Moyen Âge
     'maison-colombages': {
-      evolue: [{ vers: 'maison-etages', cout: 220, decouverte: 'horloge' }],
+      evolue: [{ vers: 'maison-etages', cout: 220, decouverte: 'horloge' }, { vers: 'maison-briques', cout: 150 }, { vers: 'immeuble', cout: 340, decouverte: 'train' }],
       resume: "Une maison à colombages, pour 7 personnes.", page: 'villes-medievales',
       explication: "Une maison à colombages. On monte d'abord une charpente de grosses poutres, puis on remplit les trous avec du torchis. À l'étage, on dort au chaud sous le toit.",
       vignettes: [{ img: 'colombages', texte: "Les charpentiers montent les poutres, puis on remplit les murs de torchis." }],
@@ -783,6 +875,7 @@ var Donnees = (function () {
     'maison-etages': {
       resume: "Une grande maison de ville à trois étages, pour 10 personnes.", page: 'villes-medievales',
       explication: "Une maison de ville à étages. Pour gagner de la place, on construit en hauteur, et chaque étage dépasse un peu au-dessus de la rue.",
+      evolue: [{ vers: 'immeuble', cout: 280, decouverte: 'train' }],
       nom: 'Une maison à étages', sprite: '04-moyen-age/maison-etages', epoque: 4, jusqua: 9, debloque: 'horloge',
       zone: 'pre', cout: 380, bois: 5, lits: 10, largeur: 205, taille: 2
     },
@@ -792,7 +885,7 @@ var Donnees = (function () {
       vignettes: [{ img: 'moulin', texte: "La rivière fait tourner la grande roue, et le meunier remplit les sacs de farine." }],
       nom: 'Le moulin à eau', sprite: '04-moyen-age/moulin', epoque: 4, jusqua: 9, debloque: 'moulin',
       zone: 'rive', cout: 190, bois: 4, largeur: 215, taille: 2, grandit: { 2: 1.12, 3: 1.3 },
-      travail: { metier: 'moulinier', aller: 'champ', porte: 'ble', livre: 'farine', duree: 6, produit: 'nourriture', qte: 10 }
+      travail: { metier: 'moulinier', aller: 'champ', porte: 'ble', livre: 'farine', duree: 6, produit: 'nourriture', qte: 10, avec: { vapeur: 14 } }
     },
     boulangerie: {
       resume: "La boulangère cuit le pain dans le grand four.",
@@ -887,6 +980,128 @@ var Donnees = (function () {
       nom: 'Angkor Vat', sprite: 'deco/angkor', epoque: 4, jusqua: 4,
       zone: 'pre', cout: 420, bois: 6, largeur: 255, taille: 2, deco: true, merveille: true, unique: true
     },
+    // 5. L'âge de la vapeur
+    'maison-briques': {
+      evolue: [{ vers: 'immeuble', cout: 320, decouverte: 'train' }],
+      resume: "Une maison en briques, pour 9 personnes.", page: 'villes-vapeur',
+      explication: "Une maison en briques. Les briques sont cuites par milliers dans de grands fours : on construit vite et solide. Les cheminées fument doucement, chaque famille a son poêle.",
+      nom: 'Une maison en briques', sprite: '05-vapeur/maison-briques', epoque: 5, jusqua: 9,
+      zone: 'pre', cout: 320, bois: 5, lits: 9, largeur: 200, taille: 2
+    },
+    immeuble: {
+      resume: "Un grand immeuble de ville, pour 14 personnes.", page: 'villes-vapeur',
+      explication: "Un immeuble. Avec le train, beaucoup de gens viennent vivre en ville : on construit de grandes maisons à quatre étages, avec un appartement pour chaque famille.",
+      nom: 'Un immeuble', sprite: '05-vapeur/immeuble', epoque: 5, jusqua: 9, debloque: 'train',
+      zone: 'pre', cout: 500, bois: 6, lits: 14, largeur: 200, taille: 2
+    },
+    'atelier-inventeur': {
+      resume: "L'inventrice y bricole de nouvelles machines : elle a des idées 💡.",
+      explication: "L'atelier de l'inventrice. Des roues dentées, des tuyaux de cuivre, une petite chaudière : elle essaie, elle se trompe, elle recommence, et un jour la machine marche !",
+      vignettes: [{ img: 'inventrice', texte: "L'inventrice serre un dernier boulon : sa nouvelle machine va-t-elle marcher ?" }],
+      nom: "L'atelier de l'inventrice", sprite: '05-vapeur/atelier-inventeur', epoque: 5, jusqua: 9,
+      zone: 'pre', cout: 300, bois: 3, largeur: 180, taille: 1, grandit: { 2: 1.15, 3: 1.32 },
+      travail: { metier: 'inventeur', aller: null, duree: 12, produit: 'idees', qte: 5 }
+    },
+    mine: {
+      resume: "Le mineur creuse sous la colline pour trouver du charbon.",
+      explication: "La mine de charbon, près des rochers. La grande roue fait descendre le mineur sous la terre ; il remonte des wagonnets pleins de charbon, qu'on vend pour chauffer les maisons et les machines.",
+      vignettes: [{ img: 'mine', texte: "Le mineur pousse son wagonnet plein de charbon sur les petits rails." }],
+      nom: 'La mine de charbon', sprite: '05-vapeur/mine', epoque: 5, jusqua: 9, debloque: 'charbon',
+      zone: 'colline', cout: 300, bois: 4, largeur: 180, taille: 1, grandit: { 2: 1.15, 3: 1.32 },
+      travail: { metier: 'mineur', aller: null, duree: 5, produit: 'pieces', qte: 54 }
+    },
+    usine: {
+      resume: "Dans l'usine, la machine à vapeur fait tourner les métiers à tisser.",
+      explication: "L'usine. Une grande machine à vapeur fait tourner des dizaines de métiers à tisser en même temps : on fabrique du tissu de toutes les couleurs, bien plus vite qu'à la main.",
+      vignettes: [{ img: 'usine', texte: "L'ouvrière surveille les fils de couleur sur le grand métier à tisser." }],
+      nom: "L'usine", sprite: '05-vapeur/usine', epoque: 5, jusqua: 9, debloque: 'vapeur',
+      zone: 'pre', cout: 400, bois: 5, largeur: 215, taille: 2, grandit: { 2: 1.1, 3: 1.25 },
+      travail: { metier: 'ouvriere', aller: null, duree: 6, produit: 'pieces', qte: 66 }
+    },
+    caserne: {
+      resume: "Les pompiers et leur pompe à vapeur : ils éteignent les incendies.",
+      explication: "La caserne des pompiers. Quand un feu éclate, les pompiers sortent la pompe à vapeur : elle envoie l'eau très fort et très haut, jusqu'au toit des maisons.",
+      vignettes: [{ img: 'pompiers', texte: "Les pompiers arrosent la maison avec la pompe à vapeur : le feu s'éteint !" }],
+      nom: 'La caserne des pompiers', sprite: '05-vapeur/caserne', epoque: 5, jusqua: 9, debloque: 'vapeur',
+      zone: 'pre', cout: 180, bois: 3, largeur: 175, taille: 1, unique: true, effet: 'pompiers'
+    },
+    gare: {
+      resume: "La gare : le train arrive avec des voyageurs et des marchandises.",
+      explication: "La gare. Le train sort du tunnel en sifflant, s'arrête au quai, et repart. Le chef de gare vend les billets et donne le signal du départ.",
+      vignettes: [{ img: 'gare', texte: "Le chef de gare siffle : le train va partir !" }],
+      nom: 'La gare', sprite: '05-vapeur/gare', epoque: 5, jusqua: 9, debloque: 'train',
+      zone: 'pre', cout: 440, bois: 5, largeur: 220, taille: 2, unique: true, grandit: { 2: 1.1, 3: 1.25 },
+      travail: { metier: 'cheminot', aller: null, duree: 6, produit: 'pieces', qte: 76 }
+    },
+    'port-vapeur': {
+      resume: "Le port des bateaux à vapeur : on pêche loin en mer. On y range des caisses : la réserve grandit.",
+      explication: "Le port à vapeur. Les bateaux à vapeur partent pêcher en mer, même sans vent, et rapportent beaucoup de poissons. Dans l'entrepôt, on garde des caisses et des tonneaux de nourriture.",
+      vignettes: [{ img: 'port-vapeur', texte: "Le bateau à vapeur rentre au port, ses grandes roues tournent dans l'eau." }],
+      nom: 'Le port à vapeur', sprite: '05-vapeur/port-vapeur', epoque: 5, jusqua: 9, debloque: 'bateau',
+      zone: 'plage', cout: 340, bois: 4, largeur: 200, taille: 1, grandit: { 2: 1.15, 3: 1.3 },
+      travail: { metier: 'matelot', aller: 'plage', porte: 'poisson', duree: 6, produit: 'nourriture', qte: 13 }
+    },
+    // décorations et merveilles de la vapeur (ADR-023, ADR-024)
+    'montgolfiere': {
+      resume: "Le premier ballon qui a emporté des humains dans le ciel.", page: 'deco-montgolfiere',
+      nom: 'La montgolfière', sprite: 'deco/montgolfiere', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 200, bois: 2, largeur: 105, taille: 1, deco: true, unique: true
+    },
+    'fardier': {
+      resume: "Le tout premier véhicule qui avance tout seul.", page: 'deco-fardier',
+      nom: 'Le fardier de Cugnot', sprite: 'deco/fardier', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 220, bois: 2, largeur: 120, taille: 1, deco: true, unique: true
+    },
+    'rocket': {
+      resume: "Une locomotive qui s'appelait « la Fusée » !", page: 'deco-rocket',
+      nom: 'La Fusée de Stephenson', sprite: 'deco/rocket', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 260, bois: 3, largeur: 125, taille: 1, deco: true, unique: true
+    },
+    'kiosque': {
+      resume: "Un kiosque rond où jouent les musiciens.", page: 'deco-kiosque',
+      nom: 'Le kiosque à musique', sprite: 'deco/kiosque', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 240, bois: 3, largeur: 140, taille: 1, deco: true, unique: true
+    },
+    'lampadaire': {
+      resume: "Un réverbère pour éclairer la rue le soir.", page: 'deco-lampadaire',
+      nom: 'Un réverbère', sprite: 'deco/lampadaire', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 120, bois: 1, largeur: 45, taille: 1, deco: true
+    },
+    'fontaine-wallace': {
+      resume: "Une fontaine verte où tout le monde peut boire.", page: 'deco-fontaine-wallace',
+      nom: 'Une fontaine Wallace', sprite: 'deco/fontaine-wallace', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 160, bois: 2, largeur: 60, taille: 1, deco: true
+    },
+    'velocipede': {
+      resume: "Un drôle de vélo à la roue géante.", page: 'deco-velocipede',
+      nom: 'Le grand-bi', sprite: 'deco/velocipede', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 180, bois: 2, largeur: 80, taille: 1, deco: true, unique: true
+    },
+    'carrousel': {
+      resume: "Un manège de chevaux de bois.", page: 'deco-carrousel',
+      nom: 'Le carrousel', sprite: 'deco/carrousel', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 320, bois: 4, largeur: 190, taille: 2, deco: true, unique: true
+    },
+    'big-ben': {
+      resume: "Une merveille : la grande tour de l'horloge de Londres.", page: 'deco-big-ben',
+      nom: 'Big Ben', sprite: 'deco/big-ben', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 440, bois: 6, largeur: 100, taille: 1, deco: true, merveille: true, unique: true
+    },
+    'statue-liberte': {
+      resume: "Une merveille : la grande statue verte qui accueille les bateaux.", page: 'deco-statue-liberte',
+      nom: 'La statue de la Liberté', sprite: 'deco/statue-liberte', epoque: 5, jusqua: 5,
+      zone: 'plage', cout: 480, bois: 6, largeur: 130, taille: 1, deco: true, merveille: true, unique: true
+    },
+    'palais-cristal': {
+      resume: "Une merveille : un immense palais de verre.", page: 'deco-palais-cristal',
+      nom: 'Le palais de cristal', sprite: 'deco/palais-cristal', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 520, bois: 6, largeur: 255, taille: 2, deco: true, merveille: true, unique: true
+    },
+    'tour-eiffel': {
+      resume: "Une merveille : la grande tour de fer de Paris.", page: 'deco-tour-eiffel',
+      nom: 'La tour Eiffel', sprite: 'deco/tour-eiffel', epoque: 5, jusqua: 5,
+      zone: 'pre', cout: 560, bois: 6, largeur: 175, taille: 2, deco: true, merveille: true, unique: true
+    },
     // le pont de pierre remplace la passerelle emportée par la crue (le petit problème du Moyen Âge, epoques.md)
     'pont-pierre': {
       resume: "Un pont en arches de pierre : la rivière ne peut plus l'emporter.", page: 'pont',
@@ -911,7 +1126,11 @@ var Donnees = (function () {
       forgeron: 'e3-forgeron', scribe: 'e3-scribe', marchand: 'e3-marchande', marin: 'e3-marin', charron: 'e3-charron' },
     4: { sage: 'sage-assis', bucheron: 'e4-bucheron', paysan: 'e4-faucille', porteur: 'e4-faucille', berger: 'berger-agneau', potier: 'e3-tour-potier', meunier: 'meuniere', moulinier: 'e4-meunier',
       forgeron: 'e4-marechal', marechal: 'e4-marechal', scribe: 'e3-scribe', marchand: 'e4-marchande', marin: 'e3-marin', charron: 'e3-charron',
-      boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e4-imprimeur' }
+      boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e4-imprimeur' },
+    5: { sage: 'sage-assis', bucheron: 'e5-bucheron', paysan: 'e5-faucille', porteur: 'e5-faucille', berger: 'berger-agneau', potier: 'e3-tour-potier', meunier: 'meuniere', moulinier: 'e4-meunier',
+      forgeron: 'e4-marechal', marechal: 'e4-marechal', scribe: 'e3-scribe', marchand: 'e4-marchande', marin: 'e5-matelot', matelot: 'e5-matelot', charron: 'e3-charron',
+      boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e4-imprimeur',
+      mineur: 'e5-mineur', ouvriere: 'e5-ouvriere', cheminot: 'e5-cheminot', inventeur: 'e5-inventrice', pompier: 'e5-pompier' }
   };
 
   // Ce qu'on porte dans les bras, selon l'époque (h : homme, f : femme)
@@ -919,9 +1138,10 @@ var Donnees = (function () {
     1: { bois: { h: 'e1-bois-h', f: 'e1-bois-f' }, viande: 'e1-viande', lapin: 'e1-lapin', poisson: 'e1-poisson', silex: 'e1-silex' },
     2: { bois: { h: 'e2-bois-h', f: 'e2-bois-f' }, ble: { h: 'e2-ble-h', f: 'e2-ble-f' }, argile: { h: 'e2-argile-h', f: 'e2-argile-f' }, poisson: 'e2-poisson' },
     3: { bois: { h: 'e3-bois-h', f: 'e3-bois-f' }, ble: { h: 'e3-ble-h', f: 'e3-ble-f' }, argile: { h: 'e3-argile-h', f: 'e3-argile-f' }, poisson: 'e3-poisson', minerai: 'e3-minerai' },
-    4: { bois: { h: 'e4-bois-h', f: 'e4-bois-f' }, ble: { h: 'e4-ble-h', f: 'e4-ble-f' }, argile: { h: 'e4-argile-h', f: 'e4-argile-f' }, poisson: 'e4-poisson', minerai: 'e4-minerai' }
+    4: { bois: { h: 'e4-bois-h', f: 'e4-bois-f' }, ble: { h: 'e4-ble-h', f: 'e4-ble-f' }, argile: { h: 'e4-argile-h', f: 'e4-argile-f' }, poisson: 'e4-poisson', minerai: 'e4-minerai' },
+    5: { bois: { h: 'e5-bois-h', f: 'e5-bois-f' }, ble: { h: 'e5-ble-h', f: 'e5-ble-f' }, argile: { h: 'e5-argile-h', f: 'e5-argile-f' }, poisson: 'e5-poisson', minerai: 'e5-minerai' }
   };
-  var femmes = ['cueilleuse', 'porteuse-jarre', 'e3-paysanne', 'e3-marchande', 'e4-paysanne', 'e4-boulangere'];
+  var femmes = ['cueilleuse', 'porteuse-jarre', 'e3-paysanne', 'e3-marchande', 'e4-paysanne', 'e4-boulangere', 'e5-ouvriere', 'e5-matelot', 'e5-inventrice'];
 
   // L'allure d'un habitant selon son métier et l'époque
   var allures = {
@@ -950,6 +1170,16 @@ var Donnees = (function () {
       forgeron: 'e4-marechal', scribe: 'e4-imprimeur', marchand: 'e4-boulangere', marin: 'e4-paysan', charron: 'e4-marechal',
       marechal: 'e4-marechal', boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e4-imprimeur',
       adulte: ['e4-paysan', 'e4-paysanne', 'e4-meunier', 'e4-boulangere', 'e4-imprimeur'], enfant: 'e4-enfant'
+    },
+    5: {
+      // les vieux métiers prennent plusieurs tenues de la vapeur, pour que tout le monde ne se ressemble pas
+      sage: 'sage', bucheron: ['e5-paysan', 'e5-mineur'], cueilleur: ['e5-ouvriere', 'e5-paysan', 'e5-matelot', 'e5-inventrice'], tailleur: 'e5-mineur',
+      chasseur: 'e5-paysan', pecheur: ['e5-matelot', 'e5-paysan'], peintre: 'e5-inventrice',
+      paysan: ['e5-paysan', 'e5-ouvriere'], berger: 'e5-paysan', porteur: 'e5-paysan', potier: ['e5-ouvriere', 'e5-inventrice'], meunier: ['e5-ouvriere', 'e5-paysan'], moulinier: 'e4-meunier',
+      forgeron: 'e5-mineur', scribe: 'e5-inventrice', marchand: ['e5-ouvriere', 'e5-cheminot'], marin: 'e5-matelot', charron: ['e5-mineur', 'e5-paysan'],
+      marechal: 'e4-marechal', boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e5-inventrice',
+      mineur: 'e5-mineur', ouvriere: 'e5-ouvriere', cheminot: 'e5-cheminot', inventeur: 'e5-inventrice', matelot: 'e5-matelot', pompier: 'e5-pompier',
+      adulte: ['e5-paysan', 'e5-ouvriere', 'e5-cheminot', 'e5-matelot', 'e5-inventrice', 'e5-mineur'], enfant: 'e5-enfant'
     }
   };
 
@@ -979,6 +1209,12 @@ var Donnees = (function () {
     moulinier: ['La roue tourne !', 'Encore un sac de farine !'],
     horloger: ['Tic, tac, tic, tac…', 'Bientôt midi !'],
     imprimeur: ["J'imprime un livre !", 'Encore une page !'],
+    mineur: ['Je descends à la mine !', 'Encore un wagonnet de charbon !'],
+    ouvriere: ['La machine tourne !', 'Du tissu tout neuf !'],
+    cheminot: ['En voiture !', 'Le train arrive !'],
+    inventeur: ["J'ai une idée de machine !", 'Encore un petit boulon…'],
+    matelot: ['En avant, toute !', "La roue tourne dans l'eau !"],
+    pompier: ['Au feu, les pompiers !', 'Plus vite, la pompe !'],
     construit: ['J\'apporte du bois pour construire !', 'On construit une maison !'],
     enfant: ['Youpi !', 'On joue à chat !', 'Tu ne m\'attraperas pas !'],
     libre: ['Bonjour !', 'Il fait bon ici.', 'Quelle belle vallée !']
@@ -995,6 +1231,10 @@ var Donnees = (function () {
     sentier: ['nature/touffe', 'Un sentier', "À force de passer toujours au même endroit, les habitants ont usé l'herbe. Plus tard, on en fera de vraies routes !"],
     cheval: ['faune/cheval', 'Un cheval', "Au Moyen Âge, les chevaux tirent les charrettes et les charrues. Le maréchal-ferrant leur met des fers aux sabots pour ne pas les abîmer."],
     gueEmporte: ['nature/galets', 'Le gué', "La crue a emporté la passerelle en bois : on traverse de nouveau en marchant sur les pierres. Il faudrait un pont de pierre !"],
+    rails: ['05-vapeur/train', 'Le chemin de fer', "Les rails en fer vont de la gare jusqu'au tunnel, sous la colline. De l'autre côté, il y a d'autres villes : le train y emporte des voyageurs et des marchandises."],
+    tunnel: ['05-vapeur/tunnel', 'Le tunnel', "Pour ne pas grimper la colline, on a creusé un tunnel dessous. Le train y entre en sifflant et ressort de l'autre côté."],
+    train: ['05-vapeur/train', 'Le train', "La locomotive brûle du charbon pour faire bouillir l'eau. La vapeur pousse les roues, et le train file sur les rails en lâchant de petits nuages blancs."],
+    incendie: ['05-vapeur/caserne', 'Une maison en feu', "Une étincelle de la cheminée a mis le feu au toit ! Tout le monde est sorti à temps. Il faudrait des pompiers pour l'éteindre."],
     route: ['nature/galets', 'Une route', "Avec la roue, les chemins les plus usés sont devenus des routes de terre et de pierres : les charrettes y roulent sans s'enfoncer."]
   },
     aides: {
@@ -1016,7 +1256,8 @@ var Donnees = (function () {
       pretEpoque: {
         2: "Prêt pour le néolithique ? Les premiers paysans vont planter du blé, élever des moutons et faire des pots. L'île va s'agrandir !",
         3: "Prêt pour l'âge des métaux ? On va inventer la roue, faire fondre le bronze et écrire. Le village va devenir une ville, et l'île va encore s'agrandir !",
-        4: "Prêt pour le Moyen Âge ? On va bâtir des moulins, forger le fer et construire un pont de pierre. La ville va encore grandir, et l'île aussi !"
+        4: "Prêt pour le Moyen Âge ? On va bâtir des moulins, forger le fer et construire un pont de pierre. La ville va encore grandir, et l'île aussi !",
+        5: "Prêt pour l'âge de la vapeur ? On va creuser le charbon, inventer des machines et faire rouler des trains. L'île va grandir vers le nord !"
       },
       epoque3: "Bienvenue à l'âge des métaux ! Construis des maisons en pierre, et regarde dans les découvertes : la roue, le bronze, l'écriture, la monnaie et la voile t'attendent.",
       maisonsPierre: 'Touche une vieille maison pour la transformer en maison en pierre.',
@@ -1034,6 +1275,16 @@ var Donnees = (function () {
       pontFini: "Le pont de pierre est fini ! On traverse la rivière sans se mouiller, même quand elle grossit.",
       outilsFer: "Avec le fer, le paysan laboure avec une charrue solide et le bûcheron coupe avec une hache en fer : ils travaillent bien mieux !",
       faim4: "Il n'y avait pas assez à manger ce soir ! Construis un champ de blé, un moulin, une boulangerie ou un port.",
+      epoque5: "Bienvenue à l'âge de la vapeur ! L'île a grandi vers le nord. Construis des maisons en briques et l'atelier de l'inventrice, et regarde dans les découvertes : le charbon, la machine à vapeur, le train et le bateau à vapeur t'attendent.",
+      maisonsBriques: 'Touche une vieille maison pour la transformer en maison en briques.',
+      vapeurArrive: "Nouveau : l'âge de la vapeur est arrivé ! Quand tu veux, touche le bouton doré en haut pour continuer l'histoire.",
+      incendie: "Oh non ! Une étincelle de cheminée a mis le feu à une maison ! Tout le monde est sorti à temps. Il faudrait des pompiers : avec la machine à vapeur, on pourra construire une caserne et sa pompe à vapeur !",
+      incendieEncore: "La maison brûle toujours, et personne ne peut y dormir. Découvre la machine à vapeur, puis construis la caserne des pompiers !",
+      caserne: "La caserne est prête ! Les pompiers sortent la pompe à vapeur et courent vers la maison en feu !",
+      eteint: "Bravo les pompiers ! Le feu est éteint, et la famille peut rentrer chez elle. Avec la caserne, la ville est protégée.",
+      rails: "Le chemin de fer est posé ! Regarde : le train sort du tunnel et s'arrête à la gare.",
+      moulinVapeur: "Avec la machine à vapeur, le moulin tourne même quand la rivière est basse : le meunier fait bien plus de farine !",
+      faim5: "Il n'y avait pas assez à manger ce soir ! Construis un champ de blé, un moulin, une boulangerie ou un port à vapeur.",
       merveilles: 'Les merveilles ! De grands monuments qui se construisent en trois étapes. Choisis-en une !',
       merveilleEtape: 'Une étape de la merveille est finie ! Ouvre les merveilles pour lancer la suivante.',
       merveilleFinie: 'Bravo ! Ta merveille est terminée ! Tout le village fait la fête !',
@@ -1055,18 +1306,19 @@ var Donnees = (function () {
       finEpoque: {
         1: "Tu as fait toutes les découvertes de l'âge de pierre ! Ton village est prêt à changer d'époque. Quand tu veux, touche le bouton doré en haut.",
         2: "Tu as fait toutes les découvertes du néolithique ! Ton village est prêt pour l'âge des métaux. Quand tu veux, touche le bouton doré en haut.",
-        3: "Tu as fait toutes les découvertes de l'âge des métaux ! Ta ville est prête pour le Moyen Âge. Quand tu veux, touche le bouton doré en haut."
+        3: "Tu as fait toutes les découvertes de l'âge des métaux ! Ta ville est prête pour le Moyen Âge. Quand tu veux, touche le bouton doré en haut.",
+        4: "Tu as fait toutes les découvertes du Moyen Âge ! Ta ville est prête pour l'âge de la vapeur. Quand tu veux, touche le bouton doré en haut."
       },
       amelioration: "Les habitants vont chercher du bois pour améliorer le bâtiment. Ensuite, une personne de plus y travaillera !",
       outilsBois: 'Avec les outils de pierre, le bûcheron peut maintenant couper les arbres !',
       plusDeChasse: "Avec l'élevage, plus besoin d'aller chasser : la viande vient de l'enclos !",
       embellir: "Embellis ton village avec les monuments de l'époque ! Chacun raconte une vraie histoire.",
       dejaConstruit: 'Tu l\'as déjà ! Il n\'en existe qu\'un seul.',
-      finJeu: "Tu as fait toutes les découvertes du Moyen Âge ! La suite de l'histoire arrivera plus tard."
+      finJeu: "Tu as fait toutes les découvertes de l'âge de la vapeur ! La suite de l'histoire arrivera plus tard."
     },
     // L'histoire : une intro au début de la partie, un passage à la fin du néolithique (la tribu est devenue un village),
-    // un passage à la fin de l'âge des métaux (le village est devenu une ville),
-    // et la fin quand toutes les découvertes de la dernière époque sont faites (une ville du Moyen Âge).
+    // un passage à la fin de l'âge des métaux (le village est devenu une ville), un passage à la fin du Moyen Âge,
+    // et la fin quand toutes les découvertes de la dernière époque sont faites (une ville de la vapeur).
     // Le jeu est en français ; l'anglais est prêt pour le jour où il sera traduit (langue de la page, <html lang>).
     histoire: {
       intro: {
@@ -1081,9 +1333,13 @@ var Donnees = (function () {
         fr: { titre: 'Bravo !', l1: 'La petite tribu est devenue un village, puis une vraie petite ville !', l2: 'Ce soir, tout le monde fait la fête sur la place du marché, et regarde la lune en rêvant de la suite du voyage.', go: 'Continuer' },
         en: { titre: 'Well done!', l1: 'The little tribe became a village, and now a real little town!', l2: 'Tonight everyone celebrates in the market square, looking at the moon and dreaming of the rest of the journey.', go: 'Continue' }
       },
-      fin: {
+      'moyen-age': {
         fr: { titre: 'Bravo !', l1: 'La petite tribu est devenue un village, puis une ville, et maintenant une belle ville du Moyen Âge !', l2: "Ce soir, tout le monde fait la fête sous les étoiles, et les enfants rêvent déjà d'aller un jour tout là-haut.", go: 'Continuer' },
         en: { titre: 'Well done!', l1: 'The little tribe became a village, then a town, and now a beautiful medieval town!', l2: 'Tonight everyone celebrates under the stars, and the children already dream of going all the way up there one day.', go: 'Continue' }
+      },
+      fin: {
+        fr: { titre: 'Bravo !', l1: "Du premier feu de camp jusqu'aux trains à vapeur, la petite tribu est devenue une grande ville pleine de machines !", l2: "Ce soir, sur le quai de la gare, les enfants regardent les étoiles et rêvent d'une machine encore plus forte : une fusée pour aller tout là-haut.", go: 'Continuer' },
+        en: { titre: 'Well done!', l1: 'From the very first campfire to steam trains, the little tribe has become a big town full of machines!', l2: 'Tonight, on the station platform, the children look at the stars and dream of an even stronger machine: a rocket to go all the way up there.', go: 'Continue' }
       },
       passer: { fr: 'Passer', en: 'Skip' },
       fini: { fr: 'Fini', en: 'Finished' }

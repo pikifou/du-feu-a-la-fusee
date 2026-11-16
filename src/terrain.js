@@ -6,6 +6,14 @@ var Terrain = (function () {
   var OX = N * TW, OY = 120;
   var CI = 22, CJ = 22;    // tuile du centre du village
   var RAYONS = { 1: 12.5, 2: 16.5, 3: 19.5, 4: 20.5 }; // rayon de l'île par époque
+  // À la vapeur, la grille ne laisse plus de place sur les côtés : l'île grandit vers le nord (le haut de l'écran),
+  // autour d'un centre décalé, en restant à deux cases du bord de la grille. Ces cases étaient hors de l'île avant :
+  // les changer ne touche à aucune sauvegarde (cf. kb/domains/tech/tech.md).
+  var NORD = { decale: 3, rayon: 23.5, marge: 2 };
+  function anneauNord(i, j, bruitIle) {
+    var d = Math.hypot(i - (CI - NORD.decale), j - (CJ - NORD.decale)) + bruitIle;
+    return d < NORD.rayon && Math.min(i, j, N - 1 - i, N - 1 - j) >= NORD.marge;
+  }
 
   // ---------- coordonnées ----------
   function centre(i, j) { return [(i - j) * TW + OX, (i + j + 1) * TH + OY]; }
@@ -35,10 +43,11 @@ var Terrain = (function () {
     var T = { N: N, tuiles: [], gue: null, grotte: null, epoque: 1 };
     for (var i = 0; i < N; i++) for (var j = 0; j < N; j++) {
       var u = i - j, v = i + j;
-      var d = Math.hypot(i - CI, j - CJ) + (bruit(i / 3, j / 3, 7) - 0.5) * 3;
+      var bi = (bruit(i / 3, j / 3, 7) - 0.5) * 3;
+      var d = Math.hypot(i - CI, j - CJ) + bi;
       var t = {
         i: i, j: j, sol: 'herbe', obj: null, vari: Math.floor(h2(i, j, 3) * 1000),
-        usure: 0, bat: null, ile: d < RAYONS[1] ? 1 : d < RAYONS[2] ? 2 : d < RAYONS[3] ? 3 : d < RAYONS[4] ? 4 : 0,
+        usure: 0, bat: null, ile: d < RAYONS[1] ? 1 : d < RAYONS[2] ? 2 : d < RAYONS[3] ? 3 : d < RAYONS[4] ? 4 : anneauNord(i, j, bi) ? 5 : 0,
         sauvage: false
       };
       var ru = riviereU(v);
@@ -98,8 +107,9 @@ var Terrain = (function () {
       if (t.sol === 'herbe') {
         var foret = f > 0.52 && dc > 6.5;
         if ((t.i - t.j) < -5 && dc > 6) foret = foret || f > 0.35;   // grande forêt à l'ouest
+        if (t.ile === 5) foret = f > 0.6 || ((t.i - t.j) < -9 && f > 0.45); // au nord, des clairières pour bâtir
         if (foret && r < 0.82) { t.obj = 'arbre'; t.bois = 3; return; }
-        if (!foret && dc > 5.5 && r < 0.04) { t.obj = 'arbre'; t.bois = 3; return; }
+        if (!foret && dc > 5.5 && r < (t.ile === 5 ? 0.02 : 0.04)) { t.obj = 'arbre'; t.bois = 3; return; }
         if (r > 0.965 && dc > 3) { t.obj = 'rocher'; return; }
         if (r > 0.86) t.deco = r > 0.92 ? 'fleurs' : 'touffe';
         if (pres(T, t, 'eau') && r > 0.55) t.deco = 'roseaux';

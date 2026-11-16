@@ -22,7 +22,7 @@ from PIL import Image
 RACINE = Path(__file__).parent
 SPRITES = RACINE / "assets" / "sprites"
 PLATEAU = RACINE / "assets" / "raw" / "plateau-vide.png"
-CINES = ["intro", "village", "ville", "fin"]  # assets/cine/<nom>.mp4 : copiées à côté de la version installée
+CINES = ["intro", "village", "ville", "moyen-age", "fin"]  # assets/cine/<nom>.mp4 : copiées à côté de la version installée
 
 
 _CACHE_F = RACINE / ".cache" / "webp.json"
@@ -72,7 +72,7 @@ def assets() -> dict:
             cible_l = min(im.width, 1000 if f.stem.startswith("pont") else 300)
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
         elif f.parent.name == "coupe":
-            cible_l = min(im.width, round(next((larg[k] for k in (cle.replace("coupe/", d + "/") for d in ("01-pierre", "02-neolithique", "03-metaux", "04-moyen-age")) if k in larg), 220) * 2.6))
+            cible_l = min(im.width, round(next((larg[k] for k in (cle.replace("coupe/", d + "/") for d in ("01-pierre", "02-neolithique", "03-metaux", "04-moyen-age", "05-vapeur")) if k in larg), 220) * 2.6))
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
         elif f.parent.name == "niveaux":
             # images des niveaux 2 et 3 (ADR-031) : un peu plus grandes que le bâtiment de base

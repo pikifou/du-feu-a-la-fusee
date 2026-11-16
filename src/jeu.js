@@ -228,6 +228,73 @@
       gr.addColorStop(0, 'rgba(' + col + ',' + a + ')'); gr.addColorStop(0.6, 'rgba(' + col + ',' + (a * 0.75) + ')'); gr.addColorStop(1, 'rgba(' + col + ',0)');
       u.fillStyle = gr; u.beginPath(); u.arc(0, 0, r, 0, 7); u.fill(); u.restore();
     });
+    dessinerRails(u);
+  }
+  // les rails : des traverses en bois et deux rails, d'une case à l'autre (le long des axes de la grille)
+  function dessinerRails(u) {
+    var R = monde.rails; if (!R || !R.tuiles || R.tuiles.length < 2) return;
+    var pts = R.tuiles.map(function (c) { return TR.centre(c[0], c[1]); });
+    u.save(); u.lineCap = 'round';
+    for (var k = 0; k < pts.length - 1; k++) {
+      var a = pts[k], b = pts[k + 1], dx = b[0] - a[0], dy = b[1] - a[1];
+      // l'autre axe de la grille : la direction des traverses
+      var px = dy > 0 === dx > 0 ? -TR.TW : TR.TW, py = TR.TH, L = Math.hypot(px, py), ex = px / L, ey = py / L;
+      for (var f = 0; f < 1; f += 0.25) {
+        var x = a[0] + dx * f, y = a[1] + dy * f;
+        u.strokeStyle = 'rgba(122,84,52,0.95)'; u.lineWidth = 7 * G;
+        u.beginPath(); u.moveTo((x - ex * 20) * G, (y - ey * 20) * G); u.lineTo((x + ex * 20) * G, (y + ey * 20) * G); u.stroke();
+      }
+      [-11, 11].forEach(function (o) {
+        u.strokeStyle = 'rgba(120,124,132,1)'; u.lineWidth = 3.4 * G;
+        u.beginPath(); u.moveTo((a[0] + ex * o) * G, (a[1] + ey * o) * G); u.lineTo((b[0] + ex * o) * G, (b[1] + ey * o) * G); u.stroke();
+        u.strokeStyle = 'rgba(205,210,216,0.9)'; u.lineWidth = 1.4 * G;
+        u.beginPath(); u.moveTo((a[0] + ex * o) * G, (a[1] + ey * o - 1.2) * G); u.lineTo((b[0] + ex * o) * G, (b[1] + ey * o - 1.2) * G); u.stroke();
+      });
+    }
+    u.restore();
+  }
+  // le train : il sort du tunnel, s'arrête à la gare, repart dans le tunnel (décor animé, comme les pirogues)
+  var train = { s: 0, etat: 'tunnel', attente: 6, sens: 1 };
+  function cheminTrain() {
+    var R = monde.rails; if (!R || !R.tuiles || R.tuiles.length < 2) return null;
+    return R.tuiles.map(function (c) { return TR.centre(c[0], c[1]); }).reverse(); // du tunnel vers la gare
+  }
+  function majTrain(dt) {
+    var pts = cheminTrain(); if (!pts) return;
+    var n = pts.length - 1;
+    if (train.attente > 0) { train.attente -= dt; if (train.attente <= 0 && train.etat === 'quai') { train.sens = -1; train.etat = 'roule'; } if (train.attente <= 0 && train.etat === 'tunnel') { train.sens = 1; train.etat = 'roule'; train.s = 0; } return; }
+    var v = 1.6 * dt; // cases par seconde
+    train.s += v * train.sens;
+    if (train.sens > 0 && train.s >= n) { train.s = n; train.etat = 'quai'; train.attente = 7; }
+    if (train.sens < 0 && train.s <= 0) { train.s = 0; train.etat = 'tunnel'; train.attente = 14 + Math.random() * 10; }
+    if (train.etat === 'roule' && Math.random() < dt * 5) {
+      var q = pointTrain(pts, train.s);
+      particule({ type: 'fumee', x: q[0] - q[2] * 20, y: q[1] - 64, vx: 6 + Math.random() * 6, vy: -32, max: 2.4, r: 10, c: '252,250,248' });
+    }
+  }
+  function pointTrain(pts, s) {
+    var k = Math.min(pts.length - 2, Math.floor(s)), f = s - k, a = pts[k], b = pts[k + 1];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, (b[0] - a[0]) * train.sens >= 0 ? 1 : -1];
+  }
+  function dessinerTrain() {
+    var pts = cheminTrain(), im = IMG['05-vapeur/train']; if (!pts || !im || (train.etat === 'tunnel' && train.attente > 0)) return;
+    var q = pointTrain(pts, train.s);
+    var a = Math.min(1, train.s / 0.8); // il sort du tunnel peu à peu
+    var w = 190 * V.s, H = w * im.height / im.width, p = E(q[0], q[1] + 4);
+    ctx.globalAlpha = a;
+    ombre(p[0], p[1], w * 0.42, 7 * V.s, 0.18);
+    // l'image va vers la gauche : on la retourne quand le train va vers la droite
+    ctx.save(); ctx.translate(p[0], p[1]); ctx.scale(q[2] > 0 ? -1 : 1, 1);
+    ctx.drawImage(im, -w / 2, -H * 0.86, w, H); ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+  function dessinerTunnel() {
+    var R = monde.rails, im = IMG['05-vapeur/tunnel']; if (!R || !im) return;
+    var t = R.tuiles, z = TR.centre(t[t.length - 1][0], t[t.length - 1][1]), y = TR.centre(t[t.length - 2][0], t[t.length - 2][1]);
+    var w = 230 * V.s, H = w * im.height / im.width, p = E(z[0] + (z[0] - y[0]) * 0.35, z[1] + (z[1] - y[1]) * 0.35 + 30);
+    // l'entrée du tunnel regarde vers le bas à gauche ; on la retourne quand les rails partent vers la droite
+    ctx.save(); ctx.translate(p[0], p[1]); ctx.scale(y[0] > z[0] ? -1 : 1, 1);
+    ctx.drawImage(im, -w / 2, -H * 0.9, w, H); ctx.restore();
   }
   function dessinerFond(dt) {
     ctx.fillStyle = '#e2d4ba'; ctx.fillRect(0, 0, V.W, V.H);
@@ -329,6 +396,15 @@
       if (ic) { var wc = t.w * 0.82; dessinerSprite(ic, p[0], p[1], wc, wc * ic.height / ic.width); return; }
     }
     if (enCoupe(b)) { var cc = cadreCoupe(b); ctx.drawImage(cc.im, cc.x, cc.y, cc.w, cc.h); return; }
+    if (b.enFeu) {
+      // la maison en feu : l'image un peu assombrie, et une lueur orange qui vacille
+      dessinerSprite(t.im, p[0], p[1], t.w, t.h);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      var gy = p[1] - t.h * 0.5, gr = ctx.createRadialGradient(p[0], gy, 0, p[0], gy, t.w * 0.6);
+      gr.addColorStop(0, 'rgba(255,120,30,' + (0.35 + Math.sin(T * 13) * 0.08) + ')'); gr.addColorStop(1, 'rgba(255,90,20,0)');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(p[0], gy, t.w * 0.6, 0, 7); ctx.fill(); ctx.restore();
+      return;
+    }
     if (D.batiments[b.type].merveille && !M.merveilleFinie(b)) { dessinerMerveille(b, p, t); return; }
     if (b.etat === 'fini') {
       var k = 1, age = monde.t - (b.apparu || -10);
@@ -534,6 +610,8 @@
   // COUCHAGES : places des couchages dans l'image en coupe (fractions de largeur et de hauteur)
   var COUCHAGES_PIERRE = [[0.36, 0.62], [0.6, 0.56], [0.44, 0.8], [0.66, 0.7]];
   var COUCHAGES_COUR = [[0.27, 0.53], [0.22, 0.61], [0.37, 0.65], [0.53, 0.6], [0.48, 0.82], [0.66, 0.74]];
+  var COUCHAGES_BRIQUES = [[0.68, 0.45], [0.76, 0.52], [0.45, 0.59], [0.6, 0.8]]; // réglés sur coupe/maison-briques
+  var COUCHAGES_IMMEUBLE = [[0.37, 0.26], [0.25, 0.45], [0.25, 0.63], [0.25, 0.81], [0.38, 0.46], [0.38, 0.64]]; // réglés sur coupe/immeuble
   var COUCHAGES = {
     'tente': [[0.43, 0.56], [0.66, 0.54]],
     'hutte-branches': [[0.36, 0.6], [0.66, 0.57], [0.52, 0.5]],
@@ -543,9 +621,12 @@
     'maison-pierre': COUCHAGES_PIERRE,
     'maison-cour': COUCHAGES_COUR,
     'maison-colombages': [[0.37, 0.5], [0.53, 0.46], [0.68, 0.53], [0.29, 0.55]],
-    'maison-etages': [[0.4, 0.49], [0.26, 0.53], [0.52, 0.62], [0.43, 0.27], [0.27, 0.31], [0.52, 0.37]]
+    'maison-etages': [[0.4, 0.49], [0.26, 0.53], [0.52, 0.62], [0.43, 0.27], [0.27, 0.31], [0.52, 0.37]],
+    'maison-briques': COUCHAGES_BRIQUES,
+    immeuble: COUCHAGES_IMMEUBLE
   };
-  function enCoupe(b) { return b && b.etat === 'fini' && COUCHAGES[b.type] && IMG['coupe/' + b.type] && dormeursChez[b.id] > 0; }
+  function enCoupe(b) {
+    if (b && b.enFeu) return false; return b && b.etat === 'fini' && COUCHAGES[b.type] && IMG['coupe/' + b.type] && dormeursChez[b.id] > 0; }
   function cadreCoupe(b) {
     var t = tailleBat(b), im = IMG['coupe/' + b.type], p = E(b.x, basBat(b));
     var w = t.w * 1.02, h = w * im.height / im.width;
@@ -623,7 +704,8 @@
   var CADENCE = { bucheron: 2.4, tailleur: 3, chasseur: 1.3, pecheur: 1.3, cueilleuse: 1.2, peintre: 1.2, 'sage-assis': 0.6,
     'allume-feu': 1.6, 'paysan-faucille': 1.6, 'berger-agneau': 0.9, potiere: 1.1, meuniere: 1.8,
     'e3-forgeron': 2.6, 'e3-scribe': 0.8, 'e3-marchande': 0.9, 'e3-marin': 1.2, 'e3-charron': 2.2, 'e3-bucheron': 2.4, 'e3-faucille': 1.6, 'e3-tour-potier': 1.4,
-    'e4-marechal': 2.6, 'e4-meunier': 1.2, 'e4-boulangere': 1.1, 'e4-horloger': 0.8, 'e4-imprimeur': 1.3, 'e4-bucheron': 2.4, 'e4-faucille': 1.6, 'e4-marchande': 0.9 };
+    'e4-marechal': 2.6, 'e4-meunier': 1.2, 'e4-boulangere': 1.1, 'e4-horloger': 0.8, 'e4-imprimeur': 1.3, 'e4-bucheron': 2.4, 'e4-faucille': 1.6, 'e4-marchande': 0.9,
+    'e5-mineur': 2.4, 'e5-ouvriere': 1.4, 'e5-cheminot': 0.9, 'e5-inventrice': 1.2, 'e5-pompier': 3, 'e5-bucheron': 2.4, 'e5-faucille': 1.6, 'e5-matelot': 1.1 };
   function spritePorteur(h) {
     var l = D.porteurs[monde.epoque] || {}, x = h.porte && l[h.porte];
     if (x && typeof x === 'object') x = D.femmes.indexOf(h.allure) >= 0 ? x.f : x.h;
@@ -631,6 +713,8 @@
   }
   function dessinerHab(h) {
     if (h.dort) { dessinerDormeur(h); return; }
+    var ar = !h.marche && h.etapes[0] && h.etapes[0].arrose;
+    if (ar) dessinerPompe(h, M.bat(monde, ar));
     // le chasseur s'éloigne dans la forêt : il s'efface, puis revient (ADR-033)
     var dtl = Math.min(0.1, T - (h.__t || T)), cible = h.cache ? 0 : 1;
     h.__t = T;
@@ -682,6 +766,17 @@
     }
   }
 
+  // le pompier arrose la maison en feu, à côté de la pompe à vapeur (le petit problème de la vapeur)
+  function dessinerPompe(h, b) {
+    var im = IMG['05-vapeur/pompe'];
+    if (im) { var w = 70 * V.s, H = w * im.height / im.width, p = E(h.x + 38, h.y + 6); ombre(p[0], p[1], w * 0.4, 4 * V.s); ctx.drawImage(im, p[0] - w / 2, p[1] - H * 0.92, w, H); }
+    if (b) {
+      // le jet d'eau, de la lance jusqu'au toit
+      var t = tailleBat(b), hx = b.x, hy = basBat(b) - t.h / V.s * 0.55;
+      var dx = hx - h.x, dy = hy - (h.y - 30), d = Math.hypot(dx, dy) || 1;
+      for (var q = 0; q < 2; q++) particule({ type: 'eau', x: h.x + (dx > 0 ? 16 : -16), y: h.y - 36, vx: dx / d * 300 + (Math.random() - 0.5) * 30, vy: dy / d * 300 - 60, max: Math.min(1.1, d / 300 + 0.15), r: 5, c: '120,185,245' });
+    }
+  }
   function dessinerAnimal(a) {
     if (a.disparu) return;
     if (a.espece === 'lapin') {
@@ -849,7 +944,8 @@
       potier: ['Un beau pot !', 'Tout rond !'], meunier: ['Bientôt du pain !', 'Ça fait de la farine !'],
       forgeron: ['Ding, ding !', 'Du bon bronze !'], scribe: ['Douze sacs…', 'Je note tout !'], marchand: ['Trois pièces !', 'Qui veut des figues ?'],
       marin: ['Hissez la voile !', 'Bon vent !'], charron: ['Encore un rayon !', 'Elle roule !'],
-      marechal: ['Tac, tac !', 'Un fer tout neuf !'], moulinier: ['Ça tourne !', 'De la farine !'], boulanger: ['Le pain est prêt !', 'Tout chaud !'], horloger: ['Tic, tac !', 'Midi pile !'], imprimeur: ['Encore une page !', 'Un beau livre !']
+      marechal: ['Tac, tac !', 'Un fer tout neuf !'], moulinier: ['Ça tourne !', 'De la farine !'], boulanger: ['Le pain est prêt !', 'Tout chaud !'], horloger: ['Tic, tac !', 'Midi pile !'], imprimeur: ['Encore une page !', 'Un beau livre !'],
+      mineur: ['Du charbon !', 'Toc, toc, la pioche !'], ouvriere: ['Quel beau tissu !', 'Les fils tournent !'], cheminot: ['En voiture !', 'Tuuut !'], inventeur: ['Eurêka !', 'Encore un boulon…'], matelot: ['En avant !', 'Ohé !'], pompier: ['Au feu !', 'Plus fort, la pompe !']
     },
     faim: ['J\'ai faim !', 'Mon ventre gargouille…', 'Il reste à manger ?'],
     porte: { baies: ['Plein de baies !'], lait: ['Du bon lait !'], pot: ['Un pot tout neuf !'], farine: ['De la farine !'], bois: ['Lourd, ce bois !', 'Du bois !'], viande: ['Ce soir, on mange !'], lapin: ['Un lapin pour ce soir !'], poisson: ['Regardez ma pêche !'],
@@ -919,12 +1015,29 @@
   }
 
   var dernierFumee = 0;
+  // la cheminée de l'usine (position du haut de la cheminée dans l'image, par niveau : décalage depuis le centre, hauteur)
+  var CHEMINEES = { usine: { 1: [-0.3, 0.78], 2: [-0.27, 0.76], 3: [-0.31, 0.78] } };
   function fumees(dt) {
     dernierFumee += dt;
+    // une maison en feu : des flammes et de la fumée grise
+    monde.batiments.forEach(function (b) {
+      if (!b.enFeu) return;
+      var t = tailleBat(b);
+      var nf = Math.floor(dt * 45 + Math.random());
+      for (var q = 0; q < nf; q++) particule({ type: 'flamme', x: b.x + (Math.random() - 0.5) * t.w / V.s * 0.55, y: basBat(b) - t.h / V.s * (0.3 + Math.random() * 0.45), vx: (Math.random() - 0.5) * 16, vy: -50 - Math.random() * 40, max: 0.6 + Math.random() * 0.5, r: 13 + Math.random() * 11, c: Math.random() < 0.5 ? '255,120,30' : '255,195,60' });
+      if (Math.random() < dt * 6) particule({ type: 'fumee', x: b.x + (Math.random() - 0.5) * 50, y: basBat(b) - t.h / V.s * 0.95, vx: 8 + Math.random() * 8, vy: -34, max: 3.4, r: 15, c: '140,135,132' });
+    });
     if (dernierFumee < 0.35) return;
     dernierFumee = 0;
     monde.batiments.forEach(function (b) {
       if (b.etat !== 'fini') return;
+      var ch = CHEMINEES[b.type] && CHEMINEES[b.type][b.niveau || 1];
+      if (ch) {
+        // la fumée douce de la cheminée : blanche, ronde, jamais noire
+        var tc = tailleBat(b);
+        if (Math.random() < 0.6) particule({ type: 'fumee', x: b.x + ch[0] * tc.w / V.s, y: basBat(b) - tc.h / V.s * ch[1], vx: 10 + Math.random() * 8, vy: -30 - Math.random() * 10, max: 3.2, r: 12, c: '250,248,245' });
+        return;
+      }
       var d = D.batiments[b.type];
       var feu = b.type === 'feu';
       if (feu && M.phase(monde) === 'nuit') return;
@@ -947,7 +1060,14 @@
         ctx.strokeText(p.texte, s[0], s[1]); ctx.fillText(p.texte, s[0], s[1]); ctx.globalAlpha = 1;
         return;
       }
-      if (p.type === 'eclat') { p.vy += 260 * dt; }
+      if (p.type === 'eclat' || p.type === 'eau') { p.vy += 260 * dt; }
+      if (p.type === 'flamme') {
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = 'rgba(' + p.c + ',' + (0.75 * (1 - k)) + ')';
+        ctx.beginPath(); ctx.arc(s[0], s[1], p.r * (1 - k * 0.6) * V.s, 0, 7); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+        return;
+      }
       if (p.type === 'pouf') { p.vx *= 0.94; p.vy *= 0.94; }
       var r = p.type === 'fumee' ? p.r * (1 + k * 2) : p.r * (1 - k * 0.5);
       var a = p.type === 'fumee' ? 0.55 * (1 - k) : 1 - k;
@@ -995,6 +1115,12 @@
       var p = E(h.x, h.y);
       if (c.b) { var pb = E(c.b.x, basBat(c.b)), ec = Math.min(48, tailleBat(c.b).w / V.s / Math.max(1, c.n)) * V.s; p = [pb[0] + (c.i - (c.n - 1) / 2) * ec, Math.max(p[1], pb[1] + 6 * V.s)]; }
       trou(p[0], p[1] - 10 * V.s, 46 * V.s, 0.45, 0.7);
+    });
+    // les réverbères à gaz éclairent la rue toute la nuit ; une maison en feu aussi
+    monde.batiments.forEach(function (b) {
+      if (b.etat !== 'fini' || (b.type !== 'lampadaire' && !b.enFeu)) return;
+      var t = tailleBat(b), p = E(b.x, basBat(b));
+      trou(p[0], p[1] - t.h * 0.4, (b.enFeu ? 160 : 150) * V.s, 0.8, 0.75);
     });
     // fenêtres éclairées des maisons (éteintes quand tout le monde dort)
     monde.batiments.forEach(function (b) {
@@ -1077,8 +1203,10 @@
     var nom = p.filet ? 'pirogue-filet' : (p.marche && Math.floor(T * 2.6 + p.id) % 2 ? 'pirogue-b' : 'pirogue-a');
     var voile = !p.filet && monde.decouvertes.voile && IMG['eau/bateau-voile']; // avec la voile, les bateaux vont plus loin
     if (voile) nom = 'bateau-voile';
+    var vapeur = p.id === 0 && monde.decouvertes.bateau && IMG['eau/bateau-vapeur']; // le bateau à vapeur, même sans vent
+    if (vapeur) { nom = 'bateau-vapeur'; voile = true; if (p.marche && Math.random() < 0.08) particule({ type: 'fumee', x: p.x + (p.dir > 0 ? -1 : 1) * 4, y: p.y - 70, vx: 6, vy: -26, max: 2.4, r: 9, c: '252,250,248' }); }
     var im = IMG['eau/' + nom]; if (!im) return;
-    var w = (voile ? 105 : 92) * V.s, h = w * im.height / im.width, e = E(p.x, p.y), bob = Math.sin(T * 2 + p.id * 2) * 1.5 * V.s;
+    var w = (vapeur ? 120 : voile ? 105 : 92) * V.s, h = w * im.height / im.width, e = E(p.x, p.y), bob = Math.sin(T * 2 + p.id * 2) * 1.5 * V.s;
     // remous sur l'eau
     ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = Math.max(1, 2 * V.s);
     if (p.marche) { ctx.beginPath(); ctx.ellipse(e[0] - p.dir * w * 0.45, e[1] + 2 * V.s, w * 0.18, 3 * V.s, 0, 0, 7); ctx.stroke(); }
@@ -1116,6 +1244,13 @@
     monde.animaux.forEach(function (a) { liste.push({ y: a.y, f: dessinerAnimal, o: a }); });
     majPirogues(Math.min(dt || 0, 0.1) * VITESSE);
     pirogues.forEach(function (p) { if (visible(p.x, p.y, 120)) liste.push({ y: p.y, f: dessinerPirogue, o: p }); });
+    if (monde.rails) {
+      majTrain(Math.min(dt || 0, 0.1) * VITESSE);
+      var pt = cheminTrain();
+      if (pt) { var qt = pointTrain(pt, train.s); liste.push({ y: qt[1] + 2, f: dessinerTrain, o: null }); }
+      var rt = monde.rails.tuiles, zt = TR.centre(rt[rt.length - 1][0], rt[rt.length - 1][1]);
+      liste.push({ y: zt[1] + 40, f: dessinerTunnel, o: null });
+    }
     liste.sort(function (a, b) { return a.y - b.y; });
     liste.forEach(function (e) { e.f(e.o); });
     fumees(dt);
@@ -1160,8 +1295,8 @@
     $('btn-merveilles').classList.toggle('pret', merveilles().some(function (t) { var a = actionMerveille(t); return a.genre && a.cout <= monde.pieces; }));
   }
 
-  var ICONE_EPOQUE = { 2: '🌾', 3: '⚒️', 4: '⚙️' };
-  var ILLU_EPOQUE = { 1: 'scenes/cueilleurs', 2: 'scenes/agriculture', 3: 'scenes/metaux', 4: 'scenes/moyen-age' };
+  var ICONE_EPOQUE = { 2: '🌾', 3: '⚒️', 4: '⚙️', 5: '🚂' };
+  var ILLU_EPOQUE = { 1: 'scenes/cueilleurs', 2: 'scenes/agriculture', 3: 'scenes/metaux', 4: 'scenes/moyen-age', 5: 'scenes/vapeur-ville' };
   var signatureBarre = '';
   // le bandeau : deux onglets, construire et embellir (ADR-023)
   function majBarre() {
@@ -1287,10 +1422,13 @@
   var LANGUE = /^en/i.test(document.documentElement.lang) ? 'en' : 'fr';
   var H = D.textes.histoire;
   var MOUVEMENT_REDUIT = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var CINE_IMAGES = { intro: 'histoire/debut', village: 'histoire/village', ville: 'histoire/ville', fin: 'histoire/fin' };
-  var PASSAGE = { 2: 'village', 3: 'ville' }; // la petite scène qui clôt une époque (avant le bouton doré)
+  var CINE_IMAGES = { intro: 'histoire/debut', village: 'histoire/village', ville: 'histoire/ville', 'moyen-age': 'histoire/moyen-age', fin: 'histoire/fin' };
+  var PASSAGE = { 2: 'village', 3: 'ville', 4: 'moyen-age' }; // la petite scène qui clôt une époque (avant le bouton doré)
   // la dernière petite scène déjà vue, pour la rejouer depuis la marque « Fini »
-  function dernierPassage() { return monde.epoque >= 4 || (monde.epoque === 3 && M.epoqueTerminee(monde)) ? 'ville' : 'village'; }
+  function dernierPassage() {
+    var e = monde.epoque + (M.epoqueTerminee(monde) ? 1 : 0); // l'époque d'après, si celle-ci est finie
+    return e >= 5 ? 'moyen-age' : e >= 4 ? 'ville' : 'village';
+  }
   function cinematique(nom, ensuite) {
     var t = H[nom][LANGUE], box = $('cine'), vid = box.querySelector('video'), img = box.querySelector('img');
     var lu = nom === 'intro' ? D.epoques[0].intro : t.l1 + ' ' + t.l2; // l'intro garde sa phrase enregistrée
@@ -1382,7 +1520,7 @@
     var d = D.decouvertes[id];
     var debloques = Object.keys(D.batiments).filter(function (k) { return D.batiments[k].debloque === id; });
     debloques.forEach(function (k) { if (ui.nouveaux.indexOf(k) < 0) ui.nouveaux.push(k); });
-    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'bronze' && monde.batiments.some(function (b) { return b.type === 'tas-bois'; })) aideUneFois('hache-bronze', A.hacheBronze); if (id === 'fer') aideUneFois('outils-fer', A.outilsFer); if (id === 'pont') { var pp = monde.batiments.filter(function (b) { return b.type === 'pont-pierre'; })[0]; if (pp) centrerSur(pp.x, pp.y); } if (id === 'roue') { aideUneFois('routes', A.routes); if (monde.batiments.some(function (b) { return b.type === 'atelier-potier'; })) setTimeout(function () { aideUneFois('tour-potier', A.tourPotier); }, 5500); } if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); ludiArret('decouverte'); } });
+    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'bronze' && monde.batiments.some(function (b) { return b.type === 'tas-bois'; })) aideUneFois('hache-bronze', A.hacheBronze); if (id === 'fer') aideUneFois('outils-fer', A.outilsFer); if (id === 'vapeur' && monde.batiments.some(function (b) { return b.type === 'moulin'; })) aideUneFois('moulin-vapeur', A.moulinVapeur); if (id === 'pont') { var pp = monde.batiments.filter(function (b) { return b.type === 'pont-pierre'; })[0]; if (pp) centrerSur(pp.x, pp.y); } if (id === 'roue') { aideUneFois('routes', A.routes); if (monde.batiments.some(function (b) { return b.type === 'atelier-potier'; })) setTimeout(function () { aideUneFois('tour-potier', A.tourPotier); }, 5500); } if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); ludiArret('decouverte'); } });
     sauver();
     ludiProgression();
   }
@@ -1436,6 +1574,10 @@
       if (monde.epoque === 4) {
         aideUneFois('epoque4', A.epoque4);
         setTimeout(function () { aideUneFois('maisons-colombages', A.maisonsColombages); }, 12000);
+      }
+      if (monde.epoque === 5) {
+        aideUneFois('epoque5', A.epoque5);
+        setTimeout(function () { aideUneFois('maisons-briques', A.maisonsBriques); }, 12000);
       }
       // une nouvelle époque commence (on n'arrive ici au-delà de la première que par le bouton d'époque)
       if (monde.epoque > 1) ludiArret('epoque');
@@ -1633,7 +1775,8 @@
     chasseur: 'le chasseur', pecheur: 'le pêcheur', peintre: 'la peintre', paysan: 'le paysan',
     berger: 'le berger', porteur: 'le porteur', potier: 'la potière', meunier: 'la meunière',
     forgeron: 'le forgeron', scribe: 'le scribe', marchand: 'la marchande', marin: 'le marin', charron: 'le charron',
-    marechal: 'le maréchal-ferrant', moulinier: 'le meunier', boulanger: 'la boulangère', horloger: "l'horloger", imprimeur: "l'imprimeur"
+    marechal: 'le maréchal-ferrant', moulinier: 'le meunier', boulanger: 'la boulangère', horloger: "l'horloger", imprimeur: "l'imprimeur",
+    mineur: 'le mineur', ouvriere: "l'ouvrière", cheminot: 'le chef de gare', inventeur: "l'inventrice", matelot: 'la matelote', pompier: 'le pompier'
   };
   var infoMinuteur = null;
   function montrerInfo(o) {
@@ -1815,7 +1958,16 @@
       var bt = bats[n], t = tailleBat(bt), pb = E(bt.x, basBat(bt));
       if (bt.type === 'passerelle') continue;
       if (bt.type === 'pont-pierre') { if (ici0 && ici0.gue) { infoBatiment(bt); return; } continue; }
-      if (Math.abs(x - pb[0]) < t.w * 0.45 && y < pb[1] + 6 && y > pb[1] - t.h * 0.85) { infoBatiment(bt); return; }
+      if (Math.abs(x - pb[0]) < t.w * 0.45 && y < pb[1] + 6 && y > pb[1] - t.h * 0.85) { if (bt.enFeu) infoNature('incendie'); else infoBatiment(bt); return; }
+    }
+    // le chemin de fer : le train, le tunnel, les rails
+    if (monde.rails) {
+      var ptT = cheminTrain();
+      if (ptT && !(train.etat === 'tunnel' && train.attente > 0)) { var qT = pointTrain(ptT, train.s), sT = E(qT[0], qT[1]); if (Math.abs(x - sT[0]) < 95 * V.s && y < sT[1] + 8 && y > sT[1] - 80 * V.s) { infoNature('train'); return; } }
+      var rtT = monde.rails.tuiles, zT = E.apply(null, TR.centre(rtT[rtT.length - 1][0], rtT[rtT.length - 1][1]));
+      if (Math.abs(x - zT[0]) < 110 * V.s && y < zT[1] + 40 * V.s && y > zT[1] - 120 * V.s) { infoNature('tunnel'); return; }
+      var tcR = TR.tuileDe(w[0], w[1]), icR = TR.tuile(monde.terrain, tcR[0], tcR[1]);
+      if (icR && icR.rail) { infoNature('rails'); return; }
     }
     // la nature
     var T0 = monde.terrain, tc = TR.tuileDe(w[0], w[1]);
@@ -1896,10 +2048,27 @@
         for (var k = 0; k < 4; k++) pouf(e.x + (Math.random() - 0.5) * 160, e.y - 10, 12, '200,228,245');
         son('non');
         if (enScene) ui.crueAide = true; else { centrerSur(e.x, e.y); aideUneFois('crue', A.crue); }
+      } else if (e.type === 'incendie') {
+        // le petit problème de la vapeur : une étincelle de cheminée met le feu à une maison
+        son('non');
+        ui.incendieA = monde.t;
+        if (enScene) ui.incendieAide = true; else { centrerSur(e.x, e.y); aideUneFois('incendie', A.incendie); }
+      } else if (e.type === 'pompiers') {
+        var bp = M.bat(monde, e.bat); if (bp && !enScene) centrerSur(bp.x, bp.y);
+        aideUneFois('caserne', A.caserne);
+      } else if (e.type === 'eteint') {
+        for (var k2 = 0; k2 < 4; k2++) pouf(e.x + (Math.random() - 0.5) * 120, e.y - 60, 12, '200,228,245');
+        son('fini');
+        aideUneFois('eteint', A.eteint);
+        sauver();
+      } else if (e.type === 'rails') {
+        train.etat = 'tunnel'; train.attente = 2; train.s = 0;
+        if (!enScene) centrerSur(e.x, e.y);
+        aideUneFois('rails', A.rails);
       } else if (e.type === 'chantier' && M.bat(monde, e.bat) && M.bat(monde, e.bat).type === 'pont-pierre') {
         aideUneFois('pont-pierre', A.pontPierre);
       } else if (e.type === 'faim') {
-        aide(monde.epoque >= 4 ? A.faim4 : monde.epoque >= 3 ? A.faim3 : monde.epoque >= 2 ? A.faim2 : A.faim1);
+        aide(monde.epoque >= 5 ? A.faim5 : monde.epoque >= 4 ? A.faim4 : monde.epoque >= 3 ? A.faim3 : monde.epoque >= 2 ? A.faim2 : A.faim1);
       } else if (e.type === 'grandi') {
         var hg = monde.habitants.filter(function (q) { return q.id === e.hab; })[0];
         if (hg) bark(hg, 'J\'ai grandi !');
@@ -1928,6 +2097,9 @@
       if (coq && ludiNuit !== (monde.jour || 0)) { ludiNuit = monde.jour || 0; ludiArret('nuit'); }
     }
     if (ui.crueAide && !enScene) { ui.crueAide = false; aideUneFois('crue', A.crue); }
+    if (ui.incendieAide && !enScene) { ui.incendieAide = false; aideUneFois('incendie', A.incendie); }
+    // la maison brûle depuis un moment, sans pompiers : on le rappelle une fois
+    if (monde.incendie && !enScene && ui.incendieA != null && monde.t - ui.incendieA > 150 && !monde.batiments.some(function (b) { return b.type === 'caserne'; })) aideUneFois('incendie-encore', A.incendieEncore);
     if (!ui.aide.idee && monde.idees >= 4 && !Object.keys(monde.decouvertes).length && !enScene) {
       aideUneFois('idee', A.idee);
     }
@@ -1980,6 +2152,14 @@
       if (!nouvellePartie && monde.epoque === 3 && M.epoqueTerminee(monde)) {
         ui.fini = true;
         setTimeout(function () { aideUneFois('moyen-age-arrive', A.moyenAgeArrive); }, 1500);
+      }
+    }
+    // Et une partie finie quand le jeu s'arrêtait au Moyen Âge garde « Fini » et apprend l'arrivée de l'âge de la vapeur.
+    if (!ui.epoque5) {
+      ui.epoque5 = true;
+      if (!nouvellePartie && monde.epoque === 4 && M.epoqueTerminee(monde)) {
+        ui.fini = true;
+        setTimeout(function () { aideUneFois('vapeur-arrive', A.vapeurArrive); }, 1500);
       }
     }
     majFini(); // une partie déjà finie : la marque « Fini », et Ludiworld le sait

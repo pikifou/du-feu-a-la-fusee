@@ -27,7 +27,7 @@ function tour(m, stats) {
   if (affame && vides && pleins) choix = possibles.filter(t => D.batiments[t].lits).sort((a, b) => prix(a) - prix(b))[0];
   else if (affame) choix = aManger();
   // 1 bis. la réserve est trop petite pour accueillir quelqu'un de plus : de quoi conserver (ADR-036)
-  const stocke = t => ['sechoir-poissons', 'grenier', 'atelier-potier', 'port', 'moulin'].indexOf(t) >= 0;
+  const stocke = t => ['sechoir-poissons', 'grenier', 'atelier-potier', 'port', 'moulin', 'port-vapeur'].indexOf(t) >= 0;
   if (!choix && Monde.besoinRepas(m, m.habitants.length + 1) > Monde.reserveMax(m)) choix = possibles.filter(stocke).sort((a, b) => prix(a) - prix(b))[0];
   // 2. une maison quand des postes attendent quelqu'un
   if (!choix && pleins && !affame && maison && (postes > libres || m.nourriture > Monde.besoinRepas(m, m.habitants.length + 5))) choix = maison;

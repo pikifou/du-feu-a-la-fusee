@@ -32,18 +32,20 @@ function jouer(graine, reflexe, maxMin, attente) {
   return { m, jalons, stats };
 }
 
-test('une partie se termine : âge de pierre, néolithique, âge des métaux, puis Moyen Âge', () => {
+test('une partie se termine : âge de pierre, néolithique, âge des métaux, Moyen Âge, puis la vapeur', () => {
   for (const graine of [1, 2, 3]) {
-    const { m, jalons, stats } = jouer(graine, 5, 160);
+    const { m, jalons, stats } = jouer(graine, 5, 200);
     assert.ok(jalons.epoque1, 'âge de pierre fini (graine ' + graine + ')');
     assert.ok(jalons.epoque2, 'néolithique fini (graine ' + graine + ')');
     assert.ok(jalons.epoque3, 'âge des métaux fini (graine ' + graine + ')');
     assert.ok(jalons.epoque4, 'Moyen Âge fini (graine ' + graine + ')');
-    assert.strictEqual(m.epoque, 4);
+    assert.ok(jalons.epoque5, 'la vapeur finie (graine ' + graine + ')');
+    assert.strictEqual(m.epoque, 5);
     assert.ok(m.fini, 'fin du jeu atteinte');
-    const ma = (jalons.epoque4 - jalons.epoque3) / 60;
+    const ma = (jalons.epoque4 - jalons.epoque3) / 60, va = (jalons.epoque5 - jalons.epoque4) / 60;
     assert.ok(ma > 5 && ma < 16, 'le Moyen Âge dure à peu près comme les autres époques : ' + ma.toFixed(1) + ' min');
-    console.log(`graine ${graine} : pierre ${(jalons.epoque1 / 60).toFixed(1)} min, néolithique ${((jalons.epoque2 - jalons.epoque1) / 60).toFixed(1)} min, métaux ${((jalons.epoque3 - jalons.epoque2) / 60).toFixed(1)} min, Moyen Âge ${ma.toFixed(1)} min, ${m.habitants.length} habitants, ${m.batiments.length} bâtiments, nourriture ${m.nourriture}, ${JSON.stringify(stats)}`);
+    assert.ok(va > 6 && va < 16, 'la vapeur dure à peu près comme les autres époques : ' + va.toFixed(1) + ' min');
+    console.log(`graine ${graine} : pierre ${(jalons.epoque1 / 60).toFixed(1)} min, néolithique ${((jalons.epoque2 - jalons.epoque1) / 60).toFixed(1)} min, métaux ${((jalons.epoque3 - jalons.epoque2) / 60).toFixed(1)} min, Moyen Âge ${ma.toFixed(1)} min, vapeur ${va.toFixed(1)} min, ${m.habitants.length} habitants, ${m.batiments.length} bâtiments, nourriture ${m.nourriture}, ${JSON.stringify(stats)}`);
   }
 });
 
@@ -133,9 +135,9 @@ test('une partie du néolithique sauvée avant l\'âge des métaux continue sans
   for (let i = 0; i < 600; i++) Monde.pas(repris, 0.1);
 });
 
-test('sauvegarde légère d\'une partie finie au Moyen Âge : sous 250 000 caractères', () => {
-  const { m } = jouer(5, 5, 200, 8);
-  assert.strictEqual(m.epoque, 4);
+test('sauvegarde légère d\'une partie finie à la vapeur : sous 250 000 caractères', () => {
+  const { m } = jouer(5, 5, 240, 8);
+  assert.strictEqual(m.epoque, 5);
   assert.ok(m.fini);
   for (let i = 0; i < 3000; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); }
   m.evenements.length = 0;
@@ -369,7 +371,7 @@ test('Moyen Âge : cinq découvertes dans l\'ordre historique, chaque image exis
   assert.ok(existe('faune/cheval') && existe('eau/pont-pierre'));
   // les métiers nouveaux ont tous une allure et des phrases, et les textes de l'histoire existent en deux langues
   ['marechal', 'boulanger', 'horloger', 'imprimeur'].forEach(k => assert.ok(D.allures[4][k] && D.textes.phrases[k], k));
-  ['village', 'ville', 'fin'].forEach(k => ['fr', 'en'].forEach(l => assert.ok(D.textes.histoire[k][l].l1 && D.textes.histoire[k][l].l2, k + ' ' + l)));
+  ['village', 'ville', 'moyen-age', 'fin'].forEach(k => ['fr', 'en'].forEach(l => assert.ok(D.textes.histoire[k][l].l1 && D.textes.histoire[k][l].l2, k + ' ' + l)));
   assert.ok(fs.existsSync(path.join(racine, 'histoire', 'ville.png')) && fs.existsSync(path.join(racine, 'cine', 'ville.mp4')), 'l\'ancienne fin devient le passage de l\'âge des métaux');
 });
 
@@ -489,4 +491,155 @@ test('sauvegarde légère : refusée si la carte du jeu a changé de taille', ()
   assert.strictEqual(Monde.developper(leger), null);
   const complet = Monde.exporter(Monde.nouveau(3));
   assert.strictEqual(Monde.developper(complet), complet, 'une sauvegarde complète passe telle quelle');
+});
+
+// ---------- L'âge de la vapeur ----------
+test('vapeur : quatre découvertes dans l\'ordre historique, chaque image existe', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const ids = Object.keys(D.decouvertes).filter(k => D.decouvertes[k].epoque === 5);
+  assert.deepStrictEqual(ids.sort(), ['bateau', 'charbon', 'train', 'vapeur']);
+  // l'ordre réel (ADR-001, epoques.md) : le charbon après le fer, la machine après le charbon, le train après la machine et la roue
+  assert.deepStrictEqual(D.decouvertes.charbon.prerequis, ['fer']);
+  assert.deepStrictEqual(D.decouvertes.vapeur.prerequis.slice().sort(), ['charbon', 'fer']);
+  assert.deepStrictEqual(D.decouvertes.train.prerequis.slice().sort(), ['roue', 'vapeur']);
+  assert.deepStrictEqual(D.decouvertes.bateau.prerequis.slice().sort(), ['vapeur', 'voile']);
+  const racine = path.join(__dirname, '..', 'assets');
+  const existe = cle => ['sprites/' + cle + '.png', 'sprites/' + cle + '.jpg', 'raw/' + cle + '.png'].some(f => fs.existsSync(path.join(racine, f)));
+  Object.keys(D.batiments).filter(k => D.batiments[k].epoque === 5).forEach(k => {
+    const b = D.batiments[k];
+    assert.ok(existe(b.sprite), 'sprite de ' + k);
+    if (b.travail) [2, 3].forEach(n => assert.ok(existe('niveaux/' + k + '-' + n), 'niveau ' + n + ' de ' + k));
+    if (b.lits) assert.ok(existe('coupe/' + k), 'maison en coupe : ' + k);
+    (b.vignettes || []).forEach(v => assert.ok(existe('vignettes/' + v.img), 'vignette ' + v.img));
+    if (b.page) assert.ok(D.pages[b.page] || D.decouvertes[b.page], 'page de ' + k);
+  });
+  Object.keys(D.allures[5]).forEach(k => [].concat(D.allures[5][k]).forEach(a => assert.ok(existe('habitants/' + a), 'habitant ' + a)));
+  Object.keys(D.poses[5]).forEach(k => { const p = D.poses[5][k]; assert.ok(existe('poses/' + p), 'pose ' + p); if (p.startsWith('e5-')) assert.ok(existe('poses/' + p + '-b'), 'deuxième image de ' + p); });
+  Object.keys(D.porteurs[5]).forEach(k => [].concat(typeof D.porteurs[5][k] === 'object' ? Object.values(D.porteurs[5][k]) : D.porteurs[5][k]).forEach(p => assert.ok(existe('porteurs/' + p), 'porteur ' + p)));
+  ['05-vapeur/train', '05-vapeur/tunnel', '05-vapeur/pompe', 'eau/bateau-vapeur', 'scenes/vapeur-ville'].forEach(k => assert.ok(existe(k), k));
+  ['mineur', 'ouvriere', 'cheminot', 'inventeur', 'matelot', 'pompier'].forEach(k => assert.ok(D.allures[5][k] && D.textes.phrases[k], k));
+  // l'ancienne fin devient le passage du Moyen Âge ; la nouvelle fin a son image et sa vidéo
+  ['histoire/moyen-age.png', 'cine/moyen-age.mp4', 'histoire/fin.png', 'cine/fin.mp4'].forEach(f => assert.ok(fs.existsSync(path.join(racine, f)), f));
+  assert.match(D.textes.histoire.fin.fr.l2, /fusée/);
+});
+
+function auMoyenAgeFini(graine) {
+  const m = auxMetauxFinis(graine);
+  Monde.passerEpoque(m);
+  Monde.decouvertesEpoque(m).forEach(id => { m.decouvertes[id] = 1; });
+  return m;
+}
+
+test('vapeur : l\'île grandit vers le nord sans toucher aux anciennes cases ; nouveaux bâtiments ; les monuments du Moyen Âge ne se construisent plus', () => {
+  const m = auMoyenAgeFini(51);
+  const avant = JSON.stringify(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)));
+  const n0 = m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length;
+  assert.ok(Monde.construisibles(m).indexOf('notre-dame') >= 0);
+  assert.ok(Monde.passerEpoque(m));
+  assert.strictEqual(m.epoque, 5);
+  const neuves = m.terrain.tuiles.filter(t => t.ile === 5);
+  assert.ok(neuves.length > 150, 'un nouvel anneau : ' + neuves.length + ' cases');
+  assert.strictEqual(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length, n0 + neuves.length);
+  const moy = l => l.reduce((s, t) => s + t.i + t.j, 0) / l.length;
+  assert.ok(moy(neuves) < Terrain.CI + Terrain.CJ - 12, 'il est au nord, en haut de l\'écran');
+  assert.ok(neuves.every(t => Math.min(t.i, t.j, Terrain.N - 1 - t.i, Terrain.N - 1 - t.j) >= 2), 'à deux cases du bord de la grille');
+  assert.ok(neuves.filter(t => t.sol === 'herbe' && !t.obj).length > 60, 'des clairières pour bâtir');
+  // les cases déjà sur l'île n'ont pas bougé (les sauvegardes restent justes)
+  assert.strictEqual(JSON.stringify(m.terrain.tuiles.filter(t => t.ile && t.ile < 5)), avant);
+  const c = Monde.construisibles(m);
+  assert.ok(c.indexOf('maison-briques') >= 0 && c.indexOf('atelier-inventeur') >= 0, 'dès l\'arrivée');
+  assert.ok(c.indexOf('usine') < 0 && c.indexOf('gare') < 0 && c.indexOf('mine') < 0, 'ils attendent leur découverte');
+  assert.ok(c.indexOf('notre-dame') < 0 && c.indexOf('moai') < 0, 'plus de monuments du Moyen Âge');
+  assert.ok(c.indexOf('tour-eiffel') >= 0 && c.indexOf('lampadaire') >= 0, 'les monuments de la vapeur');
+  m.decouvertes.charbon = 1; m.decouvertes.bateau = 1; m.pieces = 5000;
+  assert.ok(Monde.emplacementsLibres(m, 'mine').length > 0, 'la mine a sa place contre les rochers');
+  assert.ok(Monde.emplacementsLibres(m, 'port-vapeur').length > 0, 'le port à vapeur sur la plage');
+  assert.ok(Monde.emplacementsLibres(m, 'statue-liberte').length > 0, 'la statue de la Liberté sur la plage');
+  // les vieilles maisons se transforment à la main (ADR-028), puis en immeuble après le train
+  const tente = m.batiments.find(b => b.type === 'tente');
+  assert.strictEqual(Monde.amelioration(m, tente).vers, 'maison-briques');
+  m.decouvertes.train = 1;
+  assert.strictEqual(Monde.amelioration(m, { type: 'maison-briques', etat: 'fini' }).vers, 'immeuble');
+  assert.strictEqual(Monde.amelioration(m, { type: 'maison-etages', etat: 'fini' }).vers, 'immeuble');
+  // la machine à vapeur fait mieux tourner le moulin
+  const q = Monde.qteDe(D.batiments.moulin.travail, 5, m);
+  m.decouvertes.vapeur = 1;
+  assert.ok(Monde.qteDe(D.batiments.moulin.travail, 5, m) > q);
+});
+
+test('vapeur : une maison prend feu, les pompiers de la caserne l\'éteignent (le petit problème)', () => {
+  const m = auMoyenAgeFini(52);
+  Monde.passerEpoque(m);
+  const lits0 = Monde.lits(m);
+  let feu = 0, eteint = 0;
+  for (let i = 0; i < 900; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.forEach(e => { if (e.type === 'incendie') feu++; }); m.evenements.length = 0; }
+  assert.strictEqual(feu, 1, 'un incendie, peu après l\'arrivée');
+  const maison = m.batiments.find(b => b.enFeu);
+  assert.ok(maison && D.batiments[maison.type].lits, 'c\'est une maison');
+  assert.ok(Monde.lits(m) < lits0, 'personne ne peut y dormir');
+  laisser(m, 120);
+  assert.ok(maison.enFeu, 'sans pompiers, elle brûle toujours');
+  assert.ok(!m.habitants.some(h => h.maison === maison.id), 'personne n\'y habite pendant l\'incendie');
+  // la caserne vient avec la machine à vapeur
+  assert.ok(Monde.construisibles(m).indexOf('caserne') < 0);
+  m.decouvertes.charbon = 1; m.decouvertes.vapeur = 1; m.pieces = 2000;
+  const cs = Monde.construire(m, 'caserne', Monde.emplacementsLibres(m, 'caserne')[0]);
+  assert.ok(cs);
+  for (let i = 0; i < 9000 && maison.enFeu; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.forEach(e => { if (e.type === 'eteint') eteint++; }); m.evenements.length = 0; }
+  assert.strictEqual(cs.etat, 'fini');
+  assert.ok(!maison.enFeu && eteint === 1, 'le pompier éteint le feu');
+  assert.ok(Monde.lits(m) >= lits0, 'la maison accueille de nouveau sa famille');
+  laisser(m, 200);
+  assert.ok(!m.batiments.some(b => b.enFeu), 'le feu ne revient pas');
+  assert.ok(m.habitants.every(h => h.allure !== 'e5-pompier'), 'le pompier a remis sa tenue');
+});
+
+test('vapeur : la gare finie, les rails vont jusqu\'au tunnel au bord de l\'île', () => {
+  const m = auMoyenAgeFini(53);
+  Monde.passerEpoque(m);
+  ['charbon', 'vapeur', 'train'].forEach(k => { m.decouvertes[k] = 1; });
+  m.pieces = 5000;
+  const gare = Monde.construire(m, 'gare', Monde.emplacementsLibres(m, 'gare')[0]);
+  assert.ok(gare);
+  let rails = 0;
+  for (let i = 0; i < 9000 && gare.etat !== 'fini'; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.forEach(e => { if (e.type === 'rails') rails++; }); m.evenements.length = 0; }
+  assert.strictEqual(gare.etat, 'fini');
+  assert.strictEqual(rails, 1);
+  const R = m.rails.tuiles;
+  assert.ok(R.length >= 2);
+  // une ligne continue, case par case, qui part contre la gare
+  for (let k = 1; k < R.length; k++) assert.strictEqual(Math.abs(R[k][0] - R[k - 1][0]) + Math.abs(R[k][1] - R[k - 1][1]), 1);
+  assert.ok(Math.max(Math.abs(R[0][0] - (gare.i + 0.5)), Math.abs(R[0][1] - (gare.j + 0.5))) <= 1.5);
+  // le tunnel est au bord de l'île ; les rails ne passent ni dans l'eau ni sous un bâtiment, et on ne bâtit pas dessus
+  const T = m.terrain, fin = Terrain.tuile(T, R[R.length - 1][0], R[R.length - 1][1]);
+  assert.ok([[1, 0], [-1, 0], [0, 1], [0, -1]].some(d => { const v = Terrain.tuile(T, fin.i + d[0], fin.j + d[1]); return !v || !Terrain.surIle(T, v); }));
+  R.forEach(c => { const t = Terrain.tuile(T, c[0], c[1]); assert.ok(t.rail && t.sol !== 'eau' && !t.bat && !t.obj); assert.ok(!Monde.ancreValide(m, 'lampadaire', c[0], c[1])); });
+});
+
+test('une partie du Moyen Âge, finie ou en cours, sauvée avant la vapeur, continue sans rien perdre', () => {
+  for (const fini of [true, false]) {
+    const m = fini ? auMoyenAgeFini(54) : auxMetauxFinis(55);
+    if (!fini) Monde.passerEpoque(m);
+    laisser(m, 120);
+    // une sauvegarde de la version d'avant : pas d'anneau 5, pas d'incendie prévu
+    const vieux = JSON.parse(JSON.stringify(Monde.exporter(m)));
+    vieux.terrain.tuiles.forEach(t => { if (t.ile === 5) t.ile = 0; });
+    delete vieux.feuPrevu; delete vieux.incendie; delete vieux.rails;
+    const leger = JSON.parse(JSON.stringify(Monde.exporterLeger(m)));
+    for (const s of [vieux, Monde.developper(leger)]) {
+      const repris = Monde.importer(JSON.parse(JSON.stringify(s)));
+      assert.strictEqual(repris.epoque, 4);
+      assert.strictEqual(repris.habitants.length, m.habitants.length);
+      assert.strictEqual(repris.batiments.length, m.batiments.length);
+      assert.strictEqual(repris.pieces, m.pieces);
+      assert.deepStrictEqual(Object.keys(repris.decouvertes).sort(), Object.keys(m.decouvertes).sort());
+      assert.strictEqual(Monde.epoqueTerminee(repris), fini);
+      if (!fini) Monde.decouvertesEpoque(repris).forEach(id => { repris.decouvertes[id] = 1; });
+      assert.ok(Monde.passerEpoque(repris), 'le bouton doré mène à la vapeur');
+      assert.strictEqual(repris.epoque, 5);
+      assert.ok(repris.terrain.tuiles.some(t => t.ile === 5 && Terrain.surIle(repris.terrain, t)), 'et l\'île grandit');
+      laisser(repris, 90);
+      assert.ok(repris.batiments.some(b => b.enFeu), 'l\'incendie arrive aussi dans une partie reprise');
+    }
+  }
 });

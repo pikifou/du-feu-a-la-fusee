@@ -112,15 +112,19 @@ var Monde = (function () {
     h.metier = def.travail.metier;
     if (!bat.ouvriers) bat.ouvriers = [];
     if (bat.ouvriers.indexOf(h.id) < 0) bat.ouvriers.push(h.id);
-    var allure = D.allures[m.epoque][h.metier];
+    var allure = tenue(D.allures[m.epoque], h.metier, h.id);
     if (allure && allure !== h.allure && h.allure !== 'sage') { h.allure = allure; h.pouf = 0.6; }
   }
+
+  // la tenue d'un métier : une seule, ou plusieurs au choix (pour que tout le monde ne se ressemble pas), selon l'habitant
+  function tenue(al, metier, id) { var v = al[metier]; return Array.isArray(v) ? v[(id || 0) % v.length] : v; }
 
   // ---------- requêtes ----------
   function bat(m, id) { for (var i = 0; i < m.batiments.length; i++) if (m.batiments[i].id === id) return m.batiments[i]; return null; }
   function lits(m) {
     return m.batiments.reduce(function (s, b) {
       var d = D.batiments[b.type];
+      if (b.enFeu) return s; // une maison qui brûle n'accueille personne (le petit problème de la vapeur)
       return s + (b.etat === 'fini' ? (d.lits || 0) : (b.renove || 0));
     }, 0);
   }
@@ -146,10 +150,10 @@ var Monde = (function () {
     if (!tuiles) return false;
     for (var n = 0; n < tuiles.length; n++) {
       var t = tuiles[n];
-      if (!TR.surIle(T, t) || t.bat || t.gue) return false;
+      if (!TR.surIle(T, t) || t.bat || t.gue || t.rail) return false;
       if (t.obj && t.obj !== 'souche') return false;
       if (d.zone === 'plage') { if (t.sol !== 'sable') return false; }
-      else if (d.zone === 'grotte') { if (t.sol !== 'herbe' && t.sol !== 'roche') return false; }
+      else if (d.zone === 'grotte' || d.zone === 'colline') { if (t.sol !== 'herbe' && t.sol !== 'roche') return false; }
       else if (t.sol !== 'herbe') return false;
       // l'autre rive est le territoire du mammouth : on n'y construit qu'au néolithique (sauf près de la grotte)
       if (t.sauvage && m.epoque < 2 && d.zone !== 'grotte') return false;
@@ -166,6 +170,8 @@ var Monde = (function () {
       var g = T.grotte;
       return g && Math.hypot(t0.i - g[0], t0.j - g[1]) <= 4.5;
     }
+    // la mine : contre les rochers des collines
+    if (d.zone === 'colline') return tuiles.some(function (t) { return t.sol === 'roche' || TR.pres(T, t, 'roche'); });
     return true;
   }
 
@@ -263,9 +269,122 @@ var Monde = (function () {
         m.animaux.push({ id: m.prochainId++, espece: 'cheval', x: pc[0], y: pc[1], etapes: [], dir: 1, marche: false });
       }
     }
+    if (m.epoque === 5) {
+      // le petit problème de la vapeur (epoques.md) : bientôt, une étincelle de cheminée met le feu à une maison
+      m.feuPrevu = m.t + DELAI_INCENDIE;
+    }
     m.habitants.forEach(function (h) { h.changeTenue = hasard(m) * 8; });
     m.evenements.push({ type: 'epoque', epoque: m.epoque });
     return true;
+  }
+
+  // ---------- l'incendie et les pompiers (le petit problème de la vapeur) ----------
+  var DELAI_INCENDIE = 60;
+  function caserne(m) { return m.batiments.filter(function (b) { return b.type === 'caserne' && b.etat === 'fini'; })[0] || null; }
+  function incendie(m) {
+    if (m.feuPrevu != null && m.t >= m.feuPrevu) {
+      m.feuPrevu = null;
+      if (!caserne(m)) {
+        // une maison habitée, près du centre du village : tout le monde est sorti à temps
+        var maisons = m.batiments.filter(function (b) { return b.etat === 'fini' && D.batiments[b.type].lits; });
+        var c = TR.centre(TR.CI, TR.CJ);
+        maisons.sort(function (a, b) { return dist([a.x, a.y], c) - dist([b.x, b.y], c); });
+        var b = maisons[0];
+        if (b) {
+          b.enFeu = true;
+          m.incendie = { bat: b.id, pompier: null };
+          m.habitants.forEach(function (h) { if (h.dortChez === b.id || h.maison === b.id) { h.maison = null; if (h.dort) lacher(m, h); } });
+          m.evenements.push({ type: 'incendie', bat: b.id, x: b.x, y: b.y });
+        }
+      }
+    }
+    var f = m.incendie;
+    if (!f) return;
+    var bf = bat(m, f.bat);
+    if (!bf) { m.incendie = null; return; }
+    var cs = caserne(m);
+    if (!cs) return;
+    // un pompier part de la caserne avec la pompe à vapeur
+    var p = f.pompier && m.habitants.filter(function (h) { return h.id === f.pompier; })[0];
+    if (p && p.etapes.some(function (e) { return e.fait === 'eteindre'; })) return;
+    var libres = m.habitants.filter(function (h) { return !h.enfant && h.allure !== 'sage' && !h.dort; });
+    if (!libres.length) return;
+    libres.sort(function (a, b) { return dist([a.x, a.y], [cs.x, cs.y]) - dist([b.x, b.y], [cs.x, cs.y]); });
+    p = libres[0];
+    lacher(m, p);
+    p.allure = 'e5-pompier'; p.pouf = 0.6; p.changeTenue = null;
+    f.pompier = p.id;
+    var lieu = devant(m, bf);
+    p.etapes = [
+      { fait: 'aller', p: devant(m, cs) },
+      { fait: 'attendre', d: 0.8, anim: 'repos' },
+      { fait: 'aller', p: [lieu[0] + 48, lieu[1] + 18] },
+      { fait: 'attendre', d: 8, anim: 'travail', pose: 'e5-pompier', arrose: bf.id },
+      { fait: 'eteindre', bat: bf.id }
+    ];
+    m.evenements.push({ type: 'pompiers', hab: p.id, bat: bf.id });
+  }
+
+  // ---------- le chemin de fer : de la gare jusqu'au tunnel, au bord nord de l'île ----------
+  function poserRails(m, gare) {
+    var T = m.terrain;
+    var marche = function (t) {
+      return t && TR.surIle(T, t) && t.sol !== 'eau' && !t.gue && !t.bat && t.obj !== 'grotte';
+    };
+    var cle = function (t, d) { return (t.i * TR.N + t.j) * 4 + d; };
+    var DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    // départ : une case libre contre la gare (de préférence devant)
+    var departs = [];
+    for (var a = -1; a <= gare.k; a++) for (var b2 = -1; b2 <= gare.k; b2++) {
+      if (a >= 0 && a < gare.k && b2 >= 0 && b2 < gare.k) continue;
+      if ((a === -1 || a === gare.k) && (b2 === -1 || b2 === gare.k)) continue; // pas les coins
+      var t0 = TR.tuile(T, gare.i + a, gare.j + b2);
+      if (marche(t0)) departs.push(t0);
+    }
+    if (!departs.length) return null;
+    // Dijkstra : on préfère les lignes droites, et éviter d'abattre arbres et rochers
+    var g = {}, venu = {}, ouverts = [];
+    departs.forEach(function (t) { for (var d = 0; d < 4; d++) { g[cle(t, d)] = 0; ouverts.push([t, d]); } });
+    var vus = {}, garde = 0;
+    while (ouverts.length && garde++ < 40000) {
+      var k = 0;
+      for (var q = 1; q < ouverts.length; q++) if (g[cle(ouverts[q][0], ouverts[q][1])] < g[cle(ouverts[k][0], ouverts[k][1])]) k = q;
+      var o = ouverts.splice(k, 1)[0], c = o[0], dc = o[1], kc = cle(c, dc);
+      if (vus[kc]) continue;
+      vus[kc] = true;
+      for (var d = 0; d < 4; d++) {
+        var n = TR.tuile(T, c.i + DIRS[d][0], c.j + DIRS[d][1]);
+        if (!marche(n)) continue;
+        var cout = 1 + (d !== dc ? 2.5 : 0) + (n.obj === 'arbre' || n.obj === 'rocher' ? 1.5 : 0);
+        var kn = cle(n, d), ng = g[kc] + cout;
+        if (g[kn] == null || ng < g[kn]) { g[kn] = ng; venu[kn] = kc; ouverts.push([n, d]); }
+      }
+    }
+    // le tunnel : une case au bord de l'île, la plus au nord possible sans aller trop loin
+    var best = null, bs = 1e9;
+    Object.keys(g).forEach(function (kk) {
+      var id = Math.floor(kk / 4), t = T.tuiles[id];
+      var bord = DIRS.some(function (dd) { var v = TR.tuile(T, t.i + dd[0], t.j + dd[1]); return !v || !TR.surIle(T, v); });
+      if (!bord || t.sol === 'sable') return;
+      var sc = (t.i + t.j) * 0.5 + g[kk];
+      if (sc < bs) { bs = sc; best = +kk; }
+    });
+    if (best == null) return null;
+    var chemin = [], x = best;
+    while (x != null) { var tt = T.tuiles[Math.floor(x / 4)]; if (!chemin.length || chemin[0] !== tt) chemin.unshift(tt); x = venu[x]; }
+    chemin.forEach(function (t) { t.rail = true; if (t.obj && t.obj !== 'grotte') t.obj = null; t.deco = null; });
+    var fin = chemin[chemin.length - 1];
+    // on voit la ligne : les arbres qui la bordent et ceux devant le tunnel sont abattus (des souches restent)
+    chemin.forEach(function (t, k) {
+      var r = k >= chemin.length - 2 ? 2 : 1;
+      for (var di = -r; di <= r; di++) for (var dj = -r; dj <= r; dj++) {
+        var v = TR.tuile(T, t.i + di, t.j + dj);
+        if (v && v.obj === 'arbre' && !v.reserve) { v.obj = 'souche'; v.bois = 0; }
+      }
+    });
+    m.rails = { tuiles: chemin.map(function (t) { return [t.i, t.j]; }), gare: gare.id };
+    m.evenements.push({ type: 'rails', x: fin ? TR.centre(fin.i, fin.j)[0] : gare.x, y: fin ? TR.centre(fin.i, fin.j)[1] : gare.y });
+    return m.rails;
   }
 
   // ---------- le pont emporté, puis le pont de pierre (le petit problème du Moyen Âge) ----------
@@ -282,6 +401,16 @@ var Monde = (function () {
     m.pontEmporte = true;
     m.evenements.push({ type: 'crue', x: p.x, y: p.y });
   }
+  // les arbres des deux rives cachaient le grand pont de pierre : on dégage ses abords (souches)
+  function degagerPont(m) {
+    var T = m.terrain;
+    (T.gues || []).forEach(function (g) {
+      for (var di = -2; di <= 2; di++) for (var dj = -2; dj <= 2; dj++) {
+        var t = TR.tuile(T, g[0] + di, g[1] + dj);
+        if (t && t.obj === 'arbre' && !t.reserve) { t.obj = 'souche'; t.bois = 0; }
+      }
+    });
+  }
   function poserPontPierre(m) {
     var g = m.terrain.gue;
     if (!g || m.batiments.some(function (b) { return b.type === 'pont-pierre'; })) return;
@@ -292,6 +421,7 @@ var Monde = (function () {
     m.terrain.passerelle = false;
     var pont = poser(m, 'pont-pierre', g[0], g[1], false);
     pont.automatique = true;
+    degagerPont(m);
     m.evenements.push({ type: 'chantier', bat: pont.id });
   }
 
@@ -388,7 +518,7 @@ var Monde = (function () {
     }
   }
   // la réserve de nourriture : ce qu'on sait conserver (ADR-036)
-  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40, moulin: 50 };
+  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40, moulin: 50, 'port-vapeur': 60 };
   function reserveMax(m) {
     return m.batiments.reduce(function (s, b) { return s + (b.etat === 'fini' || b.niveau ? (RESERVE[b.type] || 0) : 0); }, RESERVE.base);
   }
@@ -446,7 +576,7 @@ var Monde = (function () {
   function maisonProche(m, p) {
     var best = null, bd = 1e9;
     m.batiments.forEach(function (b) {
-      if (!D.batiments[b.type].lits && b.type !== 'cercle-pierres') return;
+      if ((!D.batiments[b.type].lits || b.enFeu) && b.type !== 'cercle-pierres') return;
       var d = dist(p, [b.x, b.y]); if (d < bd) { bd = d; best = b; }
     });
     return best;
@@ -622,7 +752,7 @@ var Monde = (function () {
     var occupants = {};
     m.habitants.forEach(function (h) {
       var b = h.maison ? bat(m, h.maison) : null;
-      var cap = b ? (b.etat === 'fini' ? (D.batiments[b.type].lits || 0) : (b.renove || 0)) : 0;
+      var cap = b && !b.enFeu ? (b.etat === 'fini' ? (D.batiments[b.type].lits || 0) : (b.renove || 0)) : 0;
       if (!b || cap <= 0) { h.maison = null; return; }
       occupants[b.id] = (occupants[b.id] || 0) + 1;
     });
@@ -630,7 +760,7 @@ var Monde = (function () {
       if (h.maison) return;
       var best = null, bd = 1e9;
       m.batiments.forEach(function (b) {
-        var cap = b.etat === 'fini' ? (D.batiments[b.type].lits || 0) : (b.renove || 0);
+        var cap = b.enFeu ? 0 : b.etat === 'fini' ? (D.batiments[b.type].lits || 0) : (b.renove || 0);
         if (cap <= (occupants[b.id] || 0)) return;
         var d = dist([h.x, h.y], [b.x, b.y]); if (d < bd) { bd = d; best = b; }
       });
@@ -697,7 +827,7 @@ var Monde = (function () {
       if (h.changeTenue <= 0) {
         h.changeTenue = null;
         var al = D.allures[m.epoque];
-        var nouvelle = h.allure === 'sage' ? 'sage' : h.enfant ? al.enfant : (h.metier && al[h.metier]) || choisir(m, al.adulte);
+        var nouvelle = h.allure === 'sage' ? 'sage' : h.enfant ? al.enfant : (h.metier && tenue(al, h.metier, h.id)) || choisir(m, al.adulte);
         if (nouvelle !== h.allure) { h.allure = nouvelle; h.pouf = 0.6; }
       }
     }
@@ -762,9 +892,18 @@ var Monde = (function () {
                 if (c.etape >= 3) m.evenements.push({ type: 'merveille', bat: c.id });
               }
               if (surGue(c.type)) { m.terrain.passerelle = true; if (c.type === 'pont-pierre') m.pontEmporte = false; }
+              if (c.type === 'gare' && !m.rails) poserRails(m, c);
               m.evenements.push({ type: 'fini', bat: c.id });
             }
           }
+        } else if (e.fait === 'eteindre') {
+          var bf = bat(m, e.bat);
+          if (bf && bf.enFeu) {
+            bf.enFeu = false;
+            m.incendie = null;
+            m.evenements.push({ type: 'eteint', bat: bf.id, x: bf.x, y: bf.y });
+          }
+          h.changeTenue = 2; // le pompier rentre se changer
         } else if (e.fait === 'chasser') {
           var proie = m.animaux.filter(function (a) { return a.id === e.animal; })[0];
           if (proie) { proie.parti = true; m.evenements.push({ type: 'chasse', espece: proie.espece, x: proie.x, y: proie.y, loin: !!e.loin }); }
@@ -845,7 +984,7 @@ var Monde = (function () {
     var al = D.allures[m.epoque];
     var manque = m.batiments.filter(function (b) { return b.etat === 'fini' && (b.ouvriers || []).length < places(b) && !inactif(m, b); });
     var enfant = !manque.length && hasard(m) < 0.3;
-    var allure = enfant ? al.enfant : (manque.length ? al[D.batiments[manque[0].type].travail.metier] : choisir(m, al.adulte));
+    var allure = enfant ? al.enfant : (manque.length ? tenue(al, D.batiments[manque[0].type].travail.metier, m.prochainId) : choisir(m, al.adulte));
     // on arrive par la plage
     var dep = pointLibre(m, TR.centre(TR.CI + 6, TR.CJ + 6), 2, function (t) { return t.sol === 'sable' || t.sol === 'herbe'; });
     var h = ajouterHabitant(m, { allure: allure || choisir(m, al.adulte), enfant: enfant, x: dep[0], y: dep[1] });
@@ -894,6 +1033,7 @@ var Monde = (function () {
     m.habitants.forEach(function (h) { avancer(m, h, dt); });
     lapins(m, dt);
     crue(m);
+    incendie(m);
     m.animaux.forEach(function (a) { bougerAnimal(m, a, dt); });
     m.animaux = m.animaux.filter(function (a) { return !a.parti; });
     arrivees(m, dt);
@@ -933,6 +1073,7 @@ var Monde = (function () {
       if (base.tuiles.length === o.terrain.tuiles.length) o.terrain.tuiles.forEach(function (t, i) { t.ile = base.tuiles[i].ile; });
     }
     if (o.nourriture == null) { o.nourriture = 30; o.faim = 0; }
+    if (o.batiments.some(function (b) { return b.type === 'pont-pierre'; }) && o.terrain && o.terrain.tuiles) degagerPont(o);
     o.batiments.forEach(function (b) {
       if (!b.ouvriers) { b.ouvriers = b.ouvrier ? [b.ouvrier] : []; delete b.ouvrier; }
       if (D.batiments[b.type] && D.batiments[b.type].merveille && b.etape == null) b.etape = 3;
@@ -945,7 +1086,7 @@ var Monde = (function () {
     emplacementsLibres: emplacementsLibres, ancrePour: ancrePour, ancreValide: ancreValide,
     peutConstruire: peutConstruire, aDeLaPlace: aDeLaPlace,
     decouvertesEpoque: decouvertesEpoque, etatDecouverte: etatDecouverte, decouvrir: decouvrir,
-    epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter,
+    epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter, poserRails: poserRails,
     lits: lits, bat: bat, exporter: exporter, importer: importer, exporterLeger: exporterLeger, developper: developper, BULLES_MAX: BULLES_MAX,
     heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
     phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES,

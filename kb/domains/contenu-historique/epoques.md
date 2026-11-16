@@ -62,6 +62,8 @@ Dans le jeu depuis le 16/11/2026 (branche `moyen-age`, cf. `journal/2026-11-sess
 | Train | Machine à vapeur, Roue | Les voyages durent des jours → le train | Gare, rails |
 | Bateau à vapeur | Machine à vapeur, Voile | Sans vent, le bateau n'avance pas → la vapeur | Port à vapeur |
 
+Dans le jeu depuis le 16/11/2026 (branche `vapeur`, cf. `journal/2026-11-session-05.md`) : les quatre découvertes ci-dessus, avec la mine de charbon, l'usine (métiers à tisser), la gare (le chemin de fer va de la gare jusqu'à un tunnel au bord de l'île, un petit train fait l'aller et retour), le port à vapeur (un bateau à roues sur l'eau) ; la maison en briques et l'immeuble ; l'atelier de l'inventrice pour les idées (proposition de Claude) ; la caserne des pompiers. La machine à vapeur fait aussi mieux tourner le moulin. Le petit problème de l'incendie est dans le jeu : peu après l'arrivée, une étincelle de cheminée met le feu à une maison (personne ne peut y dormir) ; la caserne des pompiers vient avec la machine à vapeur, et un pompier éteint le feu avec la pompe à vapeur.
+
 ## 6. L'électricité
 | Découverte | Prérequis | Problème résolu | Ce qui pousse |
 |---|---|---|---|
@@ -86,7 +88,7 @@ Dans le jeu depuis le 16/11/2026 (branche `moyen-age`, cf. `journal/2026-11-sess
 | Néolithique | Blé mangé par les souris | Grenier |
 | Métaux | Crue de la rivière | (digue, à ajouter ?) |
 | Moyen Âge | Pont emporté | Pont de pierre (dans le jeu, session 04) |
-| Vapeur | Incendie | (pompiers, à ajouter ?) |
+| Vapeur | Incendie | Caserne des pompiers et pompe à vapeur, après la machine à vapeur (dans le jeu, session 05) |
 | Électricité | Nuit noire en ville | Ampoule |
 | Moderne | Air sale | Énergie solaire |
 
