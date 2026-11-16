@@ -150,7 +150,7 @@ var Monde = (function () {
     if (!tuiles) return false;
     for (var n = 0; n < tuiles.length; n++) {
       var t = tuiles[n];
-      if (!TR.surIle(T, t) || t.bat || t.gue || t.rail) return false;
+      if (!TR.surIle(T, t) || t.bat || t.gue || t.rail || t.poteau || t.lampe) return false;
       if (t.obj && t.obj !== 'souche') return false;
       if (d.zone === 'plage') { if (t.sol !== 'sable') return false; }
       else if (d.zone === 'grotte' || d.zone === 'colline') { if (t.sol !== 'herbe' && t.sol !== 'roche') return false; }
@@ -234,6 +234,7 @@ var Monde = (function () {
     m.decouvertes[id] = m.t;
     m.evenements.push({ type: 'decouverte', id: id });
     if (id === 'pont') poserPontPierre(m);
+    if (id === 'ampoule') allumerVille(m);
     if (epoqueTerminee(m)) m.evenements.push({ type: 'fin-epoque', epoque: m.epoque });
     return true;
   }
@@ -272,6 +273,12 @@ var Monde = (function () {
     if (m.epoque === 5) {
       // le petit problème de la vapeur (epoques.md) : bientôt, une étincelle de cheminée met le feu à une maison
       m.feuPrevu = m.t + DELAI_INCENDIE;
+    }
+    if (m.epoque === 6) {
+      // le petit problème de l'électricité (epoques.md) : au premier soir, la ville trop grande reste dans le noir
+      if (!m.decouvertes.ampoule) m.nuitNoire = 'prevue';
+      // la grille est pleine : l'île ne grandit plus. La ville gagne un peu de place sur la lisière de la forêt (des souches, où l'on peut bâtir)
+      defricher(m, 120);
     }
     m.habitants.forEach(function (h) { h.changeTenue = hasard(m) * 8; });
     m.evenements.push({ type: 'epoque', epoque: m.epoque });
@@ -366,7 +373,8 @@ var Monde = (function () {
       var id = Math.floor(kk / 4), t = T.tuiles[id];
       var bord = DIRS.some(function (dd) { var v = TR.tuile(T, t.i + dd[0], t.j + dd[1]); return !v || !TR.surIle(T, v); });
       if (!bord || t.sol === 'sable') return;
-      var sc = (t.i + t.j) * 0.5 + g[kk];
+      // une vraie petite ligne : au moins quelques cases entre la gare et le tunnel
+      var sc = (t.i + t.j) * 0.5 + g[kk] + (g[kk] < 3 ? 40 : 0);
       if (sc < bs) { bs = sc; best = +kk; }
     });
     if (best == null) return null;
@@ -374,17 +382,129 @@ var Monde = (function () {
     while (x != null) { var tt = T.tuiles[Math.floor(x / 4)]; if (!chemin.length || chemin[0] !== tt) chemin.unshift(tt); x = venu[x]; }
     chemin.forEach(function (t) { t.rail = true; if (t.obj && t.obj !== 'grotte') t.obj = null; t.deco = null; });
     var fin = chemin[chemin.length - 1];
-    // on voit la ligne : les arbres qui la bordent et ceux devant le tunnel sont abattus (des souches restent)
+    m.rails = { tuiles: chemin.map(function (t) { return [t.i, t.j]; }), gare: gare.id };
+    degagerRails(m);
+    m.evenements.push({ type: 'rails', x: fin ? TR.centre(fin.i, fin.j)[0] : gare.x, y: fin ? TR.centre(fin.i, fin.j)[1] : gare.y });
+    return m.rails;
+  }
+
+  // la lisière de la forêt la plus proche du village recule d'un cran : des souches où l'on peut bâtir
+  function defricher(m, n) {
+    var T = m.terrain, c = TR.centre(TR.CI, TR.CJ);
+    var l = T.tuiles.filter(function (t) {
+      if (t.obj !== 'arbre' || t.reserve || !TR.surIle(T, t) || t.sauvage) return false;
+      for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { var v = TR.tuile(T, t.i + di, t.j + dj); if (v && TR.surIle(T, v) && v.sol === 'herbe' && v.obj !== 'arbre') return true; }
+      return false;
+    });
+    l.sort(function (a, b) { return dist(TR.centre(a.i, a.j), c) - dist(TR.centre(b.i, b.j), c); });
+    l.slice(0, n).forEach(function (t) { t.obj = 'souche'; t.bois = 0; });
+    return Math.min(n, l.length);
+  }
+  // pour la copie confiée à Ludiworld : des nombres arrondis, et sans les trajets en cours (ils se recalculent tout seuls)
+  function r1(v) { return typeof v === 'number' ? Math.round(v * 10) / 10 : v; }
+  function arrondir(c) {
+    (c.habitants || []).forEach(function (h) {
+      h.x = r1(h.x); h.y = r1(h.y);
+      (h.etapes || []).forEach(function (e) { delete e.route; if (e.p) e.p = e.p.map(r1); if (e.reste != null) e.reste = r1(e.reste); });
+    });
+    (c.animaux || []).forEach(function (a) { a.x = r1(a.x); a.y = r1(a.y); if (a.etapes) a.etapes = a.etapes.map(function (q) { return Array.isArray(q) ? q.map(r1) : q; }); if (a.fuit) a.fuit = a.fuit.map(r1); });
+    if (c.terrain && c.terrain.tuiles) c.terrain.tuiles.forEach(function (t) { if (t.usure) t.usure = Math.round(t.usure * 1000) / 1000; });
+    return c;
+  }
+
+  // ---------- l'électricité : les poteaux et les fils, puis les lampadaires (le petit problème de l'électricité) ----------
+  // une ligne de poteaux, de la centrale (ou du central téléphonique) jusqu'au cercle des anciens, au cœur du village
+  function poserLigne(m, b, genre) {
+    var T = m.terrain;
+    m.lignes = m.lignes || [];
+    if (m.lignes.some(function (l) { return l.de === b.id; })) return null;
+    var cercle = m.batiments.filter(function (x) { return x.type === 'cercle-pierres'; })[0];
+    var gi = cercle ? cercle.i : TR.CI, gj = cercle ? cercle.j : TR.CJ, gk = cercle ? cercle.k : 1;
+    var passe = function (t) { return t && TR.surIle(T, t) && (t.sol !== 'eau' || t.gue) && !t.bat && t.obj !== 'grotte'; };
+    var cle = function (t) { return t.i * TR.N + t.j; };
+    var autour = function (i0, j0, k) {
+      var l = [];
+      for (var a = -1; a <= k; a++) for (var c = -1; c <= k; c++) {
+        if (a >= 0 && a < k && c >= 0 && c < k) continue;
+        var t = TR.tuile(T, i0 + a, j0 + c); if (passe(t)) l.push(t);
+      }
+      return l;
+    };
+    var depart = autour(b.i, b.j, b.k), but = {};
+    autour(gi, gj, gk).forEach(function (t) { but[cle(t)] = true; });
+    if (!depart.length) return null;
+    var venu = {}, file = depart.slice(), fin = null;
+    depart.forEach(function (t) { venu[cle(t)] = -1; });
+    while (file.length) {
+      var c = file.shift();
+      if (but[cle(c)]) { fin = c; break; }
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+        var n = TR.tuile(T, c.i + d[0], c.j + d[1]);
+        if (!passe(n) || venu[cle(n)] != null) return;
+        venu[cle(n)] = cle(c); file.push(n);
+      });
+    }
+    if (!fin) return null;
+    var chemin = [], x = cle(fin);
+    while (x != null && x !== -1) { chemin.unshift(T.tuiles[x]); x = venu[x]; }
+    // un poteau toutes les trois cases environ, sur une case libre (pas sur le gué, ni sur les rails)
+    var poteaux = [], dernier = -9;
     chemin.forEach(function (t, k) {
-      var r = k >= chemin.length - 2 ? 2 : 1;
+      var bout = k === chemin.length - 1 || k === 0;
+      if (k - dernier < 3 && !bout) return;
+      if (t.poteau) { poteaux.push([t.i, t.j]); dernier = k; return; } // un poteau déjà là : on y accroche aussi ce fil
+      if (t.gue || t.rail || t.lampe || t.sol !== 'herbe' || (t.obj && t.obj !== 'souche' && t.obj !== 'arbre')) return;
+      if (t.obj === 'arbre') { t.obj = 'souche'; t.bois = 0; }
+      t.poteau = genre; t.deco = null; dernier = k;
+      poteaux.push([t.i, t.j]);
+    });
+    if (!poteaux.length) return null;
+    var ligne = { genre: genre, de: b.id, vers: cercle ? cercle.id : null, poteaux: poteaux };
+    m.lignes.push(ligne);
+    m.evenements.push({ type: 'ligne', genre: genre, bat: b.id, x: b.x, y: b.y });
+    return ligne;
+  }
+  // l'ampoule : des lampadaires électriques le long des chemins les plus usés, et près des maisons
+  function allumerVille(m) {
+    var T = m.terrain;
+    if (m.lampes && m.lampes.length) return m.lampes;
+    var libre = function (t) { return TR.surIle(T, t) && t.sol === 'herbe' && !t.bat && !t.rail && !t.poteau && !t.gue && (!t.obj || t.obj === 'souche'); };
+    var c = TR.centre(TR.CI, TR.CJ);
+    var l = T.tuiles.filter(function (t) { return libre(t) && t.usure >= 0.3; });
+    l.sort(function (a, b) { return (b.usure - a.usure) || (dist(TR.centre(a.i, a.j), c) - dist(TR.centre(b.i, b.j), c)); });
+    // et le long des maisons, si les chemins ne suffisent pas
+    var pres = T.tuiles.filter(function (t) {
+      if (!libre(t) || t.usure >= 0.3) return false;
+      for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { var v = TR.tuile(T, t.i + di, t.j + dj); var vb = v && v.bat && bat(m, v.bat); if (vb && D.batiments[vb.type].lits) return true; }
+      return false;
+    });
+    pres.sort(function (a, b) { return dist(TR.centre(a.i, a.j), c) - dist(TR.centre(b.i, b.j), c); });
+    var choisis = [];
+    l.concat(pres).forEach(function (t) {
+      if (choisis.length >= 16) return;
+      if (choisis.some(function (q) { return Math.max(Math.abs(q.i - t.i), Math.abs(q.j - t.j)) < 3; })) return;
+      choisis.push(t);
+    });
+    choisis.forEach(function (t) { t.lampe = true; t.deco = null; if (t.obj === 'souche') t.obj = null; });
+    m.lampes = choisis.map(function (t) { return [t.i, t.j]; });
+    m.nuitNoire = 'resolue';
+    m.evenements.push({ type: 'lumiere', n: choisis.length });
+    return m.lampes;
+  }
+
+  // on voit la ligne : les arbres qui la bordent sont abattus, et plus largement devant le tunnel (des souches restent)
+  function degagerRails(m) {
+    var T = m.terrain, R = m.rails && m.rails.tuiles;
+    if (!R) return;
+    R.forEach(function (c, k) {
+      var r = k >= R.length - 3 ? 3 : 1;
       for (var di = -r; di <= r; di++) for (var dj = -r; dj <= r; dj++) {
-        var v = TR.tuile(T, t.i + di, t.j + dj);
+        // devant le tunnel, ce qui le cache est plus bas à l'écran : on dégage surtout de ce côté
+        if (r === 3 && di + dj < -1) continue;
+        var v = TR.tuile(T, c[0] + di, c[1] + dj);
         if (v && v.obj === 'arbre' && !v.reserve) { v.obj = 'souche'; v.bois = 0; }
       }
     });
-    m.rails = { tuiles: chemin.map(function (t) { return [t.i, t.j]; }), gare: gare.id };
-    m.evenements.push({ type: 'rails', x: fin ? TR.centre(fin.i, fin.j)[0] : gare.x, y: fin ? TR.centre(fin.i, fin.j)[1] : gare.y });
-    return m.rails;
   }
 
   // ---------- le pont emporté, puis le pont de pierre (le petit problème du Moyen Âge) ----------
@@ -512,13 +632,17 @@ var Monde = (function () {
     if (ph === 'aube') m.jour = (m.jour || 0) + 1;
     m.evenements.push({ type: 'phase', phase: ph });
     if (ph === 'soir') manger(m);
+    if (ph === 'soir' && m.epoque >= 6 && !m.decouvertes.ampoule && (m.nuitNoire === 'prevue' || m.nuitNoire === true)) {
+      m.evenements.push({ type: 'nuit-noire', encore: m.nuitNoire === true });
+      m.nuitNoire = true;
+    }
     if (ph === 'nuit') {
       // les feux s'éteignent : tout le monde va se coucher
       m.habitants.forEach(function (h) { lacher(m, h); });
     }
   }
   // la réserve de nourriture : ce qu'on sait conserver (ADR-036)
-  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40, moulin: 50, 'port-vapeur': 60 };
+  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40, moulin: 50, 'port-vapeur': 60, ferme: 70 };
   function reserveMax(m) {
     return m.batiments.reduce(function (s, b) { return s + (b.etat === 'fini' || b.niveau ? (RESERVE[b.type] || 0) : 0); }, RESERVE.base);
   }
@@ -566,6 +690,8 @@ var Monde = (function () {
   function feux(m) { return m.batiments.filter(function (b) { return b.type === 'feu' && b.etat === 'fini'; }); }
   function eclaire(m, p) {
     if (m.cycle.phase === 'nuit') return false; // les feux sont éteints
+    if (m.nuitNoire === true) return false; // la nuit noire en ville : le feu de camp n'éclaire plus les rues
+    if (m.lampes && m.lampes.length) return true; // l'ampoule : toute la ville est éclairée le soir
     return feux(m).some(function (f) { return Math.hypot(p[0] - f.x, (p[1] - f.y) / 0.6) < RAYON_FEU; });
   }
   function feuProche(m, p) {
@@ -839,13 +965,15 @@ var Monde = (function () {
         if (!e.route) e.route = TR.chemin(m.terrain, [h.x, h.y], e.p);
         var cible = e.route[0];
         var dx = cible[0] - h.x, dy = cible[1] - h.y, d = Math.hypot(dx, dy);
-        var pas = h.vitesse * reste;
+        // la nuit noire en ville : on avance à tâtons
+        var vit = m.nuitNoire === true && estNuit(m) ? h.vitesse * 0.5 : h.vitesse;
+        var pas = vit * reste;
         h.marche = true; h.anim = 'marche'; h.pose = null; h.dans = null;
         if (Math.abs(dx) > 2) h.dir = dx > 0 ? 1 : -1;
-        TR.user(m.terrain, h.x, h.y, Math.min(reste, d / h.vitesse)); // l'herbe s'use sous les pas (ADR-013)
+        TR.user(m.terrain, h.x, h.y, Math.min(reste, d / vit)); // l'herbe s'use sous les pas (ADR-013)
         if (d <= pas) {
           h.x = cible[0]; h.y = cible[1];
-          reste -= d / h.vitesse;
+          reste -= d / vit;
           e.route.shift();
           if (!e.route.length) h.etapes.shift();
         } else {
@@ -893,6 +1021,7 @@ var Monde = (function () {
               }
               if (surGue(c.type)) { m.terrain.passerelle = true; if (c.type === 'pont-pierre') m.pontEmporte = false; }
               if (c.type === 'gare' && !m.rails) poserRails(m, c);
+              if (c.type === 'centrale' || c.type === 'central-telephone') poserLigne(m, c, c.type === 'centrale' ? 'elec' : 'tel');
               m.evenements.push({ type: 'fini', bat: c.id });
             }
           }
@@ -1045,7 +1174,7 @@ var Monde = (function () {
   // Pour la sauvegarde confiée à Ludiworld : la carte est la même au départ pour toutes les parties (elle pèse 200 000 caractères),
   // on n'en garde que les cases qui ont changé (arbres abattus, chemins, bâtiments, île agrandie).
   function exporterLeger(m) {
-    var c = exporter(m), T = c.terrain, base = TR.generer(), delta = [], meta = {};
+    var c = arrondir(exporter(m)), T = c.terrain, base = TR.generer(), delta = [], meta = {};
     T.tuiles.forEach(function (t, i) { if (JSON.stringify(t) !== JSON.stringify(base.tuiles[i])) delta.push([i, t]); });
     Object.keys(T).forEach(function (k) { if (k !== 'tuiles') meta[k] = T[k]; });
     c.terrain = { leger: true, n: T.tuiles.length, meta: meta, delta: delta };
@@ -1074,6 +1203,7 @@ var Monde = (function () {
     }
     if (o.nourriture == null) { o.nourriture = 30; o.faim = 0; }
     if (o.batiments.some(function (b) { return b.type === 'pont-pierre'; }) && o.terrain && o.terrain.tuiles) degagerPont(o);
+    if (o.rails && o.terrain && o.terrain.tuiles) degagerRails(o); // le tunnel n'est plus caché par la forêt (aussi dans une partie reprise)
     o.batiments.forEach(function (b) {
       if (!b.ouvriers) { b.ouvriers = b.ouvrier ? [b.ouvrier] : []; delete b.ouvrier; }
       if (D.batiments[b.type] && D.batiments[b.type].merveille && b.etape == null) b.etape = 3;
@@ -1086,8 +1216,8 @@ var Monde = (function () {
     emplacementsLibres: emplacementsLibres, ancrePour: ancrePour, ancreValide: ancreValide,
     peutConstruire: peutConstruire, aDeLaPlace: aDeLaPlace,
     decouvertesEpoque: decouvertesEpoque, etatDecouverte: etatDecouverte, decouvrir: decouvrir,
-    epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter, poserRails: poserRails,
-    lits: lits, bat: bat, exporter: exporter, importer: importer, exporterLeger: exporterLeger, developper: developper, BULLES_MAX: BULLES_MAX,
+    epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter, poserRails: poserRails, poserLigne: poserLigne, allumerVille: allumerVille,
+    lits: lits, bat: bat, exporter: exporter, arrondir: arrondir, importer: importer, exporterLeger: exporterLeger, developper: developper, BULLES_MAX: BULLES_MAX,
     heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
     phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES,
     amelioration: amelioration, ameliorer: ameliorer, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX,

@@ -215,11 +215,12 @@
     usureT = 0;
     var T = monde.terrain, u = usureCv.getContext('2d');
     var routes = !!monde.decouvertes.roue; // avec la roue, les chemins les plus usés deviennent des routes de pierre
+    var goudron = !!monde.decouvertes.voiture; // avec la voiture, elles sont goudronnées
     u.clearRect(0, 0, usureCv.width, usureCv.height);
     T.tuiles.forEach(function (t) {
       if (t.sol !== 'herbe' || t.usure < 0.1 || !TR.surIle(T, t)) return;
       var e = TR.etatHerbe(t);
-      var col = e <= 1 ? [200, 192, 118] : e === 2 ? [190, 156, 104] : routes ? [166, 156, 142] : [172, 130, 86];
+      var col = e <= 1 ? [200, 192, 118] : e === 2 ? [190, 156, 104] : goudron ? [118, 118, 122] : routes ? [166, 156, 142] : [172, 130, 86];
       var a = e <= 1 ? 0.3 + t.usure * 0.8 : e === 2 ? 0.7 : 0.9;
       var p = TR.centre(t.i, t.j), x = p[0] * G, y = p[1] * G;
       u.save(); u.translate(x, y); u.scale(1, 0.5);
@@ -289,7 +290,7 @@
     ctx.globalAlpha = 1;
   }
   function dessinerTunnel() {
-    var R = monde.rails, im = IMG['05-vapeur/tunnel']; if (!R || !im) return;
+    var R = monde.rails, im = IMG['05-vapeur/tunnel']; if (!R || !im || !R.tuiles || R.tuiles.length < 2) return;
     var t = R.tuiles, z = TR.centre(t[t.length - 1][0], t[t.length - 1][1]), y = TR.centre(t[t.length - 2][0], t[t.length - 2][1]);
     var w = 230 * V.s, H = w * im.height / im.width, p = E(z[0] + (z[0] - y[0]) * 0.35, z[1] + (z[1] - y[1]) * 0.35 + 30);
     // l'entrée du tunnel regarde vers le bas à gauche ; on la retourne quand les rails partent vers la droite
@@ -377,6 +378,7 @@
   var GRANDIT = { 2: 1.16, 3: 1.32 };
   function tailleBat(b) {
     var d = D.batiments[b.type], n = b.niveau || 1, im = IMG[d.sprite], k = 1;
+    if (b.type === 'lampadaire' && monde.decouvertes.ampoule && IMG['06-electricite/lampadaire']) im = IMG['06-electricite/lampadaire'];
     if (n > 1 && IMG['niveaux/' + b.type + '-' + n]) { im = IMG['niveaux/' + b.type + '-' + n]; k = d.grandit ? d.grandit[n] : GRANDIT[n] / (b.k > 1 ? 1.06 : 1); }
     var w = d.largeur * V.s * k;
     return { w: w, h: im ? w * im.height / im.width : w, im: im };
@@ -411,6 +413,7 @@
       if (age < 0.7) k = 1 + Math.sin(age / 0.7 * Math.PI) * 0.18 * (1 - age / 0.7) - (age < 0.1 ? 0.3 * (1 - age / 0.1) : 0);
       dessinerSprite(t.im, p[0], p[1], t.w * k, t.h * (2 - k));
       if ((b.niveau || 1) > 1) dessinerEtoiles(b, p, t, b.niveau, 0);
+      if (b.type === 'centrale' && Math.random() < 0.03) particule({ type: 'eclat', x: b.x + (Math.random() - 0.5) * 60, y: basBat(b) - 50, vx: (Math.random() - 0.5) * 50, vy: -60, max: 0.4, r: 2.5, c: '255,236,140' });
       return;
     }
     var prog = b.besoin ? b.livre / b.besoin : 1;
@@ -623,7 +626,9 @@
     'maison-colombages': [[0.37, 0.5], [0.53, 0.46], [0.68, 0.53], [0.29, 0.55]],
     'maison-etages': [[0.4, 0.49], [0.26, 0.53], [0.52, 0.62], [0.43, 0.27], [0.27, 0.31], [0.52, 0.37]],
     'maison-briques': COUCHAGES_BRIQUES,
-    immeuble: COUCHAGES_IMMEUBLE
+    immeuble: COUCHAGES_IMMEUBLE,
+    'maison-ville': [[0.46, 0.37], [0.66, 0.3], [0.46, 0.56], [0.7, 0.52], [0.48, 0.79], [0.72, 0.74]], // réglés sur coupe/maison-ville
+    'grand-immeuble': [[0.33, 0.24], [0.24, 0.44], [0.26, 0.63], [0.24, 0.8], [0.44, 0.5], [0.45, 0.69], [0.46, 0.87]] // réglés sur coupe/grand-immeuble
   };
   function enCoupe(b) {
     if (b && b.enFeu) return false; return b && b.etat === 'fini' && COUCHAGES[b.type] && IMG['coupe/' + b.type] && dormeursChez[b.id] > 0; }
@@ -705,7 +710,8 @@
     'allume-feu': 1.6, 'paysan-faucille': 1.6, 'berger-agneau': 0.9, potiere: 1.1, meuniere: 1.8,
     'e3-forgeron': 2.6, 'e3-scribe': 0.8, 'e3-marchande': 0.9, 'e3-marin': 1.2, 'e3-charron': 2.2, 'e3-bucheron': 2.4, 'e3-faucille': 1.6, 'e3-tour-potier': 1.4,
     'e4-marechal': 2.6, 'e4-meunier': 1.2, 'e4-boulangere': 1.1, 'e4-horloger': 0.8, 'e4-imprimeur': 1.3, 'e4-bucheron': 2.4, 'e4-faucille': 1.6, 'e4-marchande': 0.9,
-    'e5-mineur': 2.4, 'e5-ouvriere': 1.4, 'e5-cheminot': 0.9, 'e5-inventrice': 1.2, 'e5-pompier': 3, 'e5-bucheron': 2.4, 'e5-faucille': 1.6, 'e5-matelot': 1.1 };
+    'e5-mineur': 2.4, 'e5-ouvriere': 1.4, 'e5-cheminot': 0.9, 'e5-inventrice': 1.2, 'e5-pompier': 3, 'e5-bucheron': 2.4, 'e5-faucille': 1.6, 'e5-matelot': 1.1,
+    'e6-electricien': 1.6, 'e6-standardiste': 1.2, 'e6-aviatrice': 1.4, 'e6-mecanicien': 2, 'e6-fermier': 1.6, 'e6-chercheuse': 0.8, 'e6-citadine': 0.9, 'e6-bucheron': 2.4 };
   function spritePorteur(h) {
     var l = D.porteurs[monde.epoque] || {}, x = h.porte && l[h.porte];
     if (x && typeof x === 'object') x = D.femmes.indexOf(h.allure) >= 0 ? x.f : x.h;
@@ -945,8 +951,11 @@
       forgeron: ['Ding, ding !', 'Du bon bronze !'], scribe: ['Douze sacs…', 'Je note tout !'], marchand: ['Trois pièces !', 'Qui veut des figues ?'],
       marin: ['Hissez la voile !', 'Bon vent !'], charron: ['Encore un rayon !', 'Elle roule !'],
       marechal: ['Tac, tac !', 'Un fer tout neuf !'], moulinier: ['Ça tourne !', 'De la farine !'], boulanger: ['Le pain est prêt !', 'Tout chaud !'], horloger: ['Tic, tac !', 'Midi pile !'], imprimeur: ['Encore une page !', 'Un beau livre !'],
-      mineur: ['Du charbon !', 'Toc, toc, la pioche !'], ouvriere: ['Quel beau tissu !', 'Les fils tournent !'], cheminot: ['En voiture !', 'Tuuut !'], inventeur: ['Eurêka !', 'Encore un boulon…'], matelot: ['En avant !', 'Ohé !'], pompier: ['Au feu !', 'Plus fort, la pompe !']
+      mineur: ['Du charbon !', 'Toc, toc, la pioche !'], ouvriere: ['Quel beau tissu !', 'Les fils tournent !'], cheminot: ['En voiture !', 'Tuuut !'], inventeur: ['Eurêka !', 'Encore un boulon…'], matelot: ['En avant !', 'Ohé !'], pompier: ['Au feu !', 'Plus fort, la pompe !'],
+      electricien: ['Ça grésille !', 'Encore un fil !'], standardiste: ['Allô ?', 'Je vous passe !'], aviatrice: ['Contact !', 'En route vers le ciel !'],
+      mecanicien: ['Vroum !', 'Un petit boulon…'], fermier: ['Belle récolte !', 'Allez, mon tracteur !'], chercheur: ['Eurêka !', 'Ça brille !']
     },
+    noir: ['Il fait tout noir !', 'Je ne vois rien…', 'Aïe, où est le chemin ?'],
     faim: ['J\'ai faim !', 'Mon ventre gargouille…', 'Il reste à manger ?'],
     porte: { baies: ['Plein de baies !'], lait: ['Du bon lait !'], pot: ['Un pot tout neuf !'], farine: ['De la farine !'], bois: ['Lourd, ce bois !', 'Du bois !'], viande: ['Ce soir, on mange !'], lapin: ['Un lapin pour ce soir !'], poisson: ['Regardez ma pêche !'],
       silex: ['Des cailloux tout neufs !'], ble: ['Plein de blé !'], argile: ['De la bonne argile !'], minerai: ['Du minerai pour la forge !'], outil: ['Une hache toute neuve !'] },
@@ -970,6 +979,7 @@
     if (h.porte && BARKS.porte[h.porte]) return auHasard(BARKS.porte[h.porte]);
     if (h.reserve) return auHasard(BARKS.chantier);
     if (h.pose && BARKS.travail[h.metier]) return auHasard(BARKS.travail[h.metier]);
+    if (monde.nuitNoire === true && M.estNuit(monde)) return auHasard(BARKS.noir);
     if (ph === 'soir' && h.etapes.some(function (e) { return e.fait === 'dormir'; })) return auHasard(BARKS.coucher);
     if (ph === 'soir') return auHasard(BARKS.veillee);
     return auHasard(BARKS.libre);
@@ -1089,7 +1099,8 @@
     nctx.globalCompositeOperation = 'source-over';
     nctx.clearRect(0, 0, nuitCv.width, nuitCv.height);
     nctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
-    nctx.fillStyle = 'rgba(14,20,58,' + (0.7 * d) + ')';
+    var noire = monde.nuitNoire === true; // la nuit noire en ville : plus sombre, et le feu de camp n'éclaire plus les rues
+    nctx.fillStyle = 'rgba(10,14,44,' + ((noire ? 0.86 : 0.7) * d) + ')';
     nctx.fillRect(0, 0, V.W, V.H);
     nctx.globalCompositeOperation = 'destination-out';
     var feux = monde.batiments.filter(function (b) { return b.type === 'feu' && b.etat === 'fini'; });
@@ -1103,7 +1114,9 @@
     // en pleine nuit les feux s'éteignent : il ne reste que des braises qui rougeoient un moment
     var braises = M.phase(monde) === 'nuit' ? Math.max(0, 1 - monde.cycle.t / 10) : 1;
     if (braises < 1) vacille *= 0.3 + 0.12 * braises;
-    if (braises > 0) feux.forEach(function (f) { var p = E(f.x, f.y - 20); trou(p[0], p[1], M.RAYON_FEU * V.s * vacille, braises, 0.62); });
+    if (braises > 0) feux.forEach(function (f) { var p = E(f.x, f.y - 20); trou(p[0], p[1], M.RAYON_FEU * V.s * vacille * (noire ? 0.35 : 1), braises, 0.62); });
+    // les lampadaires électriques éclairent les rues toute la nuit
+    (monde.lampes || []).forEach(function (c) { var q = piedLampe(c), p = E(q[0], q[1]); trou(p[0], p[1] - 30 * V.s, 190 * V.s, 0.9, 0.62); });
     // un peu de clair de lune sur les dormeurs, pour bien les voir
     monde.batiments.forEach(function (b) {
       if (!enCoupe(b)) return;
@@ -1120,13 +1133,13 @@
     monde.batiments.forEach(function (b) {
       if (b.etat !== 'fini' || (b.type !== 'lampadaire' && !b.enFeu)) return;
       var t = tailleBat(b), p = E(b.x, basBat(b));
-      trou(p[0], p[1] - t.h * 0.4, (b.enFeu ? 160 : 150) * V.s, 0.8, 0.75);
+      trou(p[0], p[1] - t.h * 0.4, (b.enFeu ? 160 : noire ? 60 : 150) * V.s, noire ? 0.5 : 0.8, 0.75);
     });
     // fenêtres éclairées des maisons (éteintes quand tout le monde dort)
     monde.batiments.forEach(function (b) {
       if (b.etat !== 'fini' || !D.batiments[b.type].lits || monde.epoque < 2 || M.phase(monde) === 'nuit') return;
       var t = tailleBat(b), p = E(b.x, basBat(b));
-      trou(p[0], p[1] - t.h * 0.35, 80 * V.s, 0.7, 0.8);
+      trou(p[0], p[1] - t.h * 0.35, (monde.lampes ? 100 : noire ? 40 : 80) * V.s, noire ? 0.4 : 0.7, 0.8);
     });
     nctx.globalCompositeOperation = 'source-over';
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(nuitCv, 0, 0); ctx.restore();
@@ -1136,6 +1149,12 @@
       var p = E(f.x, f.y - 20), r = M.RAYON_FEU * V.s * 0.55 * vacille;
       var g = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], r);
       g.addColorStop(0, 'rgba(255,130,50,' + (0.26 * d * braises) + ')'); g.addColorStop(1, 'rgba(255,110,40,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fill();
+    });
+    (monde.lampes || []).forEach(function (c) {
+      var q = piedLampe(c), p = E(q[0], q[1] - HAUT_LAMPE * 0.82), r = 70 * V.s;
+      var g = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], r);
+      g.addColorStop(0, 'rgba(255,230,150,' + (0.55 * d) + ')'); g.addColorStop(1, 'rgba(255,210,120,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fill();
     });
     monde.batiments.forEach(function (b) {
@@ -1214,6 +1233,134 @@
     ctx.drawImage(im, -w / 2, -h * 0.8, w, h); ctx.restore();
   }
 
+  // ---------- l'électricité : poteaux et fils, lampadaires, voitures, petit avion ----------
+  var HAUT_POTEAU = 128, HAUT_LAMPE = 112;
+  function piedPoteau(c) { var p = TR.centre(c[0], c[1]); return [p[0] + 26, p[1] + 4]; }
+  function piedLampe(c) { var p = TR.centre(c[0], c[1]); return [p[0] - 24, p[1] + 6]; }
+  function dessinerPoteau(c) {
+    var im = IMG['06-electricite/poteau']; if (!im) return;
+    var q = piedPoteau(c), p = E(q[0], q[1]), H = HAUT_POTEAU * V.s, w = H * im.width / im.height;
+    ombre(p[0] + 3 * V.s, p[1], 9 * V.s, 3 * V.s, 0.2);
+    ctx.drawImage(im, p[0] - w / 2, p[1] - H * 0.97, w, H);
+  }
+  function dessinerLampe(c) {
+    var im = IMG['06-electricite/lampadaire']; if (!im) return;
+    var q = piedLampe(c), p = E(q[0], q[1]), H = HAUT_LAMPE * V.s, w = H * im.width / im.height;
+    ombre(p[0], p[1], 9 * V.s, 3 * V.s, 0.2);
+    ctx.drawImage(im, p[0] - w / 2, p[1] - H * 0.97, w, H);
+  }
+  // les fils : de petites courbes qui pendent d'un poteau à l'autre (deux fils pour l'électricité, un pour le téléphone)
+  function dessinerFils() {
+    var L = monde.lignes; if (!L || !L.length) return;
+    ctx.save(); ctx.lineCap = 'round';
+    L.forEach(function (l) {
+      var pts = l.poteaux.map(function (c) { var q = piedPoteau(c); return [q[0], q[1] - HAUT_POTEAU * 0.9]; });
+      var b = M.bat(monde, l.de);
+      if (b) { var t = tailleBat(b); pts.unshift([b.x + (l.genre === 'tel' ? 10 : -10), basBat(b) - t.h / V.s * 0.55]); }
+      var decal = l.genre === 'tel' ? [8] : [-7, 3];
+      ctx.strokeStyle = l.genre === 'tel' ? 'rgba(70,58,48,0.85)' : 'rgba(48,44,46,0.85)';
+      ctx.lineWidth = Math.max(1, 1.5 * V.s);
+      for (var k = 0; k < pts.length - 1; k++) {
+        var a = pts[k], z = pts[k + 1];
+        if (!visible(a[0], a[1], 300) && !visible(z[0], z[1], 300)) continue;
+        decal.forEach(function (o) {
+          var pa = E(a[0] + o, a[1]), pz = E(z[0] + o, z[1]), mx = (pa[0] + pz[0]) / 2, my = (pa[1] + pz[1]) / 2 + Math.min(18, Math.hypot(pz[0] - pa[0], pz[1] - pa[1]) * 0.08) * (V.s + 0.3);
+          ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.quadraticCurveTo(mx, my, pz[0], pz[1]); ctx.stroke();
+        });
+      }
+    });
+    ctx.restore();
+  }
+
+  // les voitures roulent sur les routes goudronnées (décor animé, comme les pirogues)
+  var voitures = [], routesCle = -1, routesT = 0, routes = [];
+  function estRoute(t) { return t && t.sol === 'herbe' && !t.bat && !t.lampe && !t.poteau && TR.surIle(monde.terrain, t) && TR.etatHerbe(t) === 3; }
+  function majVoitures(dt) {
+    if (!monde.decouvertes.voiture) { voitures = []; return; }
+    routesT -= dt;
+    if (routesT <= 0) { routesT = 4; routes = monde.terrain.tuiles.filter(estRoute); }
+    if (routes.length < 6) return;
+    var IM = ['06-electricite/voiture-rouge', '06-electricite/voiture-jaune', '06-electricite/camionnette'];
+    while (voitures.length < Math.min(3, Math.floor(routes.length / 8) + 1)) {
+      var t0 = routes[Math.floor(Math.random() * routes.length)], c0 = TR.centre(t0.i, t0.j);
+      voitures.push({ x: c0[0], y: c0[1], route: [], attente: Math.random() * 3, dir: -1, im: IM[voitures.length % 3], id: voitures.length });
+    }
+    var nuit = M.phase(monde) === 'nuit';
+    voitures.forEach(function (v) {
+      v.marche = false;
+      if (!v.route.length) {
+        if (v.attente > 0 || nuit) { v.attente -= dt; return; }
+        var tc = TR.tuileDe(v.x, v.y), ici = TR.tuile(monde.terrain, tc[0], tc[1]);
+        if (!estRoute(ici)) { var tr = routes[Math.floor(Math.random() * routes.length)], cr = TR.centre(tr.i, tr.j); v.x = cr[0]; v.y = cr[1]; v.attente = 1; return; }
+        // un trajet sur les routes, d'une case de route à une autre
+        var cle = function (t) { return t.i * 1000 + t.j; }, venu = {}, file = [ici], vus = [];
+        venu[cle(ici)] = ici;
+        while (file.length && vus.length < 400) {
+          var c = file.shift(); vus.push(c);
+          [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]].forEach(function (d) {
+            var n = TR.tuile(monde.terrain, c.i + d[0], c.j + d[1]);
+            if (!estRoute(n) || venu[cle(n)]) return;
+            venu[cle(n)] = c; file.push(n);
+          });
+        }
+        var loin = vus.filter(function (t) { var dd = Math.hypot(t.i - ici.i, t.j - ici.j); return dd > 3; });
+        var cible = loin.length ? loin[Math.floor(Math.random() * loin.length)] : null;
+        v.attente = 2 + Math.random() * 5;
+        if (!cible) return;
+        var l = [], x = cible;
+        while (x && x !== ici) { var q = TR.centre(x.i, x.j); l.unshift([q[0], q[1]]); x = venu[cle(x)]; }
+        v.route = l;
+      }
+      var q = v.route[0], dx = q[0] - v.x, dy = q[1] - v.y, d = Math.hypot(dx, dy), pas = 75 * dt;
+      if (Math.abs(dx) > 1) v.dir = dx > 0 ? 1 : -1;
+      v.marche = true;
+      if (d <= pas) { v.x = q[0]; v.y = q[1]; v.route.shift(); } else { v.x += dx / d * pas; v.y += dy / d * pas; }
+    });
+  }
+  function dessinerVoiture(v) {
+    var im = IMG[v.im]; if (!im) return;
+    var w = (v.im.indexOf('camionnette') > 0 ? 82 : 86) * V.s, H = w * im.height / im.width, p = E(v.x, v.y + 8);
+    var bob = v.marche ? Math.abs(Math.sin(T * 18 + v.id)) * 1.2 * V.s : 0;
+    ombre(p[0], p[1], w * 0.4, 6 * V.s, 0.2);
+    ctx.save(); ctx.translate(p[0], p[1] - bob); ctx.scale(v.dir > 0 ? -1 : 1, 1);
+    ctx.drawImage(im, -w / 2, -H * 0.9, w, H); ctx.restore();
+    if (v.marche && Math.random() < 0.05) particule({ type: 'fumee', x: v.x - v.dir * 40, y: v.y - 6, vx: -v.dir * 10, vy: -10, max: 1.2, r: 5, c: '235,232,228' });
+  }
+
+  // le petit avion : il décolle de l'aérodrome, fait le tour de la vallée et revient se poser
+  var avion = { etat: 'hangar', attente: 4, s: 0 };
+  function aerodrome() { return monde.batiments.filter(function (b) { return b.type === 'aerodrome' && b.etat === 'fini'; })[0] || null; }
+  function posAvion(b) {
+    var C = TR.centre(TR.CI - 2, TR.CJ - 2), A = [b.x - 40, basBat(b) + 10];
+    var r = Math.hypot(A[0] - C[0], (A[1] - C[1]) * 2), a0 = Math.atan2((A[1] - C[1]) * 2, A[0] - C[0]);
+    r = Math.max(r, 520);
+    var a = a0 - avion.s * Math.PI * 2, x = C[0] + Math.cos(a) * r, y = C[1] + Math.sin(a) * r * 0.5;
+    // près du sol au départ et à l'arrivée, on rejoint l'aérodrome
+    var k = Math.min(1, avion.s / 0.08, (1 - avion.s) / 0.08);
+    var px = A[0] + (x - A[0]) * Math.min(1, k * 2), py = A[1] + (y - A[1]) * Math.min(1, k * 2);
+    var z = Math.pow(Math.sin(Math.PI * avion.s), 0.6) * 300;
+    return { x: px, y: py, z: z, dir: Math.sin(a) > 0 ? 1 : -1 };
+  }
+  function majAvion(dt) {
+    var b = aerodrome(); if (!b) return;
+    if (avion.etat === 'hangar') {
+      if (M.estNuit(monde)) return;
+      avion.attente -= dt;
+      if (avion.attente <= 0) { avion.etat = 'vol'; avion.s = 0; }
+      return;
+    }
+    avion.s += dt / 34;
+    if (avion.s >= 1) { avion.etat = 'hangar'; avion.attente = 18 + Math.random() * 20; }
+  }
+  function dessinerAvion() {
+    var b = aerodrome(), im = IMG['06-electricite/avion']; if (!b || !im || avion.etat !== 'vol') return;
+    var q = posAvion(b), p = E(q.x, q.y), w = 140 * V.s * (1 + q.z / 1500), H = w * im.height / im.width;
+    ombre(p[0], p[1], w * 0.32 / (1 + q.z / 200), 5 * V.s / (1 + q.z / 300), 0.16);
+    ctx.save(); ctx.translate(p[0], p[1] - q.z * V.s); ctx.scale(q.dir > 0 ? -1 : 1, 1);
+    ctx.rotate(-0.05 + Math.sin(T * 2) * 0.03);
+    ctx.drawImage(im, -w / 2, -H * 0.7, w, H); ctx.restore();
+  }
+
   function dessiner(dt) {
     ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
     rangerDormeurs();
@@ -1244,15 +1391,22 @@
     monde.animaux.forEach(function (a) { liste.push({ y: a.y, f: dessinerAnimal, o: a }); });
     majPirogues(Math.min(dt || 0, 0.1) * VITESSE);
     pirogues.forEach(function (p) { if (visible(p.x, p.y, 120)) liste.push({ y: p.y, f: dessinerPirogue, o: p }); });
-    if (monde.rails) {
+    if (monde.rails && monde.rails.tuiles && monde.rails.tuiles.length >= 2) { // une ligne d'une seule case : ni train ni tunnel
       majTrain(Math.min(dt || 0, 0.1) * VITESSE);
       var pt = cheminTrain();
       if (pt) { var qt = pointTrain(pt, train.s); liste.push({ y: qt[1] + 2, f: dessinerTrain, o: null }); }
       var rt = monde.rails.tuiles, zt = TR.centre(rt[rt.length - 1][0], rt[rt.length - 1][1]);
       liste.push({ y: zt[1] + 40, f: dessinerTunnel, o: null });
     }
+    (monde.lignes || []).forEach(function (l) { l.poteaux.forEach(function (c) { var q = piedPoteau(c); if (visible(q[0], q[1], 150)) liste.push({ y: q[1], f: dessinerPoteau, o: c }); }); });
+    (monde.lampes || []).forEach(function (c) { var q = piedLampe(c); if (visible(q[0], q[1], 150)) liste.push({ y: q[1], f: dessinerLampe, o: c }); });
+    majVoitures(Math.min(dt || 0, 0.1) * VITESSE);
+    voitures.forEach(function (v) { if (visible(v.x, v.y, 120)) liste.push({ y: v.y + 8, f: dessinerVoiture, o: v }); });
     liste.sort(function (a, b) { return a.y - b.y; });
     liste.forEach(function (e) { e.f(e.o); });
+    dessinerFils();
+    majAvion(Math.min(dt || 0, 0.1) * VITESSE);
+    dessinerAvion();
     fumees(dt);
     dessinerParts(dt);
     dessinerNuit();
@@ -1295,8 +1449,8 @@
     $('btn-merveilles').classList.toggle('pret', merveilles().some(function (t) { var a = actionMerveille(t); return a.genre && a.cout <= monde.pieces; }));
   }
 
-  var ICONE_EPOQUE = { 2: '🌾', 3: '⚒️', 4: '⚙️', 5: '🚂' };
-  var ILLU_EPOQUE = { 1: 'scenes/cueilleurs', 2: 'scenes/agriculture', 3: 'scenes/metaux', 4: 'scenes/moyen-age', 5: 'scenes/vapeur-ville' };
+  var ICONE_EPOQUE = { 2: '🌾', 3: '⚒️', 4: '⚙️', 5: '🚂', 6: '💡' };
+  var ILLU_EPOQUE = { 1: 'scenes/cueilleurs', 2: 'scenes/agriculture', 3: 'scenes/metaux', 4: 'scenes/moyen-age', 5: 'scenes/vapeur-ville', 6: 'scenes/ville-electrique' };
   var signatureBarre = '';
   // le bandeau : deux onglets, construire et embellir (ADR-023)
   function majBarre() {
@@ -1422,12 +1576,12 @@
   var LANGUE = /^en/i.test(document.documentElement.lang) ? 'en' : 'fr';
   var H = D.textes.histoire;
   var MOUVEMENT_REDUIT = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var CINE_IMAGES = { intro: 'histoire/debut', village: 'histoire/village', ville: 'histoire/ville', 'moyen-age': 'histoire/moyen-age', fin: 'histoire/fin' };
-  var PASSAGE = { 2: 'village', 3: 'ville', 4: 'moyen-age' }; // la petite scène qui clôt une époque (avant le bouton doré)
+  var CINE_IMAGES = { intro: 'histoire/debut', village: 'histoire/village', ville: 'histoire/ville', 'moyen-age': 'histoire/moyen-age', vapeur: 'histoire/vapeur', fin: 'histoire/fin' };
+  var PASSAGE = { 2: 'village', 3: 'ville', 4: 'moyen-age', 5: 'vapeur' }; // la petite scène qui clôt une époque (avant le bouton doré)
   // la dernière petite scène déjà vue, pour la rejouer depuis la marque « Fini »
   function dernierPassage() {
     var e = monde.epoque + (M.epoqueTerminee(monde) ? 1 : 0); // l'époque d'après, si celle-ci est finie
-    return e >= 5 ? 'moyen-age' : e >= 4 ? 'ville' : 'village';
+    return e >= 6 ? 'vapeur' : e >= 5 ? 'moyen-age' : e >= 4 ? 'ville' : 'village';
   }
   function cinematique(nom, ensuite) {
     var t = H[nom][LANGUE], box = $('cine'), vid = box.querySelector('video'), img = box.querySelector('img');
@@ -1520,7 +1674,7 @@
     var d = D.decouvertes[id];
     var debloques = Object.keys(D.batiments).filter(function (k) { return D.batiments[k].debloque === id; });
     debloques.forEach(function (k) { if (ui.nouveaux.indexOf(k) < 0) ui.nouveaux.push(k); });
-    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'bronze' && monde.batiments.some(function (b) { return b.type === 'tas-bois'; })) aideUneFois('hache-bronze', A.hacheBronze); if (id === 'fer') aideUneFois('outils-fer', A.outilsFer); if (id === 'vapeur' && monde.batiments.some(function (b) { return b.type === 'moulin'; })) aideUneFois('moulin-vapeur', A.moulinVapeur); if (id === 'pont') { var pp = monde.batiments.filter(function (b) { return b.type === 'pont-pierre'; })[0]; if (pp) centrerSur(pp.x, pp.y); } if (id === 'roue') { aideUneFois('routes', A.routes); if (monde.batiments.some(function (b) { return b.type === 'atelier-potier'; })) setTimeout(function () { aideUneFois('tour-potier', A.tourPotier); }, 5500); } if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); ludiArret('decouverte'); } });
+    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'bronze' && monde.batiments.some(function (b) { return b.type === 'tas-bois'; })) aideUneFois('hache-bronze', A.hacheBronze); if (id === 'fer') aideUneFois('outils-fer', A.outilsFer); if (id === 'vapeur' && monde.batiments.some(function (b) { return b.type === 'moulin'; })) aideUneFois('moulin-vapeur', A.moulinVapeur); if (id === 'ampoule') { var c0 = TR.centre(TR.CI, TR.CJ); centrerSur(c0[0], c0[1]); aideUneFois('lumiere', A.lumiere); } if (id === 'voiture') aideUneFois('voitures', A.voitures); if (id === 'pont') { var pp = monde.batiments.filter(function (b) { return b.type === 'pont-pierre'; })[0]; if (pp) centrerSur(pp.x, pp.y); } if (id === 'roue') { aideUneFois('routes', A.routes); if (monde.batiments.some(function (b) { return b.type === 'atelier-potier'; })) setTimeout(function () { aideUneFois('tour-potier', A.tourPotier); }, 5500); } if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); ludiArret('decouverte'); } });
     sauver();
     ludiProgression();
   }
@@ -1578,6 +1732,10 @@
       if (monde.epoque === 5) {
         aideUneFois('epoque5', A.epoque5);
         setTimeout(function () { aideUneFois('maisons-briques', A.maisonsBriques); }, 12000);
+      }
+      if (monde.epoque === 6) {
+        aideUneFois('epoque6', A.epoque6);
+        setTimeout(function () { aideUneFois('maisons-ville', A.maisonsVille); }, 12000);
       }
       // une nouvelle époque commence (on n'arrive ici au-delà de la première que par le bouton d'époque)
       if (monde.epoque > 1) ludiArret('epoque');
@@ -1776,7 +1934,8 @@
     berger: 'le berger', porteur: 'le porteur', potier: 'la potière', meunier: 'la meunière',
     forgeron: 'le forgeron', scribe: 'le scribe', marchand: 'la marchande', marin: 'le marin', charron: 'le charron',
     marechal: 'le maréchal-ferrant', moulinier: 'le meunier', boulanger: 'la boulangère', horloger: "l'horloger", imprimeur: "l'imprimeur",
-    mineur: 'le mineur', ouvriere: "l'ouvrière", cheminot: 'le chef de gare', inventeur: "l'inventrice", matelot: 'la matelote', pompier: 'le pompier'
+    mineur: 'le mineur', ouvriere: "l'ouvrière", cheminot: 'le chef de gare', inventeur: "l'inventrice", matelot: 'la matelote', pompier: 'le pompier',
+    electricien: "l'électricien", standardiste: 'la standardiste', aviatrice: "l'aviatrice", mecanicien: 'le mécanicien', fermier: 'le fermier', chercheur: 'la chercheuse'
   };
   var infoMinuteur = null;
   function montrerInfo(o) {
@@ -1960,8 +2119,15 @@
       if (bt.type === 'pont-pierre') { if (ici0 && ici0.gue) { infoBatiment(bt); return; } continue; }
       if (Math.abs(x - pb[0]) < t.w * 0.45 && y < pb[1] + 6 && y > pb[1] - t.h * 0.85) { if (bt.enFeu) infoNature('incendie'); else infoBatiment(bt); return; }
     }
+    // le petit avion, les voitures, les lampadaires et les poteaux
+    var ba = aerodrome();
+    if (ba && avion.etat === 'vol') { var qa = posAvion(ba), sa = E(qa.x, qa.y - qa.z); if (Math.abs(x - sa[0]) < 70 * V.s && Math.abs(y - sa[1] + 20 * V.s) < 50 * V.s) { infoNature('avion'); return; } }
+    for (var vi = 0; vi < voitures.length; vi++) { var sv = E(voitures[vi].x, voitures[vi].y + 8); if (Math.abs(x - sv[0]) < 45 * V.s && y < sv[1] + 6 && y > sv[1] - 60 * V.s) { infoNature('voiture'); return; } }
+    var proche = function (l, pied, haut) { return (l || []).some(function (c) { var q = pied(c), sp = E(q[0], q[1]); return Math.abs(x - sp[0]) < 22 * V.s && y < sp[1] + 6 && y > sp[1] - haut * V.s; }); };
+    if (proche(monde.lampes, piedLampe, HAUT_LAMPE)) { infoNature('lampe'); return; }
+    if ((monde.lignes || []).some(function (l) { return proche(l.poteaux, piedPoteau, HAUT_POTEAU); })) { infoNature('poteau'); return; }
     // le chemin de fer : le train, le tunnel, les rails
-    if (monde.rails) {
+    if (monde.rails && monde.rails.tuiles && monde.rails.tuiles.length >= 2) { // une ligne d'une seule case : ni train ni tunnel
       var ptT = cheminTrain();
       if (ptT && !(train.etat === 'tunnel' && train.attente > 0)) { var qT = pointTrain(ptT, train.s), sT = E(qT[0], qT[1]); if (Math.abs(x - sT[0]) < 95 * V.s && y < sT[1] + 8 && y > sT[1] - 80 * V.s) { infoNature('train'); return; } }
       var rtT = monde.rails.tuiles, zT = E.apply(null, TR.centre(rtT[rtT.length - 1][0], rtT[rtT.length - 1][1]));
@@ -1980,7 +2146,7 @@
     }
     var ici = TR.tuile(T0, tc[0], tc[1]);
     if (ici && ici.gue && !T0.passerelle) { infoNature(monde.pontEmporte ? 'gueEmporte' : 'gue'); return; }
-    if (ici && ici.sol === 'herbe' && ici.usure >= 0.4) { infoNature(monde.decouvertes.roue && TR.etatHerbe(ici) === 3 ? 'route' : 'sentier'); return; }
+    if (ici && ici.sol === 'herbe' && ici.usure >= 0.4) { infoNature(TR.etatHerbe(ici) === 3 && monde.decouvertes.voiture ? 'goudron' : monde.decouvertes.roue && TR.etatHerbe(ici) === 3 ? 'route' : 'sentier'); return; }
     cacherInfo();
   }
 
@@ -2020,6 +2186,7 @@
         if (b) { var t = tailleBat(b); pouf(b.x, b.y - t.h / V.s * 0.3, 14); son('fini'); }
         if (b && D.batiments[b.type].lits) aideUneFois('maison', A.maison);
         if (b && b.type === 'pont-pierre') { centrerSur(b.x, b.y); aideUneFois('pont-fini', A.pontFini); }
+        if (b && b.type === 'aerodrome') { avion.etat = 'hangar'; avion.attente = 3; centrerSur(b.x, b.y); aideUneFois('avion', A.avion); }
         if (b && (b.niveau || 1) > 1 && b.__niv !== b.niveau) {
           // un niveau de plus : on le voit et on le fête (ADR-038)
           b.__niv = b.niveau;
@@ -2061,6 +2228,18 @@
         son('fini');
         aideUneFois('eteint', A.eteint);
         sauver();
+      } else if (e.type === 'nuit-noire') {
+        // le petit problème de l'électricité : la ville est trop grande, les rues restent noires
+        son('non');
+        if (enScene) ui.nuitNoireAide = true; else aideUneFois(e.encore ? 'nuit-noire-encore' : 'nuit-noire', e.encore ? A.nuitNoireEncore : A.nuitNoire);
+      } else if (e.type === 'lumiere') {
+        (monde.lampes || []).forEach(function (l, k) { var c = TR.centre(l[0], l[1]); setTimeout(function () { pouf(c[0] - 22, c[1] - 90, 6, '255,236,150'); }, k * 120); });
+        son('fini');
+        sauver();
+      } else if (e.type === 'ligne') {
+        if (!enScene) centrerSur(e.x, e.y);
+        aideUneFois(e.genre === 'tel' ? 'lignes-tel' : 'lignes', e.genre === 'tel' ? A.lignesTel : A.lignes);
+        sauver();
       } else if (e.type === 'rails') {
         train.etat = 'tunnel'; train.attente = 2; train.s = 0;
         if (!enScene) centrerSur(e.x, e.y);
@@ -2068,7 +2247,7 @@
       } else if (e.type === 'chantier' && M.bat(monde, e.bat) && M.bat(monde, e.bat).type === 'pont-pierre') {
         aideUneFois('pont-pierre', A.pontPierre);
       } else if (e.type === 'faim') {
-        aide(monde.epoque >= 5 ? A.faim5 : monde.epoque >= 4 ? A.faim4 : monde.epoque >= 3 ? A.faim3 : monde.epoque >= 2 ? A.faim2 : A.faim1);
+        aide(monde.epoque >= 6 ? A.faim6 : monde.epoque >= 5 ? A.faim5 : monde.epoque >= 4 ? A.faim4 : monde.epoque >= 3 ? A.faim3 : monde.epoque >= 2 ? A.faim2 : A.faim1);
       } else if (e.type === 'grandi') {
         var hg = monde.habitants.filter(function (q) { return q.id === e.hab; })[0];
         if (hg) bark(hg, 'J\'ai grandi !');
@@ -2098,6 +2277,7 @@
     }
     if (ui.crueAide && !enScene) { ui.crueAide = false; aideUneFois('crue', A.crue); }
     if (ui.incendieAide && !enScene) { ui.incendieAide = false; aideUneFois('incendie', A.incendie); }
+    if (ui.nuitNoireAide && !enScene) { ui.nuitNoireAide = false; aideUneFois('nuit-noire', A.nuitNoire); }
     // la maison brûle depuis un moment, sans pompiers : on le rappelle une fois
     if (monde.incendie && !enScene && ui.incendieA != null && monde.t - ui.incendieA > 150 && !monde.batiments.some(function (b) { return b.type === 'caserne'; })) aideUneFois('incendie-encore', A.incendieEncore);
     if (!ui.aide.idee && monde.idees >= 4 && !Object.keys(monde.decouvertes).length && !enScene) {
@@ -2132,7 +2312,7 @@
   addEventListener('resize', redim);
 
   // pour les tests automatiques
-  window.__jeu = { monde: function () { return monde; }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage };
+  window.__jeu = { monde: function () { return monde; }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; } };
 
   chargerImages(function () {
     redim();
@@ -2160,6 +2340,14 @@
       if (!nouvellePartie && monde.epoque === 4 && M.epoqueTerminee(monde)) {
         ui.fini = true;
         setTimeout(function () { aideUneFois('vapeur-arrive', A.vapeurArrive); }, 1500);
+      }
+    }
+    // Et une partie finie quand le jeu s'arrêtait à la vapeur garde « Fini » et apprend l'arrivée de l'électricité.
+    if (!ui.epoque6) {
+      ui.epoque6 = true;
+      if (!nouvellePartie && monde.epoque === 5 && M.epoqueTerminee(monde)) {
+        ui.fini = true;
+        setTimeout(function () { aideUneFois('electricite-arrive', A.electriciteArrive); }, 1500);
       }
     }
     majFini(); // une partie déjà finie : la marque « Fini », et Ludiworld le sait

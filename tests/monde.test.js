@@ -32,20 +32,22 @@ function jouer(graine, reflexe, maxMin, attente) {
   return { m, jalons, stats };
 }
 
-test('une partie se termine : âge de pierre, néolithique, âge des métaux, Moyen Âge, puis la vapeur', () => {
+test('une partie se termine : âge de pierre, néolithique, âge des métaux, Moyen Âge, la vapeur, puis l\'électricité', () => {
   for (const graine of [1, 2, 3]) {
-    const { m, jalons, stats } = jouer(graine, 5, 200);
+    const { m, jalons, stats } = jouer(graine, 5, 240);
     assert.ok(jalons.epoque1, 'âge de pierre fini (graine ' + graine + ')');
     assert.ok(jalons.epoque2, 'néolithique fini (graine ' + graine + ')');
     assert.ok(jalons.epoque3, 'âge des métaux fini (graine ' + graine + ')');
     assert.ok(jalons.epoque4, 'Moyen Âge fini (graine ' + graine + ')');
     assert.ok(jalons.epoque5, 'la vapeur finie (graine ' + graine + ')');
-    assert.strictEqual(m.epoque, 5);
+    assert.ok(jalons.epoque6, 'l\'électricité finie (graine ' + graine + ')');
+    assert.strictEqual(m.epoque, 6);
     assert.ok(m.fini, 'fin du jeu atteinte');
-    const ma = (jalons.epoque4 - jalons.epoque3) / 60, va = (jalons.epoque5 - jalons.epoque4) / 60;
+    const ma = (jalons.epoque4 - jalons.epoque3) / 60, va = (jalons.epoque5 - jalons.epoque4) / 60, el = (jalons.epoque6 - jalons.epoque5) / 60;
+    assert.ok(el > 6 && el < 16, 'l\'électricité dure à peu près comme les autres époques : ' + el.toFixed(1) + ' min');
     assert.ok(ma > 5 && ma < 16, 'le Moyen Âge dure à peu près comme les autres époques : ' + ma.toFixed(1) + ' min');
     assert.ok(va > 6 && va < 16, 'la vapeur dure à peu près comme les autres époques : ' + va.toFixed(1) + ' min');
-    console.log(`graine ${graine} : pierre ${(jalons.epoque1 / 60).toFixed(1)} min, néolithique ${((jalons.epoque2 - jalons.epoque1) / 60).toFixed(1)} min, métaux ${((jalons.epoque3 - jalons.epoque2) / 60).toFixed(1)} min, Moyen Âge ${ma.toFixed(1)} min, vapeur ${va.toFixed(1)} min, ${m.habitants.length} habitants, ${m.batiments.length} bâtiments, nourriture ${m.nourriture}, ${JSON.stringify(stats)}`);
+    console.log(`graine ${graine} : pierre ${(jalons.epoque1 / 60).toFixed(1)} min, néolithique ${((jalons.epoque2 - jalons.epoque1) / 60).toFixed(1)} min, métaux ${((jalons.epoque3 - jalons.epoque2) / 60).toFixed(1)} min, Moyen Âge ${ma.toFixed(1)} min, vapeur ${va.toFixed(1)} min, électricité ${el.toFixed(1)} min, ${m.habitants.length} habitants, ${m.batiments.length} bâtiments, nourriture ${m.nourriture}, ${JSON.stringify(stats)}`);
   }
 });
 
@@ -135,16 +137,16 @@ test('une partie du néolithique sauvée avant l\'âge des métaux continue sans
   for (let i = 0; i < 600; i++) Monde.pas(repris, 0.1);
 });
 
-test('sauvegarde légère d\'une partie finie à la vapeur : sous 250 000 caractères', () => {
-  const { m } = jouer(5, 5, 240, 8);
-  assert.strictEqual(m.epoque, 5);
+test('sauvegarde légère d\'une partie finie à l\'électricité : sous 250 000 caractères', () => {
+  const { m } = jouer(5, 5, 290, 8);
+  assert.strictEqual(m.epoque, 6);
   assert.ok(m.fini);
   for (let i = 0; i < 3000; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); }
   m.evenements.length = 0;
   const leger = JSON.stringify(Monde.exporterLeger(m));
   console.log(`sauvegarde légère en fin de partie : ${leger.length} caractères, ${m.batiments.length} bâtiments, ${m.habitants.length} habitants`);
   assert.ok(leger.length < 250000);
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(Monde.developper(JSON.parse(leger)))), JSON.parse(JSON.stringify(Monde.exporter(m))));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(Monde.developper(JSON.parse(leger)))), JSON.parse(JSON.stringify(Monde.arrondir(Monde.exporter(m)))));
 });
 
 test('rythme avec un joueur lent (récolte toutes les 20 s)', () => {
@@ -482,7 +484,10 @@ test('sauvegarde légère : la carte revient à l\'identique, en bien plus petit
   assert.ok(JSON.stringify(leger).length < complet.length / 5, 'bien plus petit : ' + JSON.stringify(leger).length + ' contre ' + complet.length);
   assert.ok(JSON.stringify(leger).length < 60000);
   const rendu = Monde.developper(leger);
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(rendu)), JSON.parse(complet));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(rendu)), JSON.parse(JSON.stringify(Monde.arrondir(JSON.parse(complet)))), "à l'arrondi près");
+  // l'arrondi ne déplace personne de plus d'un dixième de pixel, et les trajets se recalculent
+  rendu.habitants.forEach((h, k) => assert.ok(Math.abs(h.x - m.habitants[k].x) <= 0.051 && Math.abs(h.y - m.habitants[k].y) <= 0.051));
+  const repris = Monde.importer(rendu); for (let i = 0; i < 300; i++) Monde.pas(repris, 0.1);
 });
 
 test('sauvegarde légère : refusée si la carte du jeu a changé de taille', () => {
@@ -519,8 +524,7 @@ test('vapeur : quatre découvertes dans l\'ordre historique, chaque image existe
   ['05-vapeur/train', '05-vapeur/tunnel', '05-vapeur/pompe', 'eau/bateau-vapeur', 'scenes/vapeur-ville'].forEach(k => assert.ok(existe(k), k));
   ['mineur', 'ouvriere', 'cheminot', 'inventeur', 'matelot', 'pompier'].forEach(k => assert.ok(D.allures[5][k] && D.textes.phrases[k], k));
   // l'ancienne fin devient le passage du Moyen Âge ; la nouvelle fin a son image et sa vidéo
-  ['histoire/moyen-age.png', 'cine/moyen-age.mp4', 'histoire/fin.png', 'cine/fin.mp4'].forEach(f => assert.ok(fs.existsSync(path.join(racine, f)), f));
-  assert.match(D.textes.histoire.fin.fr.l2, /fusée/);
+  ['histoire/moyen-age.png', 'cine/moyen-age.mp4'].forEach(f => assert.ok(fs.existsSync(path.join(racine, f)), f));
 });
 
 function auMoyenAgeFini(graine) {
@@ -640,6 +644,179 @@ test('une partie du Moyen Âge, finie ou en cours, sauvée avant la vapeur, cont
       assert.ok(repris.terrain.tuiles.some(t => t.ile === 5 && Terrain.surIle(repris.terrain, t)), 'et l\'île grandit');
       laisser(repris, 90);
       assert.ok(repris.batiments.some(b => b.enFeu), 'l\'incendie arrive aussi dans une partie reprise');
+    }
+  }
+});
+
+// ---------- L'électricité ----------
+test('électricité : cinq découvertes dans l\'ordre historique, chaque image existe ; la fin de la vapeur devient un passage', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const ids = Object.keys(D.decouvertes).filter(k => D.decouvertes[k].epoque === 6);
+  assert.deepStrictEqual(ids.sort(), ['ampoule', 'avion', 'electricite', 'telephone', 'voiture']);
+  // l'ordre réel (ADR-001, epoques.md section 6)
+  assert.deepStrictEqual(D.decouvertes.electricite.prerequis, ['vapeur']);
+  assert.deepStrictEqual(D.decouvertes.ampoule.prerequis, ['electricite']);
+  assert.deepStrictEqual(D.decouvertes.telephone.prerequis, ['electricite']);
+  assert.deepStrictEqual(D.decouvertes.voiture.prerequis.slice().sort(), ['roue', 'vapeur']);
+  assert.deepStrictEqual(D.decouvertes.avion.prerequis, ['voiture']);
+  const racine = path.join(__dirname, '..', 'assets');
+  const existe = cle => ['sprites/' + cle + '.png', 'sprites/' + cle + '.jpg', 'raw/' + cle + '.png'].some(f => fs.existsSync(path.join(racine, f)));
+  ids.forEach(k => { assert.ok(existe(D.decouvertes[k].scene), 'scène de ' + k); assert.ok(existe(D.decouvertes[k].icone), 'icône de ' + k); });
+  Object.keys(D.batiments).filter(k => D.batiments[k].epoque === 6).forEach(k => {
+    const b = D.batiments[k];
+    assert.ok(existe(b.sprite), 'sprite de ' + k);
+    if (b.travail) [2, 3].forEach(n => assert.ok(existe('niveaux/' + k + '-' + n), 'niveau ' + n + ' de ' + k));
+    if (b.lits) assert.ok(existe('coupe/' + k), 'maison en coupe : ' + k);
+    (b.vignettes || []).forEach(v => assert.ok(existe('vignettes/' + v.img), 'vignette ' + v.img));
+    if (b.page) assert.ok(D.pages[b.page] || D.decouvertes[b.page], 'page de ' + k);
+    if (b.travail) assert.ok(D.allures[6][b.travail.metier] && D.textes.phrases[b.travail.metier], 'métier ' + b.travail.metier);
+  });
+  Object.keys(D.allures[6]).forEach(k => [].concat(D.allures[6][k]).forEach(a => assert.ok(existe('habitants/' + a), 'habitant ' + a)));
+  Object.keys(D.poses[6]).forEach(k => { const p = D.poses[6][k]; assert.ok(existe('poses/' + p), 'pose ' + p); if (p.startsWith('e6-')) assert.ok(existe('poses/' + p + '-b'), 'deuxième image de ' + p); });
+  Object.keys(D.porteurs[6]).forEach(k => [].concat(typeof D.porteurs[6][k] === 'object' ? Object.values(D.porteurs[6][k]) : D.porteurs[6][k]).forEach(p => assert.ok(existe('porteurs/' + p), 'porteur ' + p)));
+  ['06-electricite/poteau', '06-electricite/lampadaire', '06-electricite/voiture-rouge', '06-electricite/voiture-jaune', '06-electricite/camionnette', '06-electricite/avion', 'scenes/ville-electrique'].forEach(k => assert.ok(existe(k), k));
+  Object.keys(D.textes.nature).forEach(k => assert.ok(existe(D.textes.nature[k][0]), 'image de la fiche ' + k));
+  // un métier qui a sa pose de travail garde la même tenue (pas de changement de visage au travail)
+  Object.keys(D.poses[6]).filter(k => D.poses[6][k].startsWith('e6-')).forEach(k => assert.ok(!Array.isArray(D.allures[6][k]), 'une seule tenue pour ' + k));
+  // l'ancienne fin devient le passage de la vapeur ; la nouvelle fin a son image et sa vidéo
+  ['histoire/vapeur.png', 'cine/vapeur.mp4', 'histoire/fin.png', 'cine/fin.mp4'].forEach(f => assert.ok(fs.existsSync(path.join(racine, f)), f));
+  ['village', 'ville', 'moyen-age', 'vapeur', 'fin'].forEach(k => ['fr', 'en'].forEach(l => assert.ok(D.textes.histoire[k][l].l1 && D.textes.histoire[k][l].l2, k + ' ' + l)));
+  assert.match(D.textes.histoire.vapeur.fr.l1, /trains à vapeur/);
+  assert.match(D.textes.histoire.fin.fr.l1, /ampoule/);
+  assert.match(D.textes.histoire.fin.fr.l2, /fusée/);
+  assert.ok(D.textes.aides.finEpoque[5] && D.textes.aides.pretEpoque[6] && D.textes.aides.electriciteArrive);
+  // pas de tiret long dans les textes du jeu
+  assert.ok(!/—/.test(JSON.stringify(D)), 'pas de tiret long');
+});
+
+function aLaVapeurFinie(graine) {
+  const m = auMoyenAgeFini(graine);
+  Monde.passerEpoque(m);
+  Monde.decouvertesEpoque(m).forEach(id => { m.decouvertes[id] = 1; });
+  m.feuPrevu = null;
+  return m;
+}
+
+test('électricité : l\'île ne grandit plus, la ville se densifie ; nouveaux bâtiments ; les monuments de la vapeur ne se construisent plus', () => {
+  const m = aLaVapeurFinie(61);
+  const avant = m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length;
+  assert.ok(Monde.construisibles(m).indexOf('tour-eiffel') >= 0);
+  assert.ok(Monde.passerEpoque(m));
+  assert.strictEqual(m.epoque, 6);
+  assert.strictEqual(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length, avant, 'pas de nouvel anneau : la grille est pleine');
+  const c = Monde.construisibles(m);
+  assert.ok(c.indexOf('maison-ville') >= 0 && c.indexOf('laboratoire') >= 0, 'dès l\'arrivée');
+  assert.ok(c.indexOf('centrale') < 0 && c.indexOf('garage') < 0 && c.indexOf('aerodrome') < 0 && c.indexOf('grand-immeuble') < 0, 'ils attendent leur découverte');
+  assert.ok(c.indexOf('tour-eiffel') < 0 && c.indexOf('lampadaire') < 0, 'plus de monuments de la vapeur');
+  assert.ok(c.indexOf('neuschwanstein') >= 0 && c.indexOf('cabine') >= 0, 'les monuments de l\'électricité');
+  // densifier sur place : les vieilles maisons deviennent des maisons de ville, puis de grands immeubles
+  const tente = m.batiments.find(b => b.type === 'tente');
+  assert.strictEqual(Monde.amelioration(m, tente).vers, 'maison-ville');
+  assert.strictEqual(Monde.amelioration(m, { type: 'maison-briques', etat: 'fini' }).vers, 'immeuble');
+  m.decouvertes.electricite = 1;
+  ['immeuble', 'maison-ville', 'maison-etages', 'maison-cour', 'maison-briques', 'maison-colombages'].forEach(k => assert.strictEqual(Monde.amelioration(m, { type: k, etat: 'fini' }).vers, 'grand-immeuble', k));
+  assert.ok(D.batiments['grand-immeuble'].lits > D.batiments.immeuble.lits);
+  ['ampoule', 'telephone', 'voiture', 'avion'].forEach(k => { m.decouvertes[k] = 1; });
+  m.pieces = 9000;
+  ['centrale', 'central-telephone', 'garage', 'ferme', 'aerodrome', 'neuschwanstein', 'sagrada'].forEach(k => assert.ok(Monde.emplacementsLibres(m, k).length > 0, 'de la place pour ' + k));
+  assert.ok(Monde.emplacementsLibres(m, 'golden-gate').length > 0, 'le Golden Gate sur la plage');
+});
+
+test('électricité : il reste de la place pour toute l\'époque dans une grande ville de la vapeur', () => {
+  // une partie entière jouée jusqu'à la fin de la vapeur, avec un joueur qui profite de chaque époque et construit beaucoup
+  for (const graine of [8, 9]) {
+  const m = Monde.nouveau(graine), st = {}, fin = {};
+  let p = 0;
+  while (m.t < 260 * 60) {
+    Monde.pas(m, 0.1); m.evenements.length = 0;
+    if (m.t < p) continue;
+    p = m.t + 5;
+    if (Joueur.tour(m, st) === 'fin') { if (!fin[m.epoque]) fin[m.epoque] = m.t; if (m.t - fin[m.epoque] < 300) continue; if (m.epoque >= 5) break; Monde.passerEpoque(m); }
+  }
+  assert.strictEqual(m.epoque, 5);
+  const souches = m.terrain.tuiles.filter(t => t.obj === 'souche').length;
+  Monde.passerEpoque(m);
+  assert.ok(m.terrain.tuiles.filter(t => t.obj === 'souche').length >= souches + 30, 'la lisière de la forêt recule un peu');
+  Object.keys(D.decouvertes).forEach(k => { m.decouvertes[k] = m.decouvertes[k] || 1; });
+  m.pieces = 99999;
+  const types = ['centrale', 'central-telephone', 'garage', 'ferme', 'aerodrome', 'laboratoire', 'grand-immeuble', 'maison-ville', 'grande-roue', 'neuschwanstein', 'sagrada', 'empire-state'];
+  types.forEach(k => { const b = Monde.construire(m, k, Monde.emplacementsLibres(m, k)[0]); assert.ok(b, 'construit : ' + k + ' (graine ' + graine + ')'); });
+  }
+});
+
+test('électricité : la nuit noire en ville, puis l\'ampoule allume les rues (le petit problème)', () => {
+  const m = aLaVapeurFinie(62);
+  Monde.passerEpoque(m);
+  let noire = 0, lumiere = 0;
+  const avancer = (s, f) => { for (let i = 0; i < s * 10; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.forEach(e => { if (e.type === 'nuit-noire') noire++; if (e.type === 'lumiere') lumiere++; }); m.evenements.length = 0; if (f && f()) return; } };
+  // au premier soir après l'arrivée
+  avancer(400, () => Monde.phase(m) === 'soir');
+  assert.strictEqual(noire, 1, 'la nuit noire arrive au premier soir');
+  assert.strictEqual(m.nuitNoire, true);
+  assert.ok(!Monde.eclaire(m, [m.batiments[0].x, m.batiments[0].y]), 'le feu de camp n\'éclaire plus les rues : le travail s\'arrête');
+  // on avance à tâtons : la moitié de la vitesse
+  for (let i = 0; i < 20; i++) Monde.pas(m, 0.1);
+  assert.ok(Monde.estNuit(m));
+  const h = m.habitants.find(x => !x.dort && !x.enfant) || m.habitants[0];
+  h.etapes = [{ fait: 'aller', p: [h.x + 2000, h.y] }]; h.dort = false;
+  const x0 = h.x; Monde.pas(m, 0.1);
+  assert.ok(Math.abs(h.x - x0) < h.vitesse * 0.1 * 0.6, 'on marche moins vite dans le noir');
+  // l'ampoule : des lampadaires dans les rues, la ville est éclairée le soir
+  m.decouvertes.electricite = 1; m.idees = 999;
+  assert.ok(Monde.decouvrir(m, 'ampoule'));
+  m.evenements.forEach(e => { if (e.type === 'lumiere') lumiere++; }); m.evenements.length = 0;
+  assert.strictEqual(lumiere, 1);
+  assert.ok(m.lampes.length >= 6, m.lampes.length + ' lampadaires');
+  assert.strictEqual(m.nuitNoire, 'resolue');
+  m.lampes.forEach(c => { const t = Terrain.tuile(m.terrain, c[0], c[1]); assert.ok(t.lampe && !t.bat); assert.ok(!Monde.ancreValide(m, 'cabine', c[0], c[1]), 'on ne bâtit pas sur un lampadaire'); });
+  avancer(400, () => Monde.phase(m) === 'soir');
+  assert.ok(Monde.eclaire(m, [0, 0]), 'le soir, toute la ville est éclairée');
+  avancer(600);
+  assert.strictEqual(noire, 1, 'la nuit noire ne revient pas');
+});
+
+test('électricité : la centrale et le central téléphonique posent leurs poteaux et leurs fils', () => {
+  const m = aLaVapeurFinie(63);
+  Monde.passerEpoque(m);
+  m.decouvertes.electricite = 1; m.decouvertes.telephone = 1; m.pieces = 9000;
+  const ce = Monde.construire(m, 'centrale', Monde.emplacementsLibres(m, 'centrale')[0]);
+  const ct = Monde.construire(m, 'central-telephone', Monde.emplacementsLibres(m, 'central-telephone')[0]);
+  let lignes = 0;
+  for (let i = 0; i < 12000 && (ce.etat !== 'fini' || ct.etat !== 'fini'); i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.forEach(e => { if (e.type === 'ligne') lignes++; }); m.evenements.length = 0; }
+  assert.strictEqual(ce.etat, 'fini'); assert.strictEqual(ct.etat, 'fini');
+  assert.strictEqual(lignes, 2);
+  assert.deepStrictEqual(m.lignes.map(l => l.genre).sort(), ['elec', 'tel']);
+  m.lignes.forEach(l => {
+    assert.ok(l.poteaux.length >= 1);
+    l.poteaux.forEach(c => { const t = Terrain.tuile(m.terrain, c[0], c[1]); assert.ok(t.poteau && !t.bat && !t.gue && !t.rail && t.sol === 'herbe'); assert.ok(!Monde.ancreValide(m, 'cabine', c[0], c[1])); });
+  });
+  // la ferme agrandit la réserve
+  assert.strictEqual(Monde.RESERVE.ferme, 70);
+});
+
+test('une partie de la vapeur, finie ou en cours, sauvée avant l\'électricité, continue sans rien perdre', () => {
+  for (const fini of [true, false]) {
+    const m = fini ? aLaVapeurFinie(64) : auMoyenAgeFini(65);
+    if (!fini) { Monde.passerEpoque(m); m.feuPrevu = null; }
+    laisser(m, 120);
+    // une sauvegarde de la version d'avant : ni nuit noire prévue, ni lignes, ni lampadaires
+    const vieux = JSON.parse(JSON.stringify(Monde.exporter(m)));
+    delete vieux.nuitNoire; delete vieux.lignes; delete vieux.lampes;
+    const leger = JSON.parse(JSON.stringify(Monde.exporterLeger(m)));
+    for (const s of [vieux, Monde.developper(leger)]) {
+      const repris = Monde.importer(JSON.parse(JSON.stringify(s)));
+      assert.strictEqual(repris.epoque, 5);
+      assert.strictEqual(repris.habitants.length, m.habitants.length);
+      assert.strictEqual(repris.batiments.length, m.batiments.length);
+      assert.strictEqual(repris.pieces, m.pieces);
+      assert.deepStrictEqual(Object.keys(repris.decouvertes).sort(), Object.keys(m.decouvertes).sort());
+      assert.strictEqual(Monde.epoqueTerminee(repris), fini);
+      if (!fini) Monde.decouvertesEpoque(repris).forEach(id => { repris.decouvertes[id] = 1; });
+      assert.ok(Monde.passerEpoque(repris), 'le bouton doré mène à l\'électricité');
+      assert.strictEqual(repris.epoque, 6);
+      let noire = 0;
+      for (let i = 0; i < 4000 && !noire; i++) { if (Monde.toutLeMondeDort(repris)) Monde.reveiller(repris); Monde.pas(repris, 0.1); repris.evenements.forEach(e => { if (e.type === 'nuit-noire') noire++; }); repris.evenements.length = 0; }
+      assert.strictEqual(noire, 1, 'la nuit noire arrive aussi dans une partie reprise');
     }
   }
 });

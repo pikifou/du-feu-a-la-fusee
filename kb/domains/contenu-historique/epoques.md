@@ -73,6 +73,8 @@ Dans le jeu depuis le 16/11/2026 (branche `vapeur`, cf. `journal/2026-11-session
 | Voiture | Machine à vapeur, Roue | Le cheval est lent → la voiture | Routes, garage |
 | Avion | Voiture | Les montagnes et la mer bloquent → on vole | Aérodrome |
 
+Dans le jeu depuis le 16/11/2026 (branche `electricite`, cf. `journal/2026-11-session-06.md`) : les cinq découvertes ci-dessus, avec la centrale électrique (une ligne de poteaux et de fils jusqu'au village), les lampadaires électriques posés tout seuls par l'ampoule, le central téléphonique (sa propre ligne de poteaux), le garage (des voitures roulent sur les routes, devenues goudronnées), l'aérodrome (un petit avion fait le tour de la vallée) ; la ferme au tracteur (nourriture, après la voiture, proposition de Claude) ; le laboratoire pour les idées (proposition de Claude) ; la maison de ville et le grand immeuble à ascenseur. Le petit problème de la nuit noire est dans le jeu : au premier soir, la ville trop grande reste dans le noir (on marche moins vite, le travail s'arrête) ; l'ampoule l'éclaire.
+
 ## 7. Le monde moderne
 | Découverte | Prérequis | Problème résolu | Ce qui pousse |
 |---|---|---|---|
@@ -89,7 +91,7 @@ Dans le jeu depuis le 16/11/2026 (branche `vapeur`, cf. `journal/2026-11-session
 | Métaux | Crue de la rivière | (digue, à ajouter ?) |
 | Moyen Âge | Pont emporté | Pont de pierre (dans le jeu, session 04) |
 | Vapeur | Incendie | Caserne des pompiers et pompe à vapeur, après la machine à vapeur (dans le jeu, session 05) |
-| Électricité | Nuit noire en ville | Ampoule |
+| Électricité | Nuit noire en ville | Ampoule : des lampadaires dans les rues (dans le jeu, session 06) |
 | Moderne | Air sale | Énergie solaire |
 
 ## À vérifier
