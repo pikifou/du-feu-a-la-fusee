@@ -96,6 +96,46 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 @keyframes pivote { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
 #tourner p { font-size: 22px; font-weight: 600; margin: 0; max-width: 300px; }
 @media (orientation: portrait) and (max-width: 900px) { #tourner { display: flex; } }
+/* ---- l'histoire : petite vidéo puis image fixe avec le texte (intro et fin) ---- */
+#cine { position: fixed; inset: 0; z-index: 60; background: #1d1309; touch-action: manipulation; overflow: hidden; }
+#cine[hidden] { display: none; }
+#cine video, #cine img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#cine img { opacity: 0; transition: opacity .7s ease; }
+#cine.texte img { opacity: 1; }
+#cine .carte { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom, 0px)); width: min(640px, calc(100% - 32px));
+  transform: translate(-50%, 24px); opacity: 0; pointer-events: none; transition: opacity .6s .35s ease, transform .6s .35s ease;
+  background: var(--carte); border-radius: 26px 22px 28px 20px; box-shadow: var(--ombre); padding: 14px 22px 14px; text-align: center; }
+/* la fin : la carte dans le coin du ciel en haut à gauche, la lune et la famille restent visibles */
+#cine.haut .carte { bottom: auto; top: max(14px, env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px));
+  width: min(440px, 46%); transform: translate(0, -24px); }
+#cine.texte .carte { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#cine.haut.texte .carte { transform: none; }
+#cine h2 { margin: 0 0 2px; font: 30px/1.1 'Lilita One', 'Fredoka', sans-serif; color: var(--orange-fonce); letter-spacing: .5px; }
+#cine h2[hidden] { display: none; }
+#cine p { margin: 0 0 4px; font-size: 19px; line-height: 1.3; font-weight: 600; text-wrap: balance; }
+#cine .l1 { font-weight: 700; }
+#cine .ligne-boutons { margin-top: 10px; }
+#cine .passer { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px));
+  border: 0; font-family: inherit; font-size: 17px; font-weight: 700; color: var(--encre); background: rgba(255, 248, 234, .9);
+  border-radius: 999px; padding: 7px 16px; box-shadow: var(--ombre); cursor: pointer; }
+#cine.texte .passer { display: none; }
+@media (max-height: 480px) {
+  #cine .carte { padding: 9px 18px 10px; width: min(600px, calc(100% - 32px)); }
+  #cine h2 { font-size: 24px; }
+  #cine p { font-size: 16px; margin-bottom: 2px; }
+  #cine .ligne-boutons { margin-top: 6px; }
+  #cine .gros-bouton { font-size: 18px; padding: 7px 24px; }
+  #cine .bouton-rond { width: 40px; height: 40px; font-size: 19px; }
+}
+/* la marque « Fini » : un drapeau et un mot, sur une pastille dorée bordée (jamais la couleur seule) ; la toucher remontre la fin */
+/* sous les compteurs, à gauche : elle ne pousse pas la rangée du haut (déjà pleine sur téléphone) */
+#marque-fini { position: fixed; top: calc(max(12px, env(safe-area-inset-top, 0px)) + 52px); left: max(14px, env(safe-area-inset-left, 0px));
+  pointer-events: auto; display: flex; align-items: center; gap: 6px; border: 3px solid #b8862b; background: #ffe7a3; color: #6b4310;
+  border-radius: 999px; padding: 3px 13px 3px 8px; font-family: inherit; font-size: 16px; font-weight: 700; box-shadow: var(--ombre); cursor: pointer; white-space: nowrap; }
+#marque-fini[hidden] { display: none; }
+.ludi #marque-fini { left: max(136px, env(safe-area-inset-left, 0px)); }
+#marque-fini .drapeau { font-size: 17px; }
+@media (prefers-reduced-motion: reduce) { #cine img, #cine .carte { transition: none; } }
 @media (prefers-reduced-motion: reduce) { #btn-epoque, #c-nourriture.manque, #btn-reveil, #tourner .tel, #btn-decouvertes.pret, .dec.possible, #scene-images img { animation: none; } }
 
 /* ---- barre de construction ---- */
@@ -276,6 +316,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   <div class="compteur" id="c-nourriture"><span class="ico">🍖</span><span id="v-nourriture">0</span></div>
   <div class="compteur" id="c-idees"><span class="ico">💡</span><span id="v-idees">0</span></div>
   <div id="epoque-nom">L'âge de pierre</div>
+  <button id="marque-fini" hidden aria-label="Fini : revoir la fin"><span class="drapeau">🏁</span><span id="marque-fini-mot">Fini</span></button>
   <button class="bouton-rond" id="btn-plein" aria-label="Plein écran">⛶</button>
   <button class="bouton-rond" id="btn-menu" aria-label="Menu">⚙️</button>
   <button class="bouton-rond" id="btn-merveilles" aria-label="Merveilles">🏛</button>
@@ -359,6 +400,21 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   <div class="tel">📱</div>
   <p>Tourne ton téléphone pour jouer !</p>
   <button class="gros-bouton" id="tourner-plein">⛶ Plein écran</button>
+</div>
+
+<div id="cine" hidden>
+  <video playsinline muted preload="auto"></video>
+  <img alt="">
+  <div class="carte">
+    <h2></h2>
+    <p class="l1"></p>
+    <p class="l2"></p>
+    <div class="ligne-boutons">
+      <button class="bouton-rond voix" aria-label="Écouter">🔊</button>
+      <button class="gros-bouton go"></button>
+    </div>
+  </div>
+  <button class="passer"></button>
 </div>
 
 <script>/*LUDI*/</script>

@@ -570,6 +570,20 @@ var Donnees = (function () {
       dejaConstruit: 'Tu l\'as déjà ! Il n\'en existe qu\'un seul.',
       finJeu: "Tu as fait toutes les découvertes du néolithique ! La suite de l'histoire, l'âge des métaux, arrive bientôt."
     },
+    // L'histoire : une intro au début de la partie, une fin quand toutes les découvertes de la dernière époque sont faites.
+    // Le jeu est en français ; l'anglais est prêt pour le jour où il sera traduit (langue de la page, <html lang>).
+    histoire: {
+      intro: {
+        fr: { l1: 'Il y a très, très longtemps, une petite tribu arrive dans la vallée.', l2: 'Aide-la à grandir !', go: "C'est parti !" },
+        en: { l1: 'A very, very long time ago, a small tribe arrives in the valley.', l2: 'Help it grow!', go: "Let's go!" }
+      },
+      fin: {
+        fr: { titre: 'Bravo !', l1: 'La petite tribu est devenue un vrai village de paysans !', l2: 'Ce soir, tout le monde fait la fête autour du feu, et rêve déjà de la suite du voyage.', go: 'Continuer' },
+        en: { titre: 'Well done!', l1: 'The little tribe has become a real farming village!', l2: 'Tonight everyone celebrates around the fire, already dreaming of the rest of the journey.', go: 'Continue' }
+      },
+      passer: { fr: 'Passer', en: 'Skip' },
+      fini: { fr: 'Fini', en: 'Finished' }
+    },
     prerequis: function (ids) {
       return "Il faut d'abord découvrir : " + ids.map(function (p) { return decouvertes[p].nom.toLowerCase(); }).join(' et ') + '.';
     }

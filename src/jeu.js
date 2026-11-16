@@ -1256,6 +1256,63 @@
     setTimeout(function () { dire(o.texte); }, 250);
   }
 
+  // ---------- l'histoire : une intro au début de la partie, une fin quand le village a tout découvert ----------
+  // Une petite vidéo si elle est là (version installée), sinon directement l'image et le texte (fichier unique, hors ligne,
+  // mouvement réduit). « Passer » saute la vidéo ; le texte est lu à voix haute comme les autres scènes.
+  var LANGUE = /^en/i.test(document.documentElement.lang) ? 'en' : 'fr';
+  var H = D.textes.histoire;
+  var MOUVEMENT_REDUIT = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var CINE_IMAGES = { intro: 'histoire/debut', fin: 'histoire/fin' };
+  function cinematique(nom, ensuite) {
+    var t = H[nom][LANGUE], box = $('cine'), vid = box.querySelector('video'), img = box.querySelector('img');
+    var lu = nom === 'intro' ? D.epoques[0].intro : t.l1 + ' ' + t.l2; // l'intro garde sa phrase enregistrée
+    var h2 = box.querySelector('h2');
+    h2.textContent = t.titre || ''; h2.hidden = !t.titre;
+    box.querySelector('.l1').textContent = t.l1;
+    box.querySelector('.l2').textContent = t.l2;
+    box.querySelector('.go').textContent = t.go;
+    box.querySelector('.passer').textContent = H.passer[LANGUE];
+    box.classList.toggle('haut', nom === 'fin'); // la fin : le texte dans le ciel étoilé, le village reste visible
+    img.src = ASSETS[CINE_IMAGES[nom]] || '';
+    box.classList.remove('texte');
+    box.hidden = false;
+    enScene = true;
+    var montre = false;
+    function texte() {
+      if (montre) return;
+      montre = true;
+      try { vid.pause(); } catch (e) {}
+      box.classList.add('texte');
+      setTimeout(function () { dire(lu); }, 400);
+    }
+    vid.onended = texte; vid.onerror = texte;
+    var video = (window.CINE || {})[nom];
+    if (video && !MOUVEMENT_REDUIT) {
+      vid.hidden = false; vid.src = video;
+      var p = vid.play(); if (p && p.catch) p.catch(texte);
+    } else { vid.hidden = true; vid.removeAttribute('src'); texte(); }
+    box.querySelector('.voix').onclick = function () { dire(lu); };
+    box.querySelector('.passer').onclick = texte;
+    box.querySelector('.go').onclick = function () {
+      son('clic');
+      try { vid.pause(); } catch (e) {}
+      vid.removeAttribute('src');
+      box.hidden = true; enScene = false;
+      if (ensuite) ensuite();
+    };
+  }
+  // le parcours est fini quand toutes les découvertes de la dernière époque sont faites
+  function partieFinie() {
+    return !D.epoques.some(function (x) { return x.id === monde.epoque + 1; }) && M.epoqueTerminee(monde);
+  }
+  function majFini() {
+    var f = partieFinie();
+    $('marque-fini').hidden = !f;
+    $('marque-fini-mot').textContent = H.fini[LANGUE];
+    if (f && LUDI) LUDI.fini();
+  }
+  $('marque-fini').addEventListener('click', function () { son('clic'); cinematique('fin'); });
+
   function ouvrirDecouvertes() {
     var e = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0];
     var derniere = !D.epoques.some(function (x) { return x.id === monde.epoque + 1; });
@@ -1303,8 +1360,8 @@
     var e = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0];
     var suiv = D.epoques.filter(function (x) { return x.id === monde.epoque + 1; })[0];
     if (!suiv) {
-      scene({ titre: 'Bravo !', images: ['02-neolithique/maison-longue', 'habitants/sage'],
-        texte: A.finJeu, bouton: 'À bientôt !' });
+      majFini();
+      cinematique('fin');
       return;
     }
     scene({ titre: 'Bravo !', images: ['habitants/sage', '01-pierre/peintures-rupestres'], texte: A.finEpoque[monde.epoque], bouton: 'Super !' });
@@ -1330,7 +1387,8 @@
   function montrerEpoque() {
     var e = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0];
     $('epoque-nom').textContent = e.nom;
-    var images = monde.epoque === 1 ? ['01-pierre/hutte-peaux', 'habitants/chasseur'] : ['02-neolithique/champ-ble', 'habitants/paysan'];
+    if (monde.epoque === 1) { majFini(); cinematique('intro'); return; } // le début de la partie : l'intro de l'histoire
+    var images = ['02-neolithique/champ-ble', 'habitants/paysan'];
     scene({ titre: e.nom, images: images, illustration: monde.epoque === 1 ? 'scenes/cueilleurs' : 'scenes/agriculture', texte: e.intro, bouton: 'C\'est parti !', ensuite: function () {
       if (monde.epoque === 2) {
         aideUneFois('epoque2', A.epoque2);
@@ -1847,11 +1905,12 @@
   addEventListener('resize', redim);
 
   // pour les tests automatiques
-  window.__jeu = { monde: function () { return monde; }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage };
+  window.__jeu = { monde: function () { return monde; }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage };
 
   chargerImages(function () {
     redim();
     $('epoque-nom').textContent = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0].nom;
+    majFini(); // une partie déjà finie : la marque « Fini », et Ludiworld le sait
     if (nouvellePartie && !params.has('test')) montrerEpoque();
     ludiProgression();
     requestAnimationFrame(function (t) { avant = t; boucle(t); });
