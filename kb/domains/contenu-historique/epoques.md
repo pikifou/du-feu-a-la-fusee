@@ -83,6 +83,8 @@ Dans le jeu depuis le 16/11/2026 (branche `electricite`, cf. `journal/2026-11-se
 | Satellite | Ordinateur, Avion | On ne voit pas la Terre d'en haut → un œil dans l'espace | Observatoire |
 | Fusée | Satellite | (fin du jeu) La fusée décolle | Pas de tir |
 
+Dans le jeu depuis le 16/11/2026 (branche `monde-moderne`, cf. `journal/2026-11-session-07.md`) : les quatre découvertes ci-dessus, avec le bureau (ordinateurs), le centre de recherche pour les idées, le supermarché (nourriture), le parc solaire, l'observatoire (après le satellite) ; l'immeuble moderne et la tour (après l'ordinateur). L'énergie solaire pose des éoliennes au bord de l'île et de petits panneaux près des maisons. Après le satellite, on le voit passer dans le ciel le soir. La fusée lance le chantier du pas de tir sur un terrain gardé au bord de l'île dès l'arrivée ; quand il est prêt, l'enfant fait décoller la fusée avec un gros bouton : c'est la fin du jeu, qui continue ensuite (une autre fusée est prête un peu plus tard). Le petit problème de l'air sale est dans le jeu : peu après l'arrivée, l'air de la ville devient gris et plus personne ne vient habiter ; l'énergie solaire le résout.
+
 ## Petits problèmes par époque (cf. GD)
 | Époque | Problème | Résolu par |
 |---|---|---|
@@ -92,7 +94,7 @@ Dans le jeu depuis le 16/11/2026 (branche `electricite`, cf. `journal/2026-11-se
 | Moyen Âge | Pont emporté | Pont de pierre (dans le jeu, session 04) |
 | Vapeur | Incendie | Caserne des pompiers et pompe à vapeur, après la machine à vapeur (dans le jeu, session 05) |
 | Électricité | Nuit noire en ville | Ampoule : des lampadaires dans les rues (dans le jeu, session 06) |
-| Moderne | Air sale | Énergie solaire |
+| Moderne | Air sale | Énergie solaire : éoliennes et panneaux (dans le jeu, session 07) |
 
 ## À vérifier
 - La roue de potier a précédé la roue de charrette : à confirmer avant d'en faire le prérequis.

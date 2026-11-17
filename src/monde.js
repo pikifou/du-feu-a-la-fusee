@@ -150,7 +150,7 @@ var Monde = (function () {
     if (!tuiles) return false;
     for (var n = 0; n < tuiles.length; n++) {
       var t = tuiles[n];
-      if (!TR.surIle(T, t) || t.bat || t.gue || t.rail || t.poteau || t.lampe) return false;
+      if (!TR.surIle(T, t) || t.bat || t.gue || t.rail || t.poteau || t.lampe || t.tir || t.eolienne || t.panneau) return false;
       if (t.obj && t.obj !== 'souche') return false;
       if (d.zone === 'plage') { if (t.sol !== 'sable') return false; }
       else if (d.zone === 'grotte' || d.zone === 'colline') { if (t.sol !== 'herbe' && t.sol !== 'roche') return false; }
@@ -231,21 +231,26 @@ var Monde = (function () {
   function decouvrir(m, id) {
     if (etatDecouverte(m, id) !== 'possible') return false;
     m.idees -= D.decouvertes[id].idees;
-    m.decouvertes[id] = m.t;
+    m.decouvertes[id] = Math.max(m.t, 0.01); // le moment de la découverte (jamais zéro : zéro voudrait dire « pas découvert »)
     m.evenements.push({ type: 'decouverte', id: id });
     if (id === 'pont') poserPontPierre(m);
     if (id === 'ampoule') allumerVille(m);
+    if (id === 'solaire') poserEoliennes(m);
+    if (id === 'fusee') poserPasDeTir(m);
     if (epoqueTerminee(m)) m.evenements.push({ type: 'fin-epoque', epoque: m.epoque });
     return true;
   }
   function epoqueTerminee(m) {
     return decouvertesEpoque(m).every(function (k) { return m.decouvertes[k]; });
   }
+  function derniereEpoque(m) { return !D.epoques.some(function (e) { return e.id === m.epoque + 1; }); }
+  // la vraie fin du jeu : toutes les découvertes de la dernière époque, et la fusée a décollé
+  function partieFinie(m) { return derniereEpoque(m) && epoqueTerminee(m) && (m.fusees || 0) > 0; }
 
   function passerEpoque(m) {
     if (!epoqueTerminee(m)) return false;
     var suivante = D.epoques.filter(function (e) { return e.id === m.epoque + 1; })[0];
-    if (!suivante) { m.fini = true; m.evenements.push({ type: 'fin-jeu' }); return false; }
+    if (!suivante) { if (partieFinie(m) && !m.fini) { m.fini = true; m.evenements.push({ type: 'fin-jeu' }); } return false; }
     m.epoque = suivante.id;
     m.terrain.epoque = m.epoque; // l'île s'agrandit
     m.terrain.agrandi = m.t;
@@ -279,6 +284,15 @@ var Monde = (function () {
       if (!m.decouvertes.ampoule) m.nuitNoire = 'prevue';
       // la grille est pleine : l'île ne grandit plus. La ville gagne un peu de place sur la lisière de la forêt (des souches, où l'on peut bâtir)
       defricher(m, 120);
+    }
+    if (m.epoque === 7) {
+      // le petit problème du monde moderne (epoques.md) : bientôt, l'air de la ville devient tout gris
+      if (!m.decouvertes.solaire) m.airPrevu = m.t + DELAI_AIR;
+      // encore un peu de place : la lisière recule d'un cran (de l'herbe, presque sans souches), et les vieilles souches s'en vont
+      defricher(m, 100, true);
+      eclaircirSouches(m);
+      // un grand terrain au bord de l'île est gardé pour le pas de tir de la fusée
+      reserverTir(m);
     }
     m.habitants.forEach(function (h) { h.changeTenue = hasard(m) * 8; });
     m.evenements.push({ type: 'epoque', epoque: m.epoque });
@@ -389,7 +403,7 @@ var Monde = (function () {
   }
 
   // la lisière de la forêt la plus proche du village recule d'un cran : des souches où l'on peut bâtir
-  function defricher(m, n) {
+  function defricher(m, n, clair) {
     var T = m.terrain, c = TR.centre(TR.CI, TR.CJ);
     var l = T.tuiles.filter(function (t) {
       if (t.obj !== 'arbre' || t.reserve || !TR.surIle(T, t) || t.sauvage) return false;
@@ -397,8 +411,143 @@ var Monde = (function () {
       return false;
     });
     l.sort(function (a, b) { return dist(TR.centre(a.i, a.j), c) - dist(TR.centre(b.i, b.j), c); });
-    l.slice(0, n).forEach(function (t) { t.obj = 'souche'; t.bois = 0; });
+    // clair : une souche de temps en temps seulement, de l'herbe ailleurs (sinon un grand champ de souches)
+    l.slice(0, n).forEach(function (t) { t.obj = clair && !garderSouche(t) ? null : 'souche'; t.bois = 0; });
     return Math.min(n, l.length);
+  }
+  function garderSouche(t) { return (t.i * 7 + t.j * 13) % 5 === 0; }
+  // les souches loin de la forêt s'en vont (on en garde une sur cinq) : plus de grand champ de souches au nord
+  function eclaircirSouches(m) {
+    var T = m.terrain;
+    if (m.souchesEclaircies) return;
+    m.souchesEclaircies = true;
+    T.tuiles.forEach(function (t) {
+      if (t.obj !== 'souche' || garderSouche(t)) return;
+      for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { var v = TR.tuile(T, t.i + di, t.j + dj); if (v && v.obj === 'arbre') return; }
+      t.obj = null;
+    });
+  }
+
+  // ---------- le monde moderne : l'air sale, les éoliennes, le pas de tir et la fusée ----------
+  var DELAI_AIR = 60, DUREE_VOL = 9, NOUVELLE_FUSEE = 150;
+  // un terrain de 2 x 2 cases au bord de l'île, ni trop près ni trop loin du village : on n'y bâtit pas, la fusée l'attend
+  function terrainTir(m) {
+    var T = m.terrain, c = [TR.CI, TR.CJ];
+    var ok = function (t) { return t && TR.surIle(T, t) && t.sol === 'herbe' && !t.bat && !t.gue && !t.rail && !t.poteau && !t.lampe && !t.eolienne && !t.panneau && (!t.obj || t.obj === 'souche' || t.obj === 'arbre'); };
+    var l = [];
+    for (var i = 1; i < T.N - 2; i++) for (var j = 1; j < T.N - 2; j++) {
+      var bon = true, bord = false;
+      for (var a = -1; a <= 2 && bon; a++) for (var b = -1; b <= 2 && bon; b++) {
+        var t = TR.tuile(T, i + a, j + b), dedans = a >= 0 && a < 2 && b >= 0 && b < 2;
+        if (dedans) { if (!ok(t)) bon = false; }
+        else if (t && (t.bat || t.rail)) bon = false;
+      }
+      if (!bon) continue;
+      for (var a2 = -2; a2 <= 3 && !bord; a2++) for (var b2 = -2; b2 <= 3 && !bord; b2++) { var v = TR.tuile(T, i + a2, j + b2); if (!v || !TR.surIle(T, v) || v.sol === 'eau' || v.sol === 'sable') bord = true; }
+      var d = Math.hypot(i + 0.5 - c[0], j + 0.5 - c[1]);
+      l.push({ i: i, j: j, d: d, bord: bord });
+    }
+    // de préférence au bord de la mer, à au moins 8 cases du cœur du village ; sinon le plus près possible de ça
+    var cotes = l.filter(function (x) { return x.bord && x.d >= 8; }).sort(function (a, b) { return a.d - b.d; });
+    if (cotes.length) return cotes[0];
+    l.sort(function (a, b) { return Math.abs(a.d - 10) - Math.abs(b.d - 10); });
+    return l[0] || null;
+  }
+  function reserverTir(m) {
+    if (m.tir || m.batiments.some(function (b) { return b.type === 'pas-de-tir'; })) return m.tir || null;
+    var x = terrainTir(m);
+    if (!x) return null;
+    var T = m.terrain;
+    for (var a = -1; a <= 2; a++) for (var b = -1; b <= 2; b++) {
+      var t = TR.tuile(T, x.i + a, x.j + b); if (!t) continue;
+      if (a >= 0 && a < 2 && b >= 0 && b < 2) { t.tir = true; t.obj = null; t.deco = null; }
+      else if (t.obj === 'arbre' && !t.reserve) { t.obj = null; t.bois = 0; }
+    }
+    m.tir = [x.i, x.j];
+    return m.tir;
+  }
+  function poserPasDeTir(m) {
+    if (m.batiments.some(function (b) { return b.type === 'pas-de-tir'; })) return null;
+    var r = m.tir || reserverTir(m);
+    if (!r) return null;
+    var T = m.terrain;
+    (TR.empreinte(T, r[0], r[1], 2) || []).forEach(function (t) { delete t.tir; if (t.obj) t.obj = null; });
+    var b = poser(m, 'pas-de-tir', r[0], r[1], false);
+    b.automatique = true;
+    m.fusee = 'chantier';
+    m.evenements.push({ type: 'chantier', bat: b.id });
+    m.evenements.push({ type: 'pas-de-tir', x: b.x, y: b.y });
+    return b;
+  }
+  // le gros bouton : la fusée décolle (un geste de l'enfant)
+  function decoller(m) {
+    if (m.fusee !== 'prete') return false;
+    m.fusee = 'vol'; m.vol = 0;
+    var b = m.batiments.filter(function (x) { return x.type === 'pas-de-tir'; })[0];
+    m.evenements.push({ type: 'decollage', x: b ? b.x : 0, y: b ? b.y : 0, premiere: !(m.fusees > 0) });
+    return true;
+  }
+  function fusee(m, dt) {
+    if (m.fusee === 'vol') {
+      m.vol = (m.vol || 0) + dt;
+      if (m.vol >= DUREE_VOL) {
+        m.fusee = 'partie'; m.vol = 0;
+        m.fusees = (m.fusees || 0) + 1;
+        m.prochaineFusee = m.t + NOUVELLE_FUSEE;
+        m.evenements.push({ type: 'fusee-partie', n: m.fusees });
+      }
+    } else if (m.fusee === 'partie' && m.prochaineFusee != null && m.t >= m.prochaineFusee) {
+      // une nouvelle fusée est dressée sur le pas de tir : on peut la faire décoller encore
+      m.fusee = 'prete'; m.prochaineFusee = null;
+      m.evenements.push({ type: 'fusee-prete', nouvelle: true });
+    }
+  }
+  // l'air sale : peu après l'arrivée, la ville devient toute grise ; plus personne ne vient y habiter
+  function airSale(m) {
+    if (m.airPrevu == null || m.t < m.airPrevu) return;
+    m.airPrevu = null;
+    if (m.decouvertes.solaire) return;
+    m.airSale = true;
+    m.evenements.push({ type: 'air-sale' });
+  }
+  // l'énergie solaire : des éoliennes au bord de l'île et de petits panneaux solaires près des maisons ; l'air redevient pur
+  function poserEoliennes(m) {
+    var T = m.terrain, c = TR.centre(TR.CI, TR.CJ);
+    m.airPrevu = null;
+    var etait = m.airSale === true;
+    m.airSale = 'resolu';
+    if (!m.eoliennes) {
+      var libre = function (t) { return t && TR.surIle(T, t) && t.sol === 'herbe' && !t.bat && !t.rail && !t.poteau && !t.lampe && !t.gue && !t.tir && !t.eolienne && !t.panneau && (!t.obj || t.obj === 'souche' || t.obj === 'arbre'); };
+      var bord = function (t) { for (var a = -1; a <= 1; a++) for (var b = -1; b <= 1; b++) { var v = TR.tuile(T, t.i + a, t.j + b); if (!v || !TR.surIle(T, v) || v.sol === 'sable' || v.sol === 'eau') return true; } return false; };
+      // les éoliennes : sur les bords de l'île, là où le vent souffle, bien espacées
+      var l = T.tuiles.filter(function (t) { return libre(t) && bord(t) && !t.reserve; });
+      l.sort(function (a, b) { return dist(TR.centre(a.i, a.j), c) - dist(TR.centre(b.i, b.j), c); });
+      var eo = [];
+      l.forEach(function (t) {
+        if (eo.length >= 6 || dist(TR.centre(t.i, t.j), c) < 700) return;
+        if (eo.some(function (q) { return Math.max(Math.abs(q.i - t.i), Math.abs(q.j - t.j)) < 5; })) return;
+        eo.push(t);
+      });
+      eo.forEach(function (t) { t.eolienne = true; t.deco = null; if (t.obj) { t.obj = null; t.bois = 0; } });
+      m.eoliennes = eo.map(function (t) { return [t.i, t.j]; });
+      // les petits panneaux solaires : près des maisons, comme les lampadaires
+      var pres = T.tuiles.filter(function (t) {
+        if (!libre(t) || t.obj === 'arbre' || t.usure >= 0.3) return false;
+        for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { var v = TR.tuile(T, t.i + di, t.j + dj); var vb = v && v.bat && bat(m, v.bat); if (vb && D.batiments[vb.type].lits) return true; }
+        return false;
+      });
+      pres.sort(function (a, b) { return dist(TR.centre(a.i, a.j), c) - dist(TR.centre(b.i, b.j), c); });
+      var pa = [];
+      pres.forEach(function (t) {
+        if (pa.length >= 8) return;
+        if (pa.some(function (q) { return Math.max(Math.abs(q.i - t.i), Math.abs(q.j - t.j)) < 4; })) return;
+        pa.push(t);
+      });
+      pa.forEach(function (t) { t.panneau = true; t.deco = null; if (t.obj === 'souche') t.obj = null; });
+      m.panneaux = pa.map(function (t) { return [t.i, t.j]; });
+    }
+    m.evenements.push({ type: 'air-pur', etait: etait, n: m.eoliennes.length });
+    return m.eoliennes;
   }
   // pour la copie confiée à Ludiworld : des nombres arrondis, et sans les trajets en cours (ils se recalculent tout seuls)
   function r1(v) { return typeof v === 'number' ? Math.round(v * 10) / 10 : v; }
@@ -630,6 +779,7 @@ var Monde = (function () {
   function changerPhase(m, ph) {
     m.cycle = { phase: ph, t: 0 };
     if (ph === 'aube') m.jour = (m.jour || 0) + 1;
+    if (ph === 'aube' && m.airSale === true) m.evenements.push({ type: 'air-sale', encore: true });
     m.evenements.push({ type: 'phase', phase: ph });
     if (ph === 'soir') manger(m);
     if (ph === 'soir' && m.epoque >= 6 && !m.decouvertes.ampoule && (m.nuitNoire === 'prevue' || m.nuitNoire === true)) {
@@ -642,7 +792,7 @@ var Monde = (function () {
     }
   }
   // la réserve de nourriture : ce qu'on sait conserver (ADR-036)
-  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40, moulin: 50, 'port-vapeur': 60, ferme: 70 };
+  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40, moulin: 50, 'port-vapeur': 60, ferme: 70, supermarche: 90 };
   function reserveMax(m) {
     return m.batiments.reduce(function (s, b) { return s + (b.etat === 'fini' || b.niveau ? (RESERVE[b.type] || 0) : 0); }, RESERVE.base);
   }
@@ -1022,6 +1172,7 @@ var Monde = (function () {
               if (surGue(c.type)) { m.terrain.passerelle = true; if (c.type === 'pont-pierre') m.pontEmporte = false; }
               if (c.type === 'gare' && !m.rails) poserRails(m, c);
               if (c.type === 'centrale' || c.type === 'central-telephone') poserLigne(m, c, c.type === 'centrale' ? 'elec' : 'tel');
+              if (c.type === 'pas-de-tir' && (!m.fusee || m.fusee === 'chantier')) { m.fusee = 'prete'; m.evenements.push({ type: 'fusee-prete', x: c.x, y: c.y }); }
               m.evenements.push({ type: 'fini', bat: c.id });
             }
           }
@@ -1105,6 +1256,7 @@ var Monde = (function () {
     // sans assez à manger, on ne vient que pour aider à nourrir le village (pas de cercle vicieux)
     var aideNourrir = m.batiments.some(function (b) { return b.etat === 'fini' && produitDe(b) === 'nourriture' && (b.ouvriers || []).length < places(b) && !inactif(m, b); });
     if (!assezAManger(m) && !aideNourrir) { m.arrivee = 0; return; }
+    if (m.airSale === true && !aideNourrir) { m.arrivee = 0; return; } // l'air sale : plus personne n'a envie de venir habiter ici
     if (estNuit(m) && (!aFeu(m) || m.cycle.phase === 'nuit')) return;
     m.arrivee += dt;
     var delai = aFeu(m) ? DELAI_ARRIVEE / 2 : DELAI_ARRIVEE;
@@ -1163,6 +1315,8 @@ var Monde = (function () {
     lapins(m, dt);
     crue(m);
     incendie(m);
+    airSale(m);
+    fusee(m, dt);
     m.animaux.forEach(function (a) { bougerAnimal(m, a, dt); });
     m.animaux = m.animaux.filter(function (a) { return !a.parti; });
     arrivees(m, dt);
@@ -1173,14 +1327,30 @@ var Monde = (function () {
   function exporter(m) { var c = JSON.parse(JSON.stringify(m)); c.evenements = []; return c; }
   // Pour la sauvegarde confiée à Ludiworld : la carte est la même au départ pour toutes les parties (elle pèse 200 000 caractères),
   // on n'en garde que les cases qui ont changé (arbres abattus, chemins, bâtiments, île agrandie).
+  // Les valeurs vides (null, false) des habitants, des bâtiments et des animaux ne sont pas gardées : le jeu les lit de la même façon
+  // quand elles manquent (jamais de comparaison stricte avec null ou false). Les nombres restent, même à zéro.
+  function sansVides(c) {
+    var vider = function (o) { if (o && typeof o === 'object' && !Array.isArray(o)) Object.keys(o).forEach(function (k) { if (o[k] === null || o[k] === false) delete o[k]; }); };
+    (c.habitants || []).forEach(function (h) { vider(h); (h.etapes || []).forEach(vider); });
+    (c.batiments || []).forEach(vider);
+    (c.animaux || []).forEach(vider);
+    return c;
+  }
   function exporterLeger(m) {
-    var c = arrondir(exporter(m)), T = c.terrain, base = TR.generer(), delta = [], meta = {};
-    T.tuiles.forEach(function (t, i) { if (JSON.stringify(t) !== JSON.stringify(base.tuiles[i])) delta.push([i, t]); });
+    var c = sansVides(arrondir(exporter(m))), T = c.terrain, base = TR.generer(), delta = [], meta = {};
+    // une case changée : seulement ce qui a changé par rapport à la carte de départ (partiel), et les clés qui ont disparu (_sans)
+    T.tuiles.forEach(function (t, i) {
+      var b = base.tuiles[i], d = null;
+      Object.keys(t).forEach(function (k) { if (JSON.stringify(t[k]) !== JSON.stringify(b[k])) { d = d || {}; d[k] = t[k]; } });
+      Object.keys(b).forEach(function (k) { if (!(k in t)) { d = d || {}; (d._sans = d._sans || []).push(k); } });
+      if (d) delta.push([i, d]);
+    });
     Object.keys(T).forEach(function (k) { if (k !== 'tuiles') meta[k] = T[k]; });
-    c.terrain = { leger: true, n: T.tuiles.length, meta: meta, delta: delta };
+    c.terrain = { leger: true, partiel: true, n: T.tuiles.length, meta: meta, delta: delta };
     return c;
   }
   // Rend un monde complet, ou null si la sauvegarde ne correspond plus à la carte de ce jeu.
+  // (les sauvegardes d'avant le monde moderne gardent des cases entières : partiel absent)
   function developper(o) {
     var L = o && o.terrain;
     if (!L || !L.leger) return o || null;
@@ -1189,7 +1359,12 @@ var Monde = (function () {
     var T = {};
     Object.keys(L.meta).forEach(function (k) { T[k] = L.meta[k]; });
     T.tuiles = base.tuiles;
-    L.delta.forEach(function (d) { T.tuiles[d[0]] = d[1]; });
+    L.delta.forEach(function (d) {
+      if (!L.partiel) { T.tuiles[d[0]] = d[1]; return; }
+      var t = T.tuiles[d[0]];
+      Object.keys(d[1]).forEach(function (k) { if (k !== '_sans') t[k] = d[1][k]; });
+      (d[1]._sans || []).forEach(function (k) { delete t[k]; });
+    });
     o.terrain = T;
     return o;
   }
@@ -1203,7 +1378,8 @@ var Monde = (function () {
     }
     if (o.nourriture == null) { o.nourriture = 30; o.faim = 0; }
     if (o.batiments.some(function (b) { return b.type === 'pont-pierre'; }) && o.terrain && o.terrain.tuiles) degagerPont(o);
-    if (o.rails && o.terrain && o.terrain.tuiles) degagerRails(o); // le tunnel n'est plus caché par la forêt (aussi dans une partie reprise)
+    if (o.rails && o.terrain && o.terrain.tuiles) degagerRails(o);
+    if (o.epoque >= 6 && o.terrain && o.terrain.tuiles) eclaircirSouches(o); // plus de grand champ de souches (aussi dans une partie reprise) // le tunnel n'est plus caché par la forêt (aussi dans une partie reprise)
     o.batiments.forEach(function (b) {
       if (!b.ouvriers) { b.ouvriers = b.ouvrier ? [b.ouvrier] : []; delete b.ouvrier; }
       if (D.batiments[b.type] && D.batiments[b.type].merveille && b.etape == null) b.etape = 3;
@@ -1217,7 +1393,9 @@ var Monde = (function () {
     peutConstruire: peutConstruire, aDeLaPlace: aDeLaPlace,
     decouvertesEpoque: decouvertesEpoque, etatDecouverte: etatDecouverte, decouvrir: decouvrir,
     epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter, poserRails: poserRails, poserLigne: poserLigne, allumerVille: allumerVille,
-    lits: lits, bat: bat, exporter: exporter, arrondir: arrondir, importer: importer, exporterLeger: exporterLeger, developper: developper, BULLES_MAX: BULLES_MAX,
+    poserEoliennes: poserEoliennes, poserPasDeTir: poserPasDeTir, reserverTir: reserverTir, decoller: decoller, partieFinie: partieFinie, derniereEpoque: derniereEpoque,
+    DUREE_VOL: DUREE_VOL, NOUVELLE_FUSEE: NOUVELLE_FUSEE, DELAI_AIR: DELAI_AIR,
+    lits: lits, bat: bat, exporter: exporter, arrondir: arrondir, sansVides: sansVides, importer: importer, exporterLeger: exporterLeger, developper: developper, BULLES_MAX: BULLES_MAX,
     heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
     phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES,
     amelioration: amelioration, ameliorer: ameliorer, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX,

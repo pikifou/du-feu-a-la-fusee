@@ -96,6 +96,22 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #scene-non { border: 0; background: transparent; font-family: inherit; font-size: 17px; color: var(--encre-douce); text-decoration: underline; cursor: pointer; margin-top: 10px; }
 #btn-plein { font-size: 22px; font-weight: 700; }
 
+/* la fusée (le monde moderne) : un gros bouton rouge et blanc, au milieu, pour la faire décoller ; puis le compte à rebours */
+#btn-fusee { position: fixed; z-index: 22; left: 50%; bottom: calc(132px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  border: 4px solid #fff; font-family: 'Lilita One', 'Fredoka', sans-serif; font-size: 30px; letter-spacing: .5px; color: #fff; padding: 12px 30px 12px 20px;
+  border-radius: 999px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(#f0644a, #c8341f); box-shadow: 0 7px 0 #8e2414, 0 14px 28px rgba(120,30,10,.4); animation: fusee-appel 1.3s ease-in-out infinite; }
+#btn-fusee .ico { font-size: 38px; }
+#btn-fusee:active { transform: translateX(-50%) translateY(4px); box-shadow: 0 3px 0 #8e2414; }
+@keyframes fusee-appel { 0%,100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.08); } }
+#compte { position: fixed; inset: 0; z-index: 23; display: grid; place-items: center; pointer-events: none;
+  font: 150px/1 'Lilita One', 'Fredoka', sans-serif; color: #fff; text-shadow: 0 6px 0 #c8341f, 0 12px 30px rgba(0,0,0,.35); }
+#compte span { animation: compte-pop .9s ease-out both; }
+#compte span.go { font-size: 90px; }
+@keyframes compte-pop { from { transform: scale(2.2); opacity: 0; } 25% { transform: scale(1); opacity: 1; } to { transform: scale(.9); opacity: .9; } }
+@media (max-height: 480px) { #btn-fusee { font-size: 24px; bottom: calc(112px + env(safe-area-inset-bottom, 0px)); padding: 8px 22px 8px 14px; } #compte { font-size: 110px; } #compte span.go { font-size: 64px; } }
+@media (prefers-reduced-motion: reduce) { #btn-fusee, #compte span { animation: none; } }
+
 /* ---- tourner le téléphone ---- */
 #tourner { position: fixed; inset: 0; z-index: 80; background: var(--fond); display: none; flex-direction: column;
   align-items: center; justify-content: center; gap: 18px; text-align: center; padding: 24px; }
@@ -331,6 +347,8 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 </div>
 
 <button id="btn-epoque" hidden></button>
+<button id="btn-fusee" hidden aria-label="Faire décoller la fusée"><span class="ico">🚀</span><span>Décollage !</span></button>
+<div id="compte" hidden></div>
 <div id="barre"></div>
 <div id="bulle-aide"></div>
 <div id="info" hidden>

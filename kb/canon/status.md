@@ -3,7 +3,7 @@ title: État courant
 domain: canon
 type: doc
 status: active
-updated: 2026-11-16
+updated: 2026-11-18
 ---
 
 # Où on en est (25/10/2026)
@@ -34,7 +34,7 @@ updated: 2026-11-16
 - **Prototype jouable v0.1** (époques 1 et 2) publié en artefact : habitants qui travaillent et construisent, chantiers, bulles à récolter, 10 découvertes avec voix, changement d'époque avec rénovation automatique des huttes et passerelle (cf. `domains/tech/tech.md`).
 
 ## En cours
-- Branches à jouer par Julien, pas encore validées : `age-des-metaux` (la troisième époque, publiée le 16/11/2026, cf. `journal/2026-11-session-03.md`) puis `moyen-age` (la quatrième époque, le Moyen Âge, avec la crue qui emporte la passerelle et le pont de pierre ; la vraie fin passe à la fin du Moyen Âge ; cf. `journal/2026-11-session-04.md`), puis `vapeur` (la cinquième époque, l'âge de la vapeur, avec l'incendie et les pompiers, le chemin de fer et son train ; l'île grandit vers le nord ; cf. `journal/2026-11-session-05.md`), puis `electricite` (la sixième époque, l'électricité, avec la nuit noire et les lampadaires, les poteaux et les fils, les voitures et le petit avion ; la vraie fin passe à la fin de l'électricité ; cf. `journal/2026-11-session-06.md`). Pas poussées.
+- Branches à jouer par Julien, pas encore validées : `age-des-metaux` (la troisième époque, publiée le 16/11/2026, cf. `journal/2026-11-session-03.md`) puis `moyen-age` (la quatrième époque, le Moyen Âge, avec la crue qui emporte la passerelle et le pont de pierre ; la vraie fin passe à la fin du Moyen Âge ; cf. `journal/2026-11-session-04.md`), puis `vapeur` (la cinquième époque, l'âge de la vapeur, avec l'incendie et les pompiers, le chemin de fer et son train ; l'île grandit vers le nord ; cf. `journal/2026-11-session-05.md`), puis `electricite` (la sixième époque, l'électricité, avec la nuit noire et les lampadaires, les poteaux et les fils, les voitures et le petit avion ; cf. `journal/2026-11-session-06.md`), puis `monde-moderne` (la septième et dernière époque, le monde moderne : l'air sale et l'énergie solaire, les éoliennes, le satellite, le pas de tir ; la vraie fin est le décollage de la fusée, que l'enfant lance avec un gros bouton ; cf. `journal/2026-11-session-07.md`). Pas poussées.
 - Game design en brouillon : proposition de Claude, pas encore validée par Julien (`domains/game-design/gd.md`).
 
 ## Prochaine étape

@@ -711,7 +711,8 @@
     'e3-forgeron': 2.6, 'e3-scribe': 0.8, 'e3-marchande': 0.9, 'e3-marin': 1.2, 'e3-charron': 2.2, 'e3-bucheron': 2.4, 'e3-faucille': 1.6, 'e3-tour-potier': 1.4,
     'e4-marechal': 2.6, 'e4-meunier': 1.2, 'e4-boulangere': 1.1, 'e4-horloger': 0.8, 'e4-imprimeur': 1.3, 'e4-bucheron': 2.4, 'e4-faucille': 1.6, 'e4-marchande': 0.9,
     'e5-mineur': 2.4, 'e5-ouvriere': 1.4, 'e5-cheminot': 0.9, 'e5-inventrice': 1.2, 'e5-pompier': 3, 'e5-bucheron': 2.4, 'e5-faucille': 1.6, 'e5-matelot': 1.1,
-    'e6-electricien': 1.6, 'e6-standardiste': 1.2, 'e6-aviatrice': 1.4, 'e6-mecanicien': 2, 'e6-fermier': 1.6, 'e6-chercheuse': 0.8, 'e6-citadine': 0.9, 'e6-bucheron': 2.4 };
+    'e6-electricien': 1.6, 'e6-standardiste': 1.2, 'e6-aviatrice': 1.4, 'e6-mecanicien': 2, 'e6-fermier': 1.6, 'e6-chercheuse': 0.8, 'e6-citadine': 0.9, 'e6-bucheron': 2.4,
+    'e7-informaticienne': 0.8, 'e7-caissier': 1.1, 'e7-ingenieur': 1.4, 'e7-technicien': 1.6, 'e7-astronome': 0.8, 'e7-bucheron': 2.4 };
   function spritePorteur(h) {
     var l = D.porteurs[monde.epoque] || {}, x = h.porte && l[h.porte];
     if (x && typeof x === 'object') x = D.femmes.indexOf(h.allure) >= 0 ? x.f : x.h;
@@ -953,8 +954,12 @@
       marechal: ['Tac, tac !', 'Un fer tout neuf !'], moulinier: ['Ça tourne !', 'De la farine !'], boulanger: ['Le pain est prêt !', 'Tout chaud !'], horloger: ['Tic, tac !', 'Midi pile !'], imprimeur: ['Encore une page !', 'Un beau livre !'],
       mineur: ['Du charbon !', 'Toc, toc, la pioche !'], ouvriere: ['Quel beau tissu !', 'Les fils tournent !'], cheminot: ['En voiture !', 'Tuuut !'], inventeur: ['Eurêka !', 'Encore un boulon…'], matelot: ['En avant !', 'Ohé !'], pompier: ['Au feu !', 'Plus fort, la pompe !'],
       electricien: ['Ça grésille !', 'Encore un fil !'], standardiste: ['Allô ?', 'Je vous passe !'], aviatrice: ['Contact !', 'En route vers le ciel !'],
-      mecanicien: ['Vroum !', 'Un petit boulon…'], fermier: ['Belle récolte !', 'Allez, mon tracteur !'], chercheur: ['Eurêka !', 'Ça brille !']
+      mecanicien: ['Vroum !', 'Un petit boulon…'], fermier: ['Belle récolte !', 'Allez, mon tracteur !'], chercheur: ['Eurêka !', 'Ça brille !'],
+      informaticien: ['Clic, clic !', 'Ça calcule !'], caissier: ['Bip !', 'Bonne journée !'], ingenieur: ['Il marche, mon robot !', 'Encore un calcul !'],
+      technicien: ['Ça brille au soleil !', 'Tout propre !'], astronome: ['Une étoile filante !', 'Je vois la Lune !']
     },
+    tousse: ['Kof, kof !', "L'air est tout gris…", 'On ne voit plus le ciel bleu !'],
+    fusee: ['Une fusée !', 'Elle est prête !', 'Vas-y, la fusée !'],
     noir: ['Il fait tout noir !', 'Je ne vois rien…', 'Aïe, où est le chemin ?'],
     faim: ['J\'ai faim !', 'Mon ventre gargouille…', 'Il reste à manger ?'],
     porte: { baies: ['Plein de baies !'], lait: ['Du bon lait !'], pot: ['Un pot tout neuf !'], farine: ['De la farine !'], bois: ['Lourd, ce bois !', 'Du bois !'], viande: ['Ce soir, on mange !'], lapin: ['Un lapin pour ce soir !'], poisson: ['Regardez ma pêche !'],
@@ -980,6 +985,8 @@
     if (h.reserve) return auHasard(BARKS.chantier);
     if (h.pose && BARKS.travail[h.metier]) return auHasard(BARKS.travail[h.metier]);
     if (monde.nuitNoire === true && M.estNuit(monde)) return auHasard(BARKS.noir);
+    if (monde.airSale === true && Math.random() < 0.5) return auHasard(BARKS.tousse);
+    if (monde.fusee === 'prete' && Math.random() < 0.3) return auHasard(BARKS.fusee);
     if (ph === 'soir' && h.etapes.some(function (e) { return e.fait === 'dormir'; })) return auHasard(BARKS.coucher);
     if (ph === 'soir') return auHasard(BARKS.veillee);
     return auHasard(BARKS.libre);
@@ -1361,13 +1368,136 @@
     ctx.drawImage(im, -w / 2, -H * 0.7, w, H); ctx.restore();
   }
 
+  // ---------- le monde moderne : éoliennes, panneaux solaires, terrain de la fusée, fusée, satellite, air sale ----------
+  var HAUT_EOLIENNE = 230, HAUT_PANNEAU = 50;
+  function piedEolienne(c) { var p = TR.centre(c[0], c[1]); return [p[0], p[1] + 8]; }
+  function piedPanneau(c) { var p = TR.centre(c[0], c[1]); return [p[0] + 18, p[1] + 6]; }
+  // l'éolienne est dessinée par le jeu (mât, nacelle, pales qui tournent), en blanc mat ombré comme la pâte
+  function dessinerEolienne(c) {
+    var q = piedEolienne(c), p = E(q[0], q[1]), H = HAUT_EOLIENNE * V.s, s = V.s;
+    ombre(p[0], p[1], 16 * s, 5 * s, 0.22);
+    var hx = p[0], hy = p[1] - H * 0.86;
+    // le mât, plus large en bas
+    var g = ctx.createLinearGradient(p[0] - 9 * s, 0, p[0] + 9 * s, 0);
+    g.addColorStop(0, '#d9d5cf'); g.addColorStop(0.45, '#f6f4f0'); g.addColorStop(1, '#b9b4ad');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(p[0] - 8 * s, p[1]); ctx.lineTo(p[0] - 4 * s, hy); ctx.lineTo(p[0] + 4 * s, hy); ctx.lineTo(p[0] + 8 * s, p[1]); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#cfcac3'; ctx.beginPath(); ctx.ellipse(p[0], p[1], 10 * s, 4 * s, 0, 0, 7); ctx.fill();
+    // la nacelle
+    var gn = ctx.createLinearGradient(0, hy - 8 * s, 0, hy + 8 * s);
+    gn.addColorStop(0, '#f8f6f2'); gn.addColorStop(1, '#c4bfb8');
+    ctx.fillStyle = gn; ctx.beginPath(); ctx.ellipse(hx + 8 * s, hy, 15 * s, 7.5 * s, -0.12, 0, 7); ctx.fill();
+    // les pales tournent avec le vent
+    var L = H * 0.4, a0 = T * 1.6 + c[0] * 1.3 + c[1];
+    ctx.save(); ctx.translate(hx - 4 * s, hy);
+    for (var k = 0; k < 3; k++) {
+      ctx.save(); ctx.rotate(a0 + k * Math.PI * 2 / 3);
+      var gp = ctx.createLinearGradient(0, -5 * s, 0, 5 * s); gp.addColorStop(0, '#fbfaf7'); gp.addColorStop(1, '#c8c3bc');
+      ctx.fillStyle = gp;
+      ctx.beginPath(); ctx.moveTo(0, -4.5 * s); ctx.quadraticCurveTo(L * 0.3, -7.5 * s, L, -1.2 * s); ctx.lineTo(L, 1 * s); ctx.quadraticCurveTo(L * 0.3, 4 * s, 0, 4.5 * s); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    var gh = ctx.createRadialGradient(-2 * s, -2 * s, 0, 0, 0, 7 * s); gh.addColorStop(0, '#ffffff'); gh.addColorStop(1, '#cbc6bf');
+    ctx.fillStyle = gh; ctx.beginPath(); ctx.arc(0, 0, 6.5 * s, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+  function dessinerPanneau(c) {
+    var im = IMG['07-moderne/panneau']; if (!im) return;
+    var q = piedPanneau(c), p = E(q[0], q[1]), H = HAUT_PANNEAU * V.s, w = H * im.width / im.height;
+    ombre(p[0], p[1], 12 * V.s, 4 * V.s, 0.2);
+    ctx.drawImage(im, p[0] - w / 2, p[1] - H * 0.97, w, H);
+  }
+  // le terrain gardé pour la fusée : un carré de piquets et de petits drapeaux
+  function dessinerTerrainTir() {
+    var r = monde.tir; if (!r || monde.batiments.some(function (b) { return b.type === 'pas-de-tir'; })) return;
+    var c = [TR.centre(r[0] - 0.5 + 0.5, r[1] - 0.5 + 0.5)];
+    var coins = [[r[0] - 0.5, r[1] - 0.5], [r[0] + 1.5, r[1] - 0.5], [r[0] + 1.5, r[1] + 1.5], [r[0] - 0.5, r[1] + 1.5]].map(function (q) { var z = TR.centre(q[0], q[1]); return E(z[0], z[1] - TR.TH / 2); });
+    if (!visible(TR.centre(r[0], r[1])[0], TR.centre(r[0], r[1])[1], 300)) return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,248,230,0.22)';
+    ctx.beginPath(); coins.forEach(function (q, k) { if (k) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }); ctx.closePath(); ctx.fill();
+    ctx.setLineDash([10 * V.s, 8 * V.s]); ctx.lineWidth = 3 * V.s; ctx.strokeStyle = 'rgba(200,52,31,0.75)'; ctx.stroke();
+    ctx.setLineDash([]);
+    coins.forEach(function (q, k) {
+      ctx.fillStyle = '#7a5a3a'; ctx.fillRect(q[0] - 1.5 * V.s, q[1] - 26 * V.s, 3 * V.s, 26 * V.s);
+      ctx.fillStyle = k % 2 ? '#fff' : '#d8452c';
+      ctx.beginPath(); ctx.moveTo(q[0] + 1.5 * V.s, q[1] - 26 * V.s); ctx.lineTo(q[0] + 15 * V.s, q[1] - 21 * V.s); ctx.lineTo(q[0] + 1.5 * V.s, q[1] - 16 * V.s); ctx.closePath(); ctx.fill();
+    });
+    ctx.restore();
+    void c;
+  }
+  // la fusée sur son pas de tir (prête, puis en vol)
+  var FUSEE = { dx: -0.03, haut: 250, pied: 0.77 }; // le pied de la fusée dans l'image du pas de tir (décalage en largeur, hauteur depuis le bas), sa hauteur
+  function padTir() { return monde.batiments.filter(function (b) { return b.type === 'pas-de-tir' && b.etat === 'fini'; })[0] || null; }
+  function piedFusee(b) { var t = tailleBat(b); return [b.x + FUSEE.dx * t.w / V.s, basBat(b) - t.h / V.s * (1 - FUSEE.pied)]; }
+  var ebranle = 0;
+  function dessinerFusee() {
+    var b = padTir(), im = IMG['07-moderne/fusee'];
+    if (!b || !im || (monde.fusee !== 'prete' && monde.fusee !== 'vol' && !lancement)) return;
+    var q = piedFusee(b), H = FUSEE.haut * V.s, w = H * im.width / im.height;
+    var v = monde.fusee === 'vol' ? (monde.vol || 0) : 0;
+    var monte = v > 0.6 ? Math.pow(v - 0.6, 2.2) * 26 : 0; // elle s'arrache doucement, puis file
+    var p = E(q[0], q[1] - monte);
+    var tremble = (monde.fusee === 'vol' && v < 2.5) || (lancement && lancement.feu) ? (Math.random() - 0.5) * 2.5 * V.s : 0;
+    // la flamme sous la fusée
+    if (monde.fusee === 'vol' || (lancement && lancement.feu)) {
+      var fl = (monde.fusee === 'vol' ? 1 : 0.45) * (1 + Math.sin(T * 40) * 0.12), fh = H * 0.42 * fl, fw = w * 0.32;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      var g = ctx.createRadialGradient(p[0], p[1] + fh * 0.2, 0, p[0], p[1] + fh * 0.2, fh);
+      g.addColorStop(0, 'rgba(255,250,210,0.95)'); g.addColorStop(0.35, 'rgba(255,190,70,0.85)'); g.addColorStop(1, 'rgba(255,90,30,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(p[0], p[1] + fh * 0.35, fw, fh * 0.75, 0, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+    ctx.drawImage(im, p[0] - w / 2 + tremble, p[1] - H * 0.97, w, H);
+  }
+  function fumeeFusee(dt) {
+    var b = padTir(); if (!b) return;
+    var q = piedFusee(b), enVol = monde.fusee === 'vol', v = monde.vol || 0;
+    var nb = enVol && v < 4 ? 30 : lancement && lancement.feu ? 8 : 0;
+    var n = Math.floor(dt * nb + Math.random());
+    for (var k = 0; k < n; k++) {
+      var a = Math.random() < 0.5 ? -1 : 1;
+      particule({ type: 'fumee', x: q[0] + (Math.random() - 0.5) * 40, y: q[1] + 6, vx: a * (60 + Math.random() * 90), vy: -10 - Math.random() * 25, max: 3 + Math.random() * 2, r: 18 + Math.random() * 14, c: '246,242,236' });
+    }
+    if (enVol && v > 0.6) {
+      // la traînée derrière la fusée qui monte
+      var monte = Math.pow(v - 0.6, 2.2) * 26;
+      if (Math.random() < dt * 22) particule({ type: 'fumee', x: q[0] + (Math.random() - 0.5) * 10, y: q[1] - monte + 30, vx: (Math.random() - 0.5) * 12, vy: 10, max: 2.4, r: 12, c: '250,246,240' });
+    }
+  }
+  // le satellite passe dans le ciel, le soir et la nuit (après sa découverte)
+  var satellite = { s: -1, prochain: 8 };
+  function dessinerSatellite(dt) {
+    if (!monde.decouvertes.satellite) return;
+    var im = IMG['07-moderne/satellite'], d = M.obscurite(monde);
+    if (satellite.s < 0) { satellite.prochain -= dt; if (satellite.prochain <= 0 && d > 0.3) satellite.s = 0; return; }
+    satellite.s += dt / 22;
+    if (satellite.s >= 1) { satellite.s = -1; satellite.prochain = 25 + Math.random() * 20; return; }
+    var x = -60 + (V.W + 120) * satellite.s, y = V.H * (0.2 - 0.08 * Math.sin(Math.PI * satellite.s));
+    var a = Math.max(0.35, d);
+    if (im) { var w = 46, h = w * im.height / im.width; ctx.globalAlpha = a; ctx.drawImage(im, x - w / 2, y - h / 2, w, h); ctx.globalAlpha = 1; }
+    if (Math.sin(T * 6) > 0.3) { ctx.fillStyle = 'rgba(255,250,200,' + a + ')'; ctx.beginPath(); ctx.arc(x + 4, y - 4, 3, 0, 7); ctx.fill(); }
+  }
+  // l'air sale : un voile gris sur la ville, qui s'en va doucement quand le soleil et le vent arrivent
+  var voileAir = 0;
+  function dessinerAirSale(dt) {
+    var cible = monde.airSale === true ? 1 : 0;
+    voileAir += Math.max(-dt / 5, Math.min(dt / 3, cible - voileAir));
+    if (voileAir <= 0.01) return;
+    ctx.fillStyle = 'rgba(128,120,104,' + (0.32 * voileAir) + ')';
+    ctx.fillRect(0, 0, V.W, V.H);
+  }
+
   function dessiner(dt) {
     ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0);
     rangerDormeurs();
+    if (monde.fusee === 'vol' && (monde.vol || 0) < 3) ctx.translate((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3);
     ctx.imageSmoothingQuality = 'high';
     dessinerFond(dt);
     dessinerEau();
     dessinerEmplacements();
+    dessinerTerrainTir();
     var T0 = monde.terrain, liste = [];
     T0.tuiles.forEach(function (t) {
       if (!TR.surIle(T0, t)) return;
@@ -1402,14 +1532,20 @@
     (monde.lampes || []).forEach(function (c) { var q = piedLampe(c); if (visible(q[0], q[1], 150)) liste.push({ y: q[1], f: dessinerLampe, o: c }); });
     majVoitures(Math.min(dt || 0, 0.1) * VITESSE);
     voitures.forEach(function (v) { if (visible(v.x, v.y, 120)) liste.push({ y: v.y + 8, f: dessinerVoiture, o: v }); });
+    (monde.eoliennes || []).forEach(function (c) { var q = piedEolienne(c); if (visible(q[0], q[1], 300)) liste.push({ y: q[1], f: dessinerEolienne, o: c }); });
+    (monde.panneaux || []).forEach(function (c) { var q = piedPanneau(c); if (visible(q[0], q[1], 120)) liste.push({ y: q[1], f: dessinerPanneau, o: c }); });
+    var bTir = padTir(); if (bTir) liste.push({ y: basBat(bTir) - 5, f: dessinerFusee, o: null });
     liste.sort(function (a, b) { return a.y - b.y; });
     liste.forEach(function (e) { e.f(e.o); });
     dessinerFils();
     majAvion(Math.min(dt || 0, 0.1) * VITESSE);
     dessinerAvion();
     fumees(dt);
+    fumeeFusee(Math.min(dt || 0, 0.1));
     dessinerParts(dt);
+    dessinerAirSale(Math.min(dt || 0, 0.1));
     dessinerNuit();
+    dessinerSatellite(Math.min(dt || 0, 0.1));
     dessinerFleches();
     dessinerBulles();
     barks();
@@ -1446,11 +1582,12 @@
       $('btn-epoque').hidden = !pret;
       if (pret) $('btn-epoque').textContent = (ICONE_EPOQUE[suiv.id] || '✨') + ' Vers ' + suiv.nom.replace(/^L(e |a |')/, 'l$1') + ' !';
     }
+    majBoutonFusee();
     $('btn-merveilles').classList.toggle('pret', merveilles().some(function (t) { var a = actionMerveille(t); return a.genre && a.cout <= monde.pieces; }));
   }
 
-  var ICONE_EPOQUE = { 2: '🌾', 3: '⚒️', 4: '⚙️', 5: '🚂', 6: '💡' };
-  var ILLU_EPOQUE = { 1: 'scenes/cueilleurs', 2: 'scenes/agriculture', 3: 'scenes/metaux', 4: 'scenes/moyen-age', 5: 'scenes/vapeur-ville', 6: 'scenes/ville-electrique' };
+  var ICONE_EPOQUE = { 2: '🌾', 3: '⚒️', 4: '⚙️', 5: '🚂', 6: '💡', 7: '🚀' };
+  var ILLU_EPOQUE = { 1: 'scenes/cueilleurs', 2: 'scenes/agriculture', 3: 'scenes/metaux', 4: 'scenes/moyen-age', 5: 'scenes/vapeur-ville', 6: 'scenes/ville-electrique', 7: 'scenes/ville-moderne' };
   var signatureBarre = '';
   // le bandeau : deux onglets, construire et embellir (ADR-023)
   function majBarre() {
@@ -1462,7 +1599,9 @@
     var liste = tout.filter(function (k) { return !!D.batiments[k].deco === (onglet === 'embellir'); });
     // d'abord ce qui rapporte des pièces, puis les maisons, puis la nourriture, puis le reste (ADR-037)
     var rangCarte = function (k) { var d = D.batiments[k], tr = d.travail; return tr && tr.produit === 'pieces' ? 0 : d.lits ? 1 : tr && tr.produit === 'nourriture' ? 2 : 3; };
-    liste.sort(function (a, b) { return (rangCarte(a) - rangCarte(b)) || ((D.batiments[a].cout || 0) - (D.batiments[b].cout || 0)); });
+    // à partir de l'âge des métaux, ceux de l'époque en cours passent devant les vieux bâtiments bon marché (même ordre à l'intérieur)
+    var vieux = function (k) { return monde.epoque >= 3 && D.batiments[k].epoque < monde.epoque ? 1 : 0; };
+    liste.sort(function (a, b) { return (vieux(a) - vieux(b)) || (rangCarte(a) - rangCarte(b)) || ((D.batiments[a].cout || 0) - (D.batiments[b].cout || 0)); });
     var sig = tout.join() + '|' + onglet + '|' + monde.pieces + '|' + choix + '|' + ui.nouveaux.join() + '|' + monde.batiments.length;
     if (sig === signatureBarre) return;
     signatureBarre = sig;
@@ -1530,7 +1669,9 @@
   $('placement-annuler').addEventListener('pointerdown', function (e) { e.stopPropagation(); choisir(null); });
 
   var minuteurAide = null;
+  var derniereAide = -999; // la dernière aide montrée (temps réel) : un conseil de routine ne la recouvre pas tout de suite
   function aide(texte, forcer) {
+    derniereAide = T;
     var el = $('bulle-aide');
     el.textContent = nb(texte); el.style.display = 'block';
     clearTimeout(minuteurAide);
@@ -1576,12 +1717,12 @@
   var LANGUE = /^en/i.test(document.documentElement.lang) ? 'en' : 'fr';
   var H = D.textes.histoire;
   var MOUVEMENT_REDUIT = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var CINE_IMAGES = { intro: 'histoire/debut', village: 'histoire/village', ville: 'histoire/ville', 'moyen-age': 'histoire/moyen-age', vapeur: 'histoire/vapeur', fin: 'histoire/fin' };
-  var PASSAGE = { 2: 'village', 3: 'ville', 4: 'moyen-age', 5: 'vapeur' }; // la petite scène qui clôt une époque (avant le bouton doré)
+  var CINE_IMAGES = { intro: 'histoire/debut', village: 'histoire/village', ville: 'histoire/ville', 'moyen-age': 'histoire/moyen-age', vapeur: 'histoire/vapeur', electricite: 'histoire/electricite', fin: 'histoire/fin' };
+  var PASSAGE = { 2: 'village', 3: 'ville', 4: 'moyen-age', 5: 'vapeur', 6: 'electricite' }; // la petite scène qui clôt une époque (avant le bouton doré)
   // la dernière petite scène déjà vue, pour la rejouer depuis la marque « Fini »
   function dernierPassage() {
     var e = monde.epoque + (M.epoqueTerminee(monde) ? 1 : 0); // l'époque d'après, si celle-ci est finie
-    return e >= 6 ? 'vapeur' : e >= 5 ? 'moyen-age' : e >= 4 ? 'ville' : 'village';
+    return e >= 7 ? 'electricite' : e >= 6 ? 'vapeur' : e >= 5 ? 'moyen-age' : e >= 4 ? 'ville' : 'village';
   }
   function cinematique(nom, ensuite) {
     var t = H[nom][LANGUE], box = $('cine'), vid = box.querySelector('video'), img = box.querySelector('img');
@@ -1622,9 +1763,7 @@
     };
   }
   // le parcours est fini quand toutes les découvertes de la dernière époque sont faites
-  function partieFinie() {
-    return !D.epoques.some(function (x) { return x.id === monde.epoque + 1; }) && M.epoqueTerminee(monde);
-  }
+  function partieFinie() { return M.partieFinie(monde); } // la fusée a décollé
   // Ludiworld n'enlève jamais « Fini » : un enfant qui a fini le jeu quand il s'arrêtait au néolithique garde sa marque,
   // et la nouvelle époque l'attend derrière le bouton doré.
   function majFini() {
@@ -1639,8 +1778,8 @@
   function ouvrirDecouvertes() {
     var e = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0];
     var derniere = !D.epoques.some(function (x) { return x.id === monde.epoque + 1; });
-    $('dec-sous').textContent = derniere && M.epoqueTerminee(monde)
-      ? 'Tu as tout découvert ! La suite de l\'histoire arrivera plus tard.'
+    $('dec-sous').textContent = derniere && M.partieFinie(monde) ? 'Tu as tout découvert, et ta fusée est partie vers les étoiles !'
+      : derniere && M.epoqueTerminee(monde) ? 'Tu as tout découvert ! Il reste à faire décoller la fusée.'
       : e.nom + ' · tu as ' + monde.idees + ' 💡';
     var g = $('grille-dec');
     g.innerHTML = '';
@@ -1674,7 +1813,7 @@
     var d = D.decouvertes[id];
     var debloques = Object.keys(D.batiments).filter(function (k) { return D.batiments[k].debloque === id; });
     debloques.forEach(function (k) { if (ui.nouveaux.indexOf(k) < 0) ui.nouveaux.push(k); });
-    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'bronze' && monde.batiments.some(function (b) { return b.type === 'tas-bois'; })) aideUneFois('hache-bronze', A.hacheBronze); if (id === 'fer') aideUneFois('outils-fer', A.outilsFer); if (id === 'vapeur' && monde.batiments.some(function (b) { return b.type === 'moulin'; })) aideUneFois('moulin-vapeur', A.moulinVapeur); if (id === 'ampoule') { var c0 = TR.centre(TR.CI, TR.CJ); centrerSur(c0[0], c0[1]); aideUneFois('lumiere', A.lumiere); } if (id === 'voiture') aideUneFois('voitures', A.voitures); if (id === 'pont') { var pp = monde.batiments.filter(function (b) { return b.type === 'pont-pierre'; })[0]; if (pp) centrerSur(pp.x, pp.y); } if (id === 'roue') { aideUneFois('routes', A.routes); if (monde.batiments.some(function (b) { return b.type === 'atelier-potier'; })) setTimeout(function () { aideUneFois('tour-potier', A.tourPotier); }, 5500); } if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); ludiArret('decouverte'); } });
+    ouvrirPage(id, { nouveau: true, ensuite: function () { if (id === 'outils') aideUneFois('outils-bois', A.outilsBois); if (id === 'bronze' && monde.batiments.some(function (b) { return b.type === 'tas-bois'; })) aideUneFois('hache-bronze', A.hacheBronze); if (id === 'fer') aideUneFois('outils-fer', A.outilsFer); if (id === 'vapeur' && monde.batiments.some(function (b) { return b.type === 'moulin'; })) aideUneFois('moulin-vapeur', A.moulinVapeur); if (id === 'ampoule') { var c0 = TR.centre(TR.CI, TR.CJ); centrerSur(c0[0], c0[1]); aideUneFois('lumiere', A.lumiere); } if (id === 'voiture') aideUneFois('voitures', A.voitures); if (id === 'satellite') { satellite.prochain = 2; aideUneFois('satellite', A.satellite); } if (id === 'fusee') { var bt = monde.batiments.filter(function (b) { return b.type === 'pas-de-tir'; })[0]; if (bt) { centrerSur(bt.x, bt.y); aideUneFois('pas-de-tir', A.pasDeTir); } } if (id === 'pont') { var pp = monde.batiments.filter(function (b) { return b.type === 'pont-pierre'; })[0]; if (pp) centrerSur(pp.x, pp.y); } if (id === 'roue') { aideUneFois('routes', A.routes); if (monde.batiments.some(function (b) { return b.type === 'atelier-potier'; })) setTimeout(function () { aideUneFois('tour-potier', A.tourPotier); }, 5500); } if (id === 'elevage' && monde.batiments.some(function (b) { return b.type === 'ratelier-lances'; })) aideUneFois('plus-de-chasse', A.plusDeChasse); apresDecouverte(); ludiArret('decouverte'); } });
     sauver();
     ludiProgression();
   }
@@ -1683,8 +1822,8 @@
     var e = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0];
     var suiv = D.epoques.filter(function (x) { return x.id === monde.epoque + 1; })[0];
     if (!suiv) {
-      majFini();
-      cinematique('fin');
+      // la dernière époque : la fin vient quand la fusée décolle (le gros bouton), pas à la dernière découverte
+      if (partieFinie()) { majFini(); cinematique('fin'); }
       return;
     }
     var bravo = function () { scene({ titre: 'Bravo !', images: ['habitants/sage', '01-pierre/peintures-rupestres'], texte: A.finEpoque[monde.epoque], bouton: 'Super !' }); };
@@ -1737,10 +1876,42 @@
         aideUneFois('epoque6', A.epoque6);
         setTimeout(function () { aideUneFois('maisons-ville', A.maisonsVille); }, 12000);
       }
+      if (monde.epoque === 7) {
+        if (monde.tir) { var ct = TR.centre(monde.tir[0] + 0.5, monde.tir[1] + 0.5); centrerSur(ct[0], ct[1]); }
+        aideUneFois('epoque7', A.epoque7);
+        setTimeout(function () { aideUneFois('maisons-modernes', A.maisonsModernes); }, 14000);
+      }
       // une nouvelle époque commence (on n'arrive ici au-delà de la première que par le bouton d'époque)
       if (monde.epoque > 1) ludiArret('epoque');
     } });
   }
+
+  // ---------- la fusée : un gros bouton, un compte à rebours, et elle décolle ----------
+  var lancement = null;
+  function majBoutonFusee() {
+    var montrer = monde.fusee === 'prete' && !enScene && !lancement;
+    if ($('btn-fusee').hidden === montrer) $('btn-fusee').hidden = !montrer;
+  }
+  $('btn-fusee').addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (monde.fusee !== 'prete' || lancement) return;
+    son('clic'); cacherInfo(); choisir(null);
+    var b = padTir(); if (b) centrerSur(b.x, basBat(b) - 120);
+    lancement = { n: 0, feu: false };
+    $('btn-fusee').hidden = true;
+    var mots = A.compteRebours, box = $('compte');
+    box.hidden = false;
+    function etape() {
+      if (lancement.n >= mots.length) { box.hidden = true; box.innerHTML = ''; lancement = null; M.decoller(monde); sauver(); return; }
+      var m = mots[lancement.n], dernier = lancement.n === mots.length - 1;
+      box.innerHTML = '<span class="' + (dernier ? 'go' : '') + '">' + (dernier ? m.replace(' !', '') : m.replace(/ !$/, '').replace('Trois', '3').replace('Deux', '2').replace('Un', '1')) + '</span>';
+      if (lancement.n === 2) lancement.feu = true;
+      dire(m); son(dernier ? 'decouverte' : 'pop');
+      lancement.n++;
+      setTimeout(etape, 1000);
+    }
+    etape();
+  });
 
   $('c-nourriture').addEventListener('click', function () { son('clic'); aide(A.nourritureInfo, true); });
 
@@ -1935,7 +2106,8 @@
     forgeron: 'le forgeron', scribe: 'le scribe', marchand: 'la marchande', marin: 'le marin', charron: 'le charron',
     marechal: 'le maréchal-ferrant', moulinier: 'le meunier', boulanger: 'la boulangère', horloger: "l'horloger", imprimeur: "l'imprimeur",
     mineur: 'le mineur', ouvriere: "l'ouvrière", cheminot: 'le chef de gare', inventeur: "l'inventrice", matelot: 'la matelote', pompier: 'le pompier',
-    electricien: "l'électricien", standardiste: 'la standardiste', aviatrice: "l'aviatrice", mecanicien: 'le mécanicien', fermier: 'le fermier', chercheur: 'la chercheuse'
+    electricien: "l'électricien", standardiste: 'la standardiste', aviatrice: "l'aviatrice", mecanicien: 'le mécanicien', fermier: 'le fermier', chercheur: 'la chercheuse',
+    informaticien: "l'informaticienne", caissier: 'le caissier', ingenieur: "l'ingénieur", technicien: 'le technicien', astronome: "l'astronome"
   };
   var infoMinuteur = null;
   function montrerInfo(o) {
@@ -2125,6 +2297,8 @@
     for (var vi = 0; vi < voitures.length; vi++) { var sv = E(voitures[vi].x, voitures[vi].y + 8); if (Math.abs(x - sv[0]) < 45 * V.s && y < sv[1] + 6 && y > sv[1] - 60 * V.s) { infoNature('voiture'); return; } }
     var proche = function (l, pied, haut) { return (l || []).some(function (c) { var q = pied(c), sp = E(q[0], q[1]); return Math.abs(x - sp[0]) < 22 * V.s && y < sp[1] + 6 && y > sp[1] - haut * V.s; }); };
     if (proche(monde.lampes, piedLampe, HAUT_LAMPE)) { infoNature('lampe'); return; }
+    if (proche(monde.eoliennes, piedEolienne, HAUT_EOLIENNE)) { infoNature('eolienne'); return; }
+    if (proche(monde.panneaux, piedPanneau, HAUT_PANNEAU)) { infoNature('panneau'); return; }
     if ((monde.lignes || []).some(function (l) { return proche(l.poteaux, piedPoteau, HAUT_POTEAU); })) { infoNature('poteau'); return; }
     // le chemin de fer : le train, le tunnel, les rails
     if (monde.rails && monde.rails.tuiles && monde.rails.tuiles.length >= 2) { // une ligne d'une seule case : ni train ni tunnel
@@ -2205,7 +2379,7 @@
         var cpt = $('c-' + e.produit); if (cpt) { cpt.classList.remove('tilt'); void cpt.offsetWidth; cpt.classList.add('tilt'); }
       } else if (e.type === 'perdu') {
         // la réserve est pleine : ce qui arrive est perdu (ADR-036) ; on dit quoi faire, de temps en temps
-        if (!enScene && monde.t - (ui.perduA || -999) > 360) {
+        if (!enScene && monde.t - (ui.perduA || -999) > 360 && T - derniereAide > 12) {
           ui.perduA = monde.t;
           var trop = M.besoinRepas(monde, monde.habitants.length + 1) > M.reserveMax(monde);
           aide(trop ? (monde.epoque >= 2 ? A.reserveTropPetite2 : A.reserveTropPetite1) : A.reserveDeborde);
@@ -2228,6 +2402,37 @@
         son('fini');
         aideUneFois('eteint', A.eteint);
         sauver();
+      } else if (e.type === 'air-sale') {
+        // le petit problème du monde moderne : l'air de la ville devient tout gris
+        son('non');
+        if (enScene) ui.airSaleAide = true; else aideUneFois(e.encore ? 'air-sale-encore-' + monde.jour : 'air-sale', e.encore ? A.airSaleEncore : A.airSale);
+      } else if (e.type === 'air-pur') {
+        var eo = (monde.eoliennes || [])[0];
+        if (eo && !enScene) { var ce = TR.centre(eo[0], eo[1]); centrerSur(ce[0], ce[1]); }
+        (monde.panneaux || []).concat(monde.eoliennes || []).forEach(function (l, k) { var c = TR.centre(l[0], l[1]); setTimeout(function () { pouf(c[0], c[1] - 60, 6, '255,244,190'); }, k * 120); });
+        son('fini');
+        aideUneFois('air-pur', A.airPur);
+        sauver();
+      } else if (e.type === 'pas-de-tir') {
+        if (!enScene) centrerSur(e.x, e.y);
+        aideUneFois('pas-de-tir', A.pasDeTir);
+        sauver();
+      } else if (e.type === 'fusee-prete') {
+        var bp = padTir();
+        if (bp) { centrerSur(bp.x, basBat(bp) - 120); pouf(bp.x, basBat(bp) - 80, 12); }
+        son('fini');
+        aide(e.nouvelle ? A.fuseeNouvelle : A.fuseePrete);
+        sauver();
+      } else if (e.type === 'decollage') {
+        son('decouverte');
+      } else if (e.type === 'fusee-partie') {
+        sauver();
+        if (e.n === 1) {
+          // la toute première fusée : la vraie fin du jeu (vidéo, puis l'image et le texte), puis la marque « Fini »
+          setTimeout(function () {
+            cinematique('fin', function () { majFini(); sauver(); ludiProgression(); setTimeout(function () { aide(A.finJeu); }, 600); });
+          }, 900);
+        } else aide(A.fuseePartie);
       } else if (e.type === 'nuit-noire') {
         // le petit problème de l'électricité : la ville est trop grande, les rues restent noires
         son('non');
@@ -2247,7 +2452,7 @@
       } else if (e.type === 'chantier' && M.bat(monde, e.bat) && M.bat(monde, e.bat).type === 'pont-pierre') {
         aideUneFois('pont-pierre', A.pontPierre);
       } else if (e.type === 'faim') {
-        aide(monde.epoque >= 6 ? A.faim6 : monde.epoque >= 5 ? A.faim5 : monde.epoque >= 4 ? A.faim4 : monde.epoque >= 3 ? A.faim3 : monde.epoque >= 2 ? A.faim2 : A.faim1);
+        aide(monde.epoque >= 7 ? A.faim7 : monde.epoque >= 6 ? A.faim6 : monde.epoque >= 5 ? A.faim5 : monde.epoque >= 4 ? A.faim4 : monde.epoque >= 3 ? A.faim3 : monde.epoque >= 2 ? A.faim2 : A.faim1);
       } else if (e.type === 'grandi') {
         var hg = monde.habitants.filter(function (q) { return q.id === e.hab; })[0];
         if (hg) bark(hg, 'J\'ai grandi !');
@@ -2278,6 +2483,7 @@
     if (ui.crueAide && !enScene) { ui.crueAide = false; aideUneFois('crue', A.crue); }
     if (ui.incendieAide && !enScene) { ui.incendieAide = false; aideUneFois('incendie', A.incendie); }
     if (ui.nuitNoireAide && !enScene) { ui.nuitNoireAide = false; aideUneFois('nuit-noire', A.nuitNoire); }
+    if (ui.airSaleAide && !enScene) { ui.airSaleAide = false; aideUneFois('air-sale', A.airSale); }
     // la maison brûle depuis un moment, sans pompiers : on le rappelle une fois
     if (monde.incendie && !enScene && ui.incendieA != null && monde.t - ui.incendieA > 150 && !monde.batiments.some(function (b) { return b.type === 'caserne'; })) aideUneFois('incendie-encore', A.incendieEncore);
     if (!ui.aide.idee && monde.idees >= 4 && !Object.keys(monde.decouvertes).length && !enScene) {
@@ -2312,7 +2518,7 @@
   addEventListener('resize', redim);
 
   // pour les tests automatiques
-  window.__jeu = { monde: function () { return monde; }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; } };
+  window.__jeu = { monde: function () { return monde; }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; }, centrerSur: centrerSur, padTir: padTir };
 
   chargerImages(function () {
     redim();
@@ -2348,6 +2554,14 @@
       if (!nouvellePartie && monde.epoque === 5 && M.epoqueTerminee(monde)) {
         ui.fini = true;
         setTimeout(function () { aideUneFois('electricite-arrive', A.electriciteArrive); }, 1500);
+      }
+    }
+    // Et une partie finie quand le jeu s'arrêtait à l'électricité garde « Fini » et apprend l'arrivée du monde moderne.
+    if (!ui.epoque7) {
+      ui.epoque7 = true;
+      if (!nouvellePartie && monde.epoque === 6 && M.epoqueTerminee(monde)) {
+        ui.fini = true;
+        setTimeout(function () { aideUneFois('moderne-arrive', A.modernArrive); }, 1500);
       }
     }
     majFini(); // une partie déjà finie : la marque « Fini », et Ludiworld le sait

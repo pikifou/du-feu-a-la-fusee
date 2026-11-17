@@ -32,17 +32,22 @@ function jouer(graine, reflexe, maxMin, attente) {
   return { m, jalons, stats };
 }
 
-test('une partie se termine : âge de pierre, néolithique, âge des métaux, Moyen Âge, la vapeur, puis l\'électricité', () => {
+test('une partie se termine : de l\'âge de pierre au monde moderne, jusqu\'au décollage de la fusée', () => {
   for (const graine of [1, 2, 3]) {
-    const { m, jalons, stats } = jouer(graine, 5, 240);
+    const { m, jalons, stats } = jouer(graine, 5, 300);
     assert.ok(jalons.epoque1, 'âge de pierre fini (graine ' + graine + ')');
     assert.ok(jalons.epoque2, 'néolithique fini (graine ' + graine + ')');
     assert.ok(jalons.epoque3, 'âge des métaux fini (graine ' + graine + ')');
     assert.ok(jalons.epoque4, 'Moyen Âge fini (graine ' + graine + ')');
     assert.ok(jalons.epoque5, 'la vapeur finie (graine ' + graine + ')');
     assert.ok(jalons.epoque6, 'l\'électricité finie (graine ' + graine + ')');
-    assert.strictEqual(m.epoque, 6);
+    assert.ok(jalons.epoque7, 'le monde moderne fini (graine ' + graine + ')');
+    assert.strictEqual(m.epoque, 7);
     assert.ok(m.fini, 'fin du jeu atteinte');
+    assert.ok(m.fusees >= 1 && Monde.partieFinie(m), 'la fusée a décollé');
+    const mo = (jalons.epoque7 - jalons.epoque6) / 60;
+    assert.ok(mo > 6 && mo < 16, 'le monde moderne dure à peu près comme les autres époques : ' + mo.toFixed(1) + ' min');
+    console.log(`graine ${graine} : monde moderne ${mo.toFixed(1)} min, partie entière ${(jalons.epoque7 / 60).toFixed(1)} min`);
     const ma = (jalons.epoque4 - jalons.epoque3) / 60, va = (jalons.epoque5 - jalons.epoque4) / 60, el = (jalons.epoque6 - jalons.epoque5) / 60;
     assert.ok(el > 6 && el < 16, 'l\'électricité dure à peu près comme les autres époques : ' + el.toFixed(1) + ' min');
     assert.ok(ma > 5 && ma < 16, 'le Moyen Âge dure à peu près comme les autres époques : ' + ma.toFixed(1) + ' min');
@@ -137,16 +142,21 @@ test('une partie du néolithique sauvée avant l\'âge des métaux continue sans
   for (let i = 0; i < 600; i++) Monde.pas(repris, 0.1);
 });
 
-test('sauvegarde légère d\'une partie finie à l\'électricité : sous 250 000 caractères', () => {
-  const { m } = jouer(5, 5, 290, 8);
-  assert.strictEqual(m.epoque, 6);
+test('sauvegarde légère d\'une longue partie finie au monde moderne : sous 250 000 caractères', () => {
+  const { m } = jouer(5, 5, 360, 8);
+  assert.strictEqual(m.epoque, 7);
   assert.ok(m.fini);
   for (let i = 0; i < 3000; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); }
   m.evenements.length = 0;
   const leger = JSON.stringify(Monde.exporterLeger(m));
   console.log(`sauvegarde légère en fin de partie : ${leger.length} caractères, ${m.batiments.length} bâtiments, ${m.habitants.length} habitants`);
   assert.ok(leger.length < 250000);
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(Monde.developper(JSON.parse(leger)))), JSON.parse(JSON.stringify(Monde.arrondir(Monde.exporter(m)))));
+  assert.ok(leger.length < 200000, 'de la marge pour continuer à jouer : ' + leger.length);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(Monde.developper(JSON.parse(leger)))), JSON.parse(JSON.stringify(Monde.sansVides(Monde.arrondir(Monde.exporter(m))))));
+  // et elle se rejoue
+  const repris = Monde.importer(Monde.developper(JSON.parse(leger)));
+  for (let i = 0; i < 600; i++) { if (Monde.toutLeMondeDort(repris)) Monde.reveiller(repris); Monde.pas(repris, 0.1); }
+  assert.strictEqual(repris.habitants.length >= m.habitants.length - 2, true);
 });
 
 test('rythme avec un joueur lent (récolte toutes les 20 s)', () => {
@@ -484,10 +494,26 @@ test('sauvegarde légère : la carte revient à l\'identique, en bien plus petit
   assert.ok(JSON.stringify(leger).length < complet.length / 5, 'bien plus petit : ' + JSON.stringify(leger).length + ' contre ' + complet.length);
   assert.ok(JSON.stringify(leger).length < 60000);
   const rendu = Monde.developper(leger);
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(rendu)), JSON.parse(JSON.stringify(Monde.arrondir(JSON.parse(complet)))), "à l'arrondi près");
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(rendu)), JSON.parse(JSON.stringify(Monde.sansVides(Monde.arrondir(JSON.parse(complet))))), "à l'arrondi près, sans les valeurs vides");
   // l'arrondi ne déplace personne de plus d'un dixième de pixel, et les trajets se recalculent
   rendu.habitants.forEach((h, k) => assert.ok(Math.abs(h.x - m.habitants[k].x) <= 0.051 && Math.abs(h.y - m.habitants[k].y) <= 0.051));
   const repris = Monde.importer(rendu); for (let i = 0; i < 300; i++) Monde.pas(repris, 0.1);
+});
+
+test('sauvegarde légère : une copie faite par une version d\'avant (cases entières, valeurs vides gardées) se relit', () => {
+  const m = Monde.nouveau(9);
+  for (let i = 0; i < 3000; i++) Monde.pas(m, 0.1);
+  m.evenements.length = 0;
+  // le format d'avant le monde moderne : la case entière dès qu'elle a changé, sans « partiel »
+  const c = Monde.arrondir(Monde.exporter(m)), T = c.terrain, base = Terrain.generer(), delta = [], meta = {};
+  T.tuiles.forEach((t, i) => { if (JSON.stringify(t) !== JSON.stringify(base.tuiles[i])) delta.push([i, t]); });
+  Object.keys(T).forEach(k => { if (k !== 'tuiles') meta[k] = T[k]; });
+  c.terrain = { leger: true, n: T.tuiles.length, meta, delta };
+  const vieux = JSON.parse(JSON.stringify(c));
+  const rendu = Monde.developper(vieux);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(rendu.terrain)), JSON.parse(JSON.stringify(Monde.arrondir(Monde.exporter(m)).terrain)));
+  const repris = Monde.importer(rendu); for (let i = 0; i < 300; i++) Monde.pas(repris, 0.1);
+  assert.strictEqual(repris.habitants.length, m.habitants.length);
 });
 
 test('sauvegarde légère : refusée si la carte du jeu a changé de taille', () => {
@@ -679,11 +705,9 @@ test('électricité : cinq découvertes dans l\'ordre historique, chaque image e
   // un métier qui a sa pose de travail garde la même tenue (pas de changement de visage au travail)
   Object.keys(D.poses[6]).filter(k => D.poses[6][k].startsWith('e6-')).forEach(k => assert.ok(!Array.isArray(D.allures[6][k]), 'une seule tenue pour ' + k));
   // l'ancienne fin devient le passage de la vapeur ; la nouvelle fin a son image et sa vidéo
-  ['histoire/vapeur.png', 'cine/vapeur.mp4', 'histoire/fin.png', 'cine/fin.mp4'].forEach(f => assert.ok(fs.existsSync(path.join(racine, f)), f));
-  ['village', 'ville', 'moyen-age', 'vapeur', 'fin'].forEach(k => ['fr', 'en'].forEach(l => assert.ok(D.textes.histoire[k][l].l1 && D.textes.histoire[k][l].l2, k + ' ' + l)));
+  ['histoire/vapeur.png', 'cine/vapeur.mp4'].forEach(f => assert.ok(fs.existsSync(path.join(racine, f)), f));
+  ['village', 'ville', 'moyen-age', 'vapeur', 'electricite', 'fin'].forEach(k => ['fr', 'en'].forEach(l => assert.ok(D.textes.histoire[k][l].l1 && D.textes.histoire[k][l].l2, k + ' ' + l)));
   assert.match(D.textes.histoire.vapeur.fr.l1, /trains à vapeur/);
-  assert.match(D.textes.histoire.fin.fr.l1, /ampoule/);
-  assert.match(D.textes.histoire.fin.fr.l2, /fusée/);
   assert.ok(D.textes.aides.finEpoque[5] && D.textes.aides.pretEpoque[6] && D.textes.aides.electriciteArrive);
   // pas de tiret long dans les textes du jeu
   assert.ok(!/—/.test(JSON.stringify(D)), 'pas de tiret long');
@@ -818,5 +842,240 @@ test('une partie de la vapeur, finie ou en cours, sauvée avant l\'électricité
       for (let i = 0; i < 4000 && !noire; i++) { if (Monde.toutLeMondeDort(repris)) Monde.reveiller(repris); Monde.pas(repris, 0.1); repris.evenements.forEach(e => { if (e.type === 'nuit-noire') noire++; }); repris.evenements.length = 0; }
       assert.strictEqual(noire, 1, 'la nuit noire arrive aussi dans une partie reprise');
     }
+  }
+});
+
+// ---------- Le monde moderne (la dernière époque) ----------
+test('monde moderne : quatre découvertes dans l\'ordre historique, chaque image existe ; la fin de l\'électricité devient un passage ; le texte de fin', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const ids = Object.keys(D.decouvertes).filter(k => D.decouvertes[k].epoque === 7);
+  assert.deepStrictEqual(ids.sort(), ['fusee', 'ordinateur', 'satellite', 'solaire']);
+  // l'ordre réel (ADR-001, epoques.md section 7)
+  assert.deepStrictEqual(D.decouvertes.ordinateur.prerequis, ['electricite']);
+  assert.deepStrictEqual(D.decouvertes.solaire.prerequis, ['electricite']);
+  assert.deepStrictEqual(D.decouvertes.satellite.prerequis.slice().sort(), ['avion', 'ordinateur']);
+  assert.deepStrictEqual(D.decouvertes.fusee.prerequis, ['satellite']);
+  assert.strictEqual(D.epoques.length, 7, 'le monde moderne est la dernière époque');
+  const racine = path.join(__dirname, '..', 'assets');
+  const existe = cle => ['sprites/' + cle + '.png', 'sprites/' + cle + '.jpg', 'raw/' + cle + '.png'].some(f => fs.existsSync(path.join(racine, f)));
+  ids.forEach(k => { assert.ok(existe(D.decouvertes[k].scene), 'scène de ' + k); assert.ok(existe(D.decouvertes[k].icone), 'icône de ' + k); });
+  Object.keys(D.batiments).filter(k => D.batiments[k].epoque === 7).forEach(k => {
+    const b = D.batiments[k];
+    assert.ok(existe(b.sprite), 'sprite de ' + k);
+    if (b.travail) [2, 3].forEach(n => assert.ok(existe('niveaux/' + k + '-' + n), 'niveau ' + n + ' de ' + k));
+    if (b.lits) assert.ok(existe('coupe/' + k), 'maison en coupe : ' + k);
+    (b.vignettes || []).forEach(v => assert.ok(existe('vignettes/' + v.img), 'vignette ' + v.img));
+    if (b.page) assert.ok(D.pages[b.page] || D.decouvertes[b.page], 'page de ' + k);
+    if (b.travail) assert.ok(D.allures[7][b.travail.metier] && D.textes.phrases[b.travail.metier], 'métier ' + b.travail.metier);
+  });
+  Object.keys(D.allures[7]).forEach(k => [].concat(D.allures[7][k]).forEach(a => assert.ok(existe('habitants/' + a), 'habitant ' + a)));
+  Object.keys(D.poses[7]).forEach(k => { const p = D.poses[7][k]; assert.ok(existe('poses/' + p), 'pose ' + p); if (p.startsWith('e7-')) assert.ok(existe('poses/' + p + '-b'), 'deuxième image de ' + p); });
+  Object.keys(D.porteurs[7]).forEach(k => [].concat(typeof D.porteurs[7][k] === 'object' ? Object.values(D.porteurs[7][k]) : D.porteurs[7][k]).forEach(p => assert.ok(existe('porteurs/' + p), 'porteur ' + p)));
+  Object.keys(D.poses[7]).filter(k => D.poses[7][k].startsWith('e7-')).forEach(k => assert.ok(!Array.isArray(D.allures[7][k]), 'une seule tenue pour ' + k));
+  ['07-moderne/fusee', '07-moderne/pas-de-tir', '07-moderne/satellite', '07-moderne/panneau', '07-moderne/voiture-electrique', '07-moderne/bus', 'scenes/ville-moderne'].forEach(k => assert.ok(existe(k), k));
+  Object.keys(D.textes.nature).forEach(k => assert.ok(existe(D.textes.nature[k][0]), 'image de la fiche ' + k));
+  // l'ancienne fin (l'électricité) devient un passage ; la vraie fin a sa nouvelle image et sa vidéo
+  ['histoire/electricite.png', 'cine/electricite.mp4', 'histoire/fin.png', 'cine/fin.mp4'].forEach(f => assert.ok(fs.existsSync(path.join(racine, f)), f));
+  assert.match(D.textes.histoire.electricite.fr.l1, /ampoule/);
+  // le texte de fin conclut tout le voyage, du premier feu de camp à la fusée, sans annoncer de suite
+  const fin = D.textes.histoire.fin.fr;
+  assert.match(fin.l1, /feu de camp/); assert.match(fin.l1 + fin.l2, /fusée/);
+  assert.ok(!/suite|bientôt|plus tard/i.test(fin.l1 + fin.l2), 'pas de clin d\'œil à une suite');
+  assert.ok(D.textes.aides.finEpoque[6] && D.textes.aides.pretEpoque[7] && D.textes.aides.modernArrive && D.textes.aides.fuseePrete);
+  assert.ok(!/plus tard/.test(D.textes.aides.finJeu), 'la fin ne dit plus que la suite arrivera plus tard');
+  assert.ok(!/—/.test(JSON.stringify(D)), 'pas de tiret long');
+});
+
+function alElectriciteFinie(graine) {
+  const m = aLaVapeurFinie(graine);
+  Monde.passerEpoque(m);
+  Monde.decouvertesEpoque(m).forEach(id => { m.decouvertes[id] = 1; });
+  m.nuitNoire = 'resolue';
+  return m;
+}
+
+test('monde moderne : l\'île ne grandit pas, un terrain est gardé pour la fusée ; nouveaux bâtiments ; les monuments de l\'électricité ne se construisent plus', () => {
+  const m = alElectriciteFinie(71);
+  const avant = m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length;
+  assert.ok(Monde.construisibles(m).indexOf('sagrada') >= 0);
+  assert.ok(Monde.passerEpoque(m));
+  assert.strictEqual(m.epoque, 7);
+  assert.strictEqual(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length, avant, 'pas de nouvel anneau');
+  const c = Monde.construisibles(m);
+  ['supermarche', 'centre-recherche', 'immeuble-moderne'].forEach(k => assert.ok(c.indexOf(k) >= 0, k + ' dès l\'arrivée'));
+  ['bureau', 'tour', 'parc-solaire', 'observatoire', 'pas-de-tir'].forEach(k => assert.ok(c.indexOf(k) < 0, k + ' attend sa découverte (le pas de tir se construit tout seul)'));
+  assert.ok(c.indexOf('sagrada') < 0 && c.indexOf('cabine') < 0, 'plus de monuments de l\'électricité');
+  assert.ok(c.indexOf('atomium') >= 0 && c.indexOf('velos') >= 0, 'les monuments du monde moderne');
+  // le terrain de la fusée : 2 x 2 cases gardées, au bord de l'île, où l'on ne bâtit pas
+  assert.ok(m.tir, 'un terrain est gardé');
+  const T = m.terrain, cases = Terrain.empreinte(T, m.tir[0], m.tir[1], 2);
+  cases.forEach(t => { assert.ok(t.tir && !t.bat && !t.obj && t.sol === 'herbe'); assert.ok(!Monde.ancreValide(m, 'velos', t.i, t.j), 'on ne bâtit pas sur le terrain de la fusée'); });
+  // densifier : les vieilles maisons deviennent des immeubles modernes, puis des tours après l'ordinateur
+  const tente = m.batiments.find(b => b.type === 'tente');
+  if (tente) assert.strictEqual(Monde.amelioration(m, tente).vers, 'immeuble-moderne');
+  assert.strictEqual(Monde.amelioration(m, { type: 'grand-immeuble', etat: 'fini' }).vers, 'immeuble-moderne');
+  m.decouvertes.ordinateur = 1;
+  ['grand-immeuble', 'immeuble', 'maison-ville', 'maison-briques', 'immeuble-moderne', 'maison-etages', 'maison-cour', 'maison-colombages'].forEach(k => assert.strictEqual(Monde.amelioration(m, { type: k, etat: 'fini' }).vers, 'tour', k));
+  assert.ok(D.batiments.tour.lits > D.batiments['immeuble-moderne'].lits && D.batiments['immeuble-moderne'].lits > D.batiments['grand-immeuble'].lits);
+  // les vieilles souches s'en vont (plus de grand champ de souches), on en garde un peu près de la forêt
+  const loin = T.tuiles.filter(t => t.obj === 'souche' && ![[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1], [-1, -1], [1, -1], [-1, 1]].some(d => { const v = Terrain.tuile(T, t.i + d[0], t.j + d[1]); return v && v.obj === 'arbre'; }));
+  assert.ok(loin.every(t => (t.i * 7 + t.j * 13) % 5 === 0), 'une souche sur cinq seulement loin de la forêt');
+});
+
+test('monde moderne : il reste de la place pour toute l\'époque dans une grande ville de l\'électricité', () => {
+  for (const graine of [8, 9]) {
+    const m = Monde.nouveau(graine), st = {}, fin = {};
+    let p = 0;
+    while (m.t < 300 * 60) {
+      Monde.pas(m, 0.1); m.evenements.length = 0;
+      if (m.t < p) continue;
+      p = m.t + 5;
+      if (Joueur.tour(m, st) === 'fin') { if (!fin[m.epoque]) fin[m.epoque] = m.t; if (m.t - fin[m.epoque] < 300) continue; if (m.epoque >= 6) break; Monde.passerEpoque(m); }
+    }
+    assert.strictEqual(m.epoque, 6);
+    Monde.passerEpoque(m);
+    assert.ok(m.tir, 'un terrain est gardé pour la fusée (graine ' + graine + ')');
+    Object.keys(D.decouvertes).forEach(k => { if (k !== 'fusee') m.decouvertes[k] = m.decouvertes[k] || 1; });
+    m.pieces = 99999;
+    const types = ['supermarche', 'centre-recherche', 'bureau', 'parc-solaire', 'observatoire', 'immeuble-moderne', 'tour', 'atomium', 'pyramide-louvre', 'burj-khalifa', 'opera-sydney', 'spoutnik'];
+    types.forEach(k => { const b = Monde.construire(m, k, Monde.emplacementsLibres(m, k)[0]); assert.ok(b, 'construit : ' + k + ' (graine ' + graine + ')'); });
+    // le terrain de la fusée est resté libre : le pas de tir s'y pose
+    m.idees = 999; m.decouvertes.fusee = 0; delete m.decouvertes.fusee;
+    assert.ok(Monde.decouvrir(m, 'fusee'));
+    const pad = m.batiments.find(b => b.type === 'pas-de-tir');
+    assert.ok(pad && pad.i === m.tir[0] && pad.j === m.tir[1], 'le pas de tir est sur son terrain');
+  }
+});
+
+test('monde moderne : l\'air devient sale, plus personne ne vient ; l\'énergie solaire pose des éoliennes et l\'air redevient pur (le petit problème)', () => {
+  const m = alElectriciteFinie(72);
+  Monde.passerEpoque(m);
+  let sale = 0, pur = 0, encore = 0;
+  const avancer = (s, f) => { for (let i = 0; i < s * 10; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.forEach(e => { if (e.type === 'air-sale') { if (e.encore) encore++; else sale++; } if (e.type === 'air-pur') pur++; }); m.evenements.length = 0; if (f && f()) return; } };
+  avancer(Monde.DELAI_AIR - 5);
+  assert.strictEqual(sale, 0, 'pas tout de suite');
+  avancer(10);
+  assert.strictEqual(sale, 1, 'l\'air devient sale peu après l\'arrivée');
+  assert.strictEqual(m.airSale, true);
+  // plus personne ne vient habiter ici, même avec de la place et à manger
+  m.pieces = 99999;
+  const maison = Monde.construire(m, 'immeuble-moderne', Monde.emplacementsLibres(m, 'immeuble-moderne')[0]);
+  avancer(200, () => maison.etat === 'fini');
+  m.nourriture = Monde.reserveMax(m); m.faim = 0;
+  m.batiments.forEach(b => { if (D.batiments[b.type].travail && D.batiments[b.type].travail.produit === 'nourriture') b.ouvriers = b.ouvriers.slice(0, Monde.places(b)); });
+  const n0 = m.habitants.length;
+  avancer(90, () => { m.nourriture = Monde.reserveMax(m); m.faim = 0; return false; });
+  assert.ok(m.habitants.length <= n0 + 1, 'presque personne n\'arrive dans l\'air sale : ' + n0 + ' puis ' + m.habitants.length);
+  avancer(400, () => encore > 0);
+  assert.ok(encore >= 1, 'on le rappelle au matin');
+  // l'énergie solaire
+  m.idees = 999;
+  assert.ok(Monde.decouvrir(m, 'solaire'));
+  m.evenements.forEach(e => { if (e.type === 'air-pur') pur++; }); m.evenements.length = 0;
+  assert.strictEqual(pur, 1);
+  assert.strictEqual(m.airSale, 'resolu');
+  assert.ok(m.eoliennes.length >= 3, m.eoliennes.length + ' éoliennes');
+  assert.ok(m.panneaux.length >= 1, m.panneaux.length + ' panneaux');
+  m.eoliennes.concat(m.panneaux).forEach(c => { const t = Terrain.tuile(m.terrain, c[0], c[1]); assert.ok((t.eolienne || t.panneau) && !t.bat && !t.tir); assert.ok(!Monde.ancreValide(m, 'velos', c[0], c[1])); });
+  // les arrivées reprennent
+  const n1 = m.habitants.length;
+  avancer(120, () => { m.nourriture = Monde.reserveMax(m); m.faim = 0; return false; });
+  assert.ok(m.habitants.length > n1, 'des familles arrivent de nouveau');
+  avancer(600);
+  assert.strictEqual(sale, 1, 'l\'air sale ne revient pas');
+});
+
+test('monde moderne : la fusée lance le pas de tir ; prête, l\'enfant la fait décoller ; c\'est la fin, et le jeu continue', () => {
+  const m = alElectriciteFinie(73);
+  Monde.passerEpoque(m);
+  m.airPrevu = null;
+  ['ordinateur', 'solaire', 'satellite'].forEach(k => { m.decouvertes[k] = 1; });
+  m.idees = 999;
+  assert.ok(Monde.epoqueTerminee(m) === false);
+  assert.strictEqual(m.fusee, undefined);
+  assert.ok(Monde.decouvrir(m, 'fusee'));
+  assert.ok(Monde.epoqueTerminee(m), 'toutes les découvertes sont faites');
+  assert.ok(!Monde.partieFinie(m), 'mais la partie n\'est finie qu\'au décollage');
+  assert.strictEqual(Monde.passerEpoque(m), false); assert.ok(!m.fini);
+  const pad = m.batiments.find(b => b.type === 'pas-de-tir');
+  assert.ok(pad && pad.etat === 'chantier' && pad.automatique);
+  assert.strictEqual(m.fusee, 'chantier');
+  assert.ok(!Monde.decoller(m), 'pas de décollage avant que le pas de tir soit prêt');
+  let prete = 0, partie = 0;
+  for (let i = 0; i < 20000 && !prete; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.forEach(e => { if (e.type === 'fusee-prete') prete++; }); m.evenements.length = 0; }
+  assert.strictEqual(pad.etat, 'fini', 'les habitants bâtissent le pas de tir');
+  assert.strictEqual(prete, 1); assert.strictEqual(m.fusee, 'prete');
+  // la sauvegarde garde une fusée prête
+  const repris = Monde.importer(Monde.developper(JSON.parse(JSON.stringify(Monde.exporterLeger(m)))));
+  assert.strictEqual(repris.fusee, 'prete');
+  // le gros bouton
+  assert.ok(Monde.decoller(m));
+  assert.strictEqual(m.fusee, 'vol');
+  for (let i = 0; i < (Monde.DUREE_VOL + 1) * 10; i++) { Monde.pas(m, 0.1); m.evenements.forEach(e => { if (e.type === 'fusee-partie') partie++; }); m.evenements.length = 0; }
+  assert.strictEqual(partie, 1);
+  assert.strictEqual(m.fusees, 1);
+  assert.ok(Monde.partieFinie(m), 'la vraie fin du jeu');
+  assert.strictEqual(Monde.passerEpoque(m), false); assert.ok(m.fini);
+  // le jeu continue : on construit encore, et une nouvelle fusée est dressée un peu plus tard
+  m.pieces = 9999;
+  assert.ok(Monde.construire(m, 'velos', Monde.emplacementsLibres(m, 'velos')[0]));
+  for (let i = 0; i < (Monde.NOUVELLE_FUSEE + 5) * 10; i++) { if (Monde.toutLeMondeDort(m)) Monde.reveiller(m); Monde.pas(m, 0.1); m.evenements.length = 0; }
+  assert.strictEqual(m.fusee, 'prete');
+  assert.ok(Monde.decoller(m));
+  for (let i = 0; i < (Monde.DUREE_VOL + 1) * 10; i++) Monde.pas(m, 0.1);
+  assert.strictEqual(m.fusees, 2);
+  assert.ok(Monde.partieFinie(m));
+});
+
+test('une partie sauvée à chaque époque, finie ou en cours, avec l\'ancienne version, reprend sans rien perdre et peut aller jusqu\'à la fusée', () => {
+  const etats = [];
+  const pierre = Monde.nouveau(81); laisser(pierre, 120); etats.push(['pierre en cours', pierre]);
+  etats.push(['néolithique fini', auNeolithiqueFini(82)]);
+  etats.push(['métaux finis', auxMetauxFinis(83)]);
+  etats.push(['Moyen Âge fini', auMoyenAgeFini(84)]);
+  etats.push(['vapeur finie', aLaVapeurFinie(85)]);
+  const el = aLaVapeurFinie(86); Monde.passerEpoque(el); laisser(el, 60); etats.push(['électricité en cours', el]);
+  etats.push(['électricité finie (« Fini » de l\'ancienne version)', alElectriciteFinie(87)]);
+  for (const [nom, m] of etats) {
+    laisser(m, 30);
+    // une sauvegarde de la version d'avant : sans les nouveautés du monde moderne, et une copie légère à l'ancienne (cases entières)
+    const vieux = JSON.parse(JSON.stringify(Monde.exporter(m)));
+    ['airPrevu', 'airSale', 'tir', 'eoliennes', 'panneaux', 'fusee', 'fusees', 'vol', 'prochaineFusee', 'souchesEclaircies'].forEach(k => delete vieux[k]);
+    const c = JSON.parse(JSON.stringify(vieux)), T = c.terrain, base = Terrain.generer(), delta = [], meta = {};
+    T.tuiles.forEach((t, i) => { if (JSON.stringify(t) !== JSON.stringify(base.tuiles[i])) delta.push([i, t]); });
+    Object.keys(T).forEach(k => { if (k !== 'tuiles') meta[k] = T[k]; });
+    c.terrain = { leger: true, n: T.tuiles.length, meta, delta };
+    for (const s of [vieux, Monde.developper(c), Monde.developper(JSON.parse(JSON.stringify(Monde.exporterLeger(m))))]) {
+      const r = Monde.importer(JSON.parse(JSON.stringify(s)));
+      assert.strictEqual(r.epoque, m.epoque, nom);
+      assert.strictEqual(r.habitants.length, m.habitants.length, nom);
+      assert.strictEqual(r.batiments.length, m.batiments.length, nom);
+      assert.strictEqual(r.pieces, m.pieces, nom);
+      assert.deepStrictEqual(Object.keys(r.decouvertes).sort(), Object.keys(m.decouvertes).sort(), nom);
+      assert.strictEqual(Monde.epoqueTerminee(r), Monde.epoqueTerminee(m), nom);
+      // on continue jusqu'au monde moderne et jusqu'à la fusée
+      while (r.epoque < 7) { Monde.decouvertesEpoque(r).forEach(id => { r.decouvertes[id] = r.decouvertes[id] || 1; }); r.feuPrevu = null; r.crue = null; assert.ok(Monde.passerEpoque(r), nom + ' : époque ' + (r.epoque + 1)); }
+      assert.ok(r.tir, nom + ' : le terrain de la fusée');
+      ['ordinateur', 'solaire', 'satellite'].forEach(k => { r.decouvertes[k] = 1; });
+      r.idees = 999;
+      assert.ok(Monde.decouvrir(r, 'fusee'), nom);
+      const pad = r.batiments.find(b => b.type === 'pas-de-tir');
+      pad.etat = 'fini'; r.fusee = 'prete';
+      assert.ok(Monde.decoller(r), nom);
+      for (let i = 0; i < (Monde.DUREE_VOL + 1) * 10; i++) Monde.pas(r, 0.1);
+      assert.ok(Monde.partieFinie(r), nom + ' : la fin');
+    }
+  }
+});
+
+test('monde moderne : la place de la fusée existe dans chaque partie de l\'électricité', () => {
+  for (const g of [91, 92, 93, 94, 95]) {
+    const m = alElectriciteFinie(g);
+    Monde.passerEpoque(m);
+    assert.ok(m.tir, 'graine ' + g);
+    const T = m.terrain;
+    let bord = false;
+    for (let a = -2; a <= 3; a++) for (let b = -2; b <= 3; b++) { const v = Terrain.tuile(T, m.tir[0] + a, m.tir[1] + b); if (!v || !Terrain.surIle(T, v) || v.sol === 'eau' || v.sol === 'sable') bord = true; }
+    assert.ok(bord, 'au bord de l\'île (graine ' + g + ')');
   }
 });

@@ -32,6 +32,11 @@ var Donnees = (function () {
       id: 6,
       nom: "L'électricité",
       intro: "Encore quelques dizaines d'années, et voici le temps de l'électricité : des ampoules qui brillent, des téléphones, des voitures, et même des avions !"
+    },
+    {
+      id: 7,
+      nom: 'Le monde moderne',
+      intro: "Encore quelques dizaines d'années, et voici le monde moderne : des ordinateurs, des panneaux solaires, des satellites dans le ciel… et bientôt, une fusée !"
     }
   ];
 
@@ -185,6 +190,27 @@ var Donnees = (function () {
       scene: 'scenes/avion', faits: ["En 1903, en Amérique, les frères Wright ont fait voler le premier avion à moteur : le vol a duré 12 secondes !", "En 1909, Louis Blériot a traversé la mer entre la France et l'Angleterre en avion, en un peu plus d'une demi-heure.", "En 1932, Amelia Earhart a traversé tout l'océan Atlantique toute seule, aux commandes de son avion."],
       nom: "L'avion", epoque: 6, idees: 156, prerequis: ['voiture'], icone: '06-electricite/aerodrome',
       texte: "Avant, les montagnes et la mer arrêtaient les voyageurs. Maintenant, l'avion vole par-dessus : on traverse le ciel comme les oiseaux !"
+    },
+    // 7. Le monde moderne (kb/domains/contenu-historique/epoques.md, section 7)
+    ordinateur: {
+      scene: 'scenes/ordinateur', faits: ["Les premiers ordinateurs, vers 1945, étaient si gros qu'ils remplissaient toute une grande salle !", "Un ordinateur ne connaît que deux chiffres, 0 et 1, mais il les compte des millions de fois par seconde.", "Pour les premiers voyages dans l'espace, la mathématicienne Katherine Johnson vérifiait à la main les calculs des ordinateurs."],
+      nom: "L'ordinateur", epoque: 7, idees: 170, prerequis: ['electricite'], icone: '07-moderne/bureau',
+      texte: "Avant, on faisait tous les calculs à la main, et c'était très long. Maintenant, l'ordinateur calcule en un clin d'œil : il aide à tout préparer, même un voyage dans l'espace !"
+    },
+    solaire: {
+      scene: 'scenes/solaire', faits: ["Un panneau solaire change la lumière du soleil en électricité, sans bruit et sans fumée.", "Les satellites, là-haut dans l'espace, ont presque tous des panneaux solaires sur leurs ailes.", "Il y a très longtemps, les moulins à vent tournaient déjà grâce au vent : l'éolienne est leur petite cousine."],
+      nom: "L'énergie solaire", epoque: 7, idees: 160, prerequis: ['electricite'], icone: '07-moderne/parc-solaire',
+      texte: "Avant, on brûlait du charbon pour faire l'électricité, et la fumée salissait l'air. Maintenant, des panneaux attrapent la lumière du soleil et des éoliennes tournent avec le vent : l'électricité arrive sans fumée !"
+    },
+    satellite: {
+      scene: 'scenes/satellite', faits: ["En 1957, le tout premier satellite, Spoutnik, faisait bip, bip en tournant autour de la Terre.", "Un satellite fait le tour de la Terre en à peu près une heure et demie.", "Le soir, on peut parfois voir un satellite passer dans le ciel : on dirait une petite étoile qui avance."],
+      nom: 'Le satellite', epoque: 7, idees: 190, prerequis: ['ordinateur', 'avion'], icone: '07-moderne/satellite',
+      texte: "Avant, personne ne pouvait voir la Terre d'en haut. Maintenant, des satellites tournent tout autour : ils photographient les nuages, aident à prévoir la pluie et montrent le chemin !"
+    },
+    fusee: {
+      scene: 'scenes/fusee', faits: ["En 1961, Youri Gagarine a été le premier humain à voler dans l'espace.", "En 1969, Neil Armstrong et Buzz Aldrin ont marché sur la Lune.", "Une fusée part très vite : en quelques minutes à peine, elle est déjà dans l'espace !"],
+      nom: 'La fusée', epoque: 7, idees: 220, prerequis: ['satellite'], icone: '07-moderne/fusee',
+      texte: "Avant, aucun avion ne pouvait sortir du ciel. Maintenant, la fusée pousse si fort avec son feu qu'elle monte jusque dans l'espace, là où brillent les étoiles !"
     }
   };
 
@@ -544,6 +570,72 @@ var Donnees = (function () {
       texte: "À Paris, dans les rues, de grandes colonnes vertes portent les affiches des spectacles : le cirque, le théâtre, le cinéma.",
       faits: ["On les appelle colonnes Morris, du nom de l'imprimeur qui les a installées vers 1868.", "Il y en a encore des centaines à Paris."]
     },
+    // Le monde moderne
+    'deco-atomium': {
+      nom: "L'Atomium", epoque: 7, image: 'deco/atomium', deco: true,
+      texte: "À Bruxelles, en Belgique, on a construit en 1958 l'Atomium : neuf grosses boules de métal, comme un tout petit grain de fer agrandi des milliards de fois !",
+      faits: ["On peut monter dans les boules par des escaliers et un ascenseur.", "Depuis la boule du haut, on voit toute la ville."]
+    },
+    'deco-opera-sydney': {
+      nom: "L'opéra de Sydney", epoque: 7, image: 'deco/opera-sydney', deco: true,
+      texte: "À Sydney, en Australie, l'opéra ouvert en 1973 ressemble à de grandes voiles blanches posées au bord de la mer.",
+      faits: ["Ses toits sont couverts de plus d'un million de petits carreaux blancs.", "Il a été imaginé par l'architecte danois Jørn Utzon."]
+    },
+    'deco-pyramide-louvre': {
+      nom: 'La pyramide du Louvre', epoque: 7, image: 'deco/pyramide-louvre', deco: true,
+      texte: "À Paris, en 1989, on a construit une pyramide de verre devant le musée du Louvre, pour faire entrer la lumière dans le musée.",
+      faits: ["Elle a été imaginée par l'architecte Ieoh Ming Pei.", "Le Louvre garde des trésors de toutes les époques, même de l'Égypte ancienne !"]
+    },
+    'deco-burj-khalifa': {
+      nom: 'Le Burj Khalifa', epoque: 7, image: 'deco/burj-khalifa', deco: true,
+      texte: "À Dubaï, depuis 2010, le Burj Khalifa est le plus haut immeuble du monde : plus de 800 mètres de haut !",
+      faits: ["Il a plus de 160 étages.", "Tout en haut, on est parfois au-dessus des nuages."]
+    },
+    'deco-spoutnik': {
+      nom: 'Spoutnik', epoque: 7, image: 'deco/spoutnik', deco: true,
+      texte: "En 1957, Spoutnik a été le tout premier satellite envoyé autour de la Terre : une petite boule de métal avec quatre longues antennes.",
+      faits: ["Il faisait bip, bip, et on pouvait l'écouter à la radio.", "Il était à peine plus gros qu'un ballon de plage."]
+    },
+    'deco-module-lunaire': {
+      nom: 'Le module lunaire', epoque: 7, image: 'deco/module-lunaire', deco: true,
+      texte: "En 1969, ce drôle de petit vaisseau doré s'est posé sur la Lune avec deux astronautes à bord.",
+      faits: ["Il avait quatre pattes pour se poser doucement sur la poussière de la Lune.", "Les traces de pas des astronautes y sont encore : il n'y a pas de vent sur la Lune pour les effacer."]
+    },
+    'deco-concorde': {
+      nom: 'Le Concorde', epoque: 7, image: 'deco/concorde', deco: true,
+      texte: "À partir de 1976, le Concorde a emmené des voyageurs deux fois plus vite que le bruit : il traversait l'océan en trois heures et demie.",
+      faits: ["Son long nez pointu se baissait pour que les pilotes voient bien la piste en atterrissant.", "La France et l'Angleterre l'ont construit ensemble."]
+    },
+    'deco-tgv': {
+      nom: 'Le TGV', epoque: 7, image: 'deco/tgv', deco: true,
+      texte: "En 1981, en France, le TGV, un train électrique à grande vitesse, a commencé à rouler à 260 kilomètres à l'heure !",
+      faits: ["En 2007, un TGV a même battu un record : plus de 570 kilomètres à l'heure.", "Son nez est arrondi pour bien glisser dans l'air."]
+    },
+    'deco-borne-arcade': {
+      nom: "Une borne d'arcade", epoque: 7, image: 'deco/borne-arcade', deco: true,
+      texte: "Vers 1972, les premiers jeux vidéo sont arrivés dans les cafés : on jouait debout, devant une grande borne.",
+      faits: ["Un des tout premiers s'appelait Pong : une petite balle qu'on se renvoie, comme au ping-pong.", "Il fallait glisser une pièce pour jouer une partie."]
+    },
+    'deco-rubik': {
+      nom: 'Le cube de Rubik', epoque: 7, image: 'deco/rubik', deco: true,
+      texte: "En 1974, en Hongrie, Ernő Rubik a inventé un cube aux faces de couleur qu'on tourne dans tous les sens.",
+      faits: ["Le but : remettre chaque face d'une seule couleur.", "Il y a tellement de façons de le mélanger qu'on ne pourrait jamais toutes les essayer."]
+    },
+    'deco-fontaine-stravinsky': {
+      nom: 'La fontaine Stravinsky', epoque: 7, image: 'deco/fontaine-stravinsky', deco: true,
+      texte: "À Paris, en 1983, les artistes Niki de Saint Phalle et Jean Tinguely ont rempli une fontaine de sculptures rigolotes qui bougent et crachent de l'eau.",
+      faits: ["On y voit une grande bouche rouge, un serpent et une clé de sol.", "Elle porte le nom d'Igor Stravinsky, un musicien."]
+    },
+    'deco-velos': {
+      nom: 'Des vélos en libre-service', epoque: 7, image: 'deco/velos', deco: true,
+      texte: "Depuis 2005, dans beaucoup de villes, on peut prendre un vélo dans la rue, faire son trajet, puis le reposer plus loin.",
+      faits: ["Un vélo ne fait ni fumée ni bruit.", "La ville de Lyon, en France, a été une des premières à en avoir beaucoup."]
+    },
+    'villes-modernes': {
+      nom: 'Le monde moderne', epoque: 7, scene: 'scenes/ville-moderne',
+      texte: "Dans le monde moderne, les villes montent vers le ciel : des tours de verre, des supermarchés, des bureaux pleins d'ordinateurs, et sur les toits, des panneaux solaires.",
+      faits: ["Les grandes tours ont des ascenseurs très rapides.", "Dans un supermarché, on trouve des fruits venus du monde entier.", "Aujourd'hui, presque chaque famille a un petit ordinateur dans la poche : le téléphone !"]
+    },
     'villes-electriques': {
       nom: "Les villes de l'électricité", epoque: 6, scene: 'scenes/ville-electrique',
       texte: "Avec l'électricité, les villes changent encore : des poteaux et des fils, des lampadaires dans les rues, des voitures sur les routes, et des immeubles avec des ascenseurs.",
@@ -601,14 +693,14 @@ var Donnees = (function () {
       travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: { 1: 5, 2: 10 }, avec: { bronze: 14, fer: 18 } }
     },
     tente: {
-      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 120 }, { vers: 'maison-colombages', cout: 170 }, { vers: 'maison-briques', cout: 220 }, { vers: 'maison-ville', cout: 260 }],
+      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 120 }, { vers: 'maison-colombages', cout: 170 }, { vers: 'maison-briques', cout: 220 }, { vers: 'maison-ville', cout: 260 }, { vers: 'immeuble-moderne', cout: 320 }],
       resume: "Une petite maison pour 2 personnes.", page: 'cueilleurs',
       explication: "Une tente en peaux tendues sur des bâtons. Deux personnes y dorment à l'abri du vent. Plus il y a de maisons, plus de familles viennent vivre au village.",
       nom: 'Une tente', sprite: '01-pierre/tente', epoque: 1, jusqua: 1,
       zone: 'pre', cout: 10, bois: 2, lits: 2, largeur: 200, taille: 2
     },
     'hutte-branches': {
-      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 110 }, { vers: 'maison-colombages', cout: 160 }, { vers: 'maison-briques', cout: 210 }, { vers: 'maison-ville', cout: 250 }],
+      evolue: [{ vers: 'hutte-peaux', cout: 30, decouverte: 'abri' }, { vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 110 }, { vers: 'maison-colombages', cout: 160 }, { vers: 'maison-briques', cout: 210 }, { vers: 'maison-ville', cout: 250 }, { vers: 'immeuble-moderne', cout: 310 }],
       resume: "Une maison de branches pour 3 personnes.", page: 'cueilleurs',
       explication: 'Une hutte de branches entrecroisées. Trois personnes peuvent y dormir.',
       nom: 'Une hutte de branches', sprite: '01-pierre/hutte-branches', epoque: 1, jusqua: 1,
@@ -657,7 +749,7 @@ var Donnees = (function () {
     'hutte-peaux': {
       resume: "Une maison chaude en peaux, pour 3 personnes.",
       explication: 'Une grande hutte couverte de peaux cousues entre elles. Bien chaude, elle accueille trois personnes, même en hiver.',
-      evolue: [{ vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 100 }, { vers: 'maison-colombages', cout: 150 }, { vers: 'maison-briques', cout: 200 }, { vers: 'maison-ville', cout: 240 }],
+      evolue: [{ vers: 'maison-torchis', cout: 70, decouverte: 'agriculture' }, { vers: 'maison-pierre', cout: 100 }, { vers: 'maison-colombages', cout: 150 }, { vers: 'maison-briques', cout: 200 }, { vers: 'maison-ville', cout: 240 }, { vers: 'immeuble-moderne', cout: 300 }],
       nom: 'Une hutte en peaux', sprite: '01-pierre/hutte-peaux', epoque: 1, jusqua: 1, debloque: 'abri',
       zone: 'pre', cout: 40, bois: 3, lits: 3, largeur: 220, taille: 2
     },
@@ -670,7 +762,7 @@ var Donnees = (function () {
       travail: { metier: 'peintre', aller: null, duree: 14, produit: 'idees', qte: 2 }
     },
     'maison-torchis': {
-      evolue: [{ vers: 'maison-longue', cout: 80, decouverte: 'grenier' }, { vers: 'maison-cour', cout: 220, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 140 }, { vers: 'maison-briques', cout: 190 }, { vers: 'maison-ville', cout: 230 }],
+      evolue: [{ vers: 'maison-longue', cout: 80, decouverte: 'grenier' }, { vers: 'maison-cour', cout: 220, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 140 }, { vers: 'maison-briques', cout: 190 }, { vers: 'maison-ville', cout: 230 }, { vers: 'immeuble-moderne', cout: 290 }],
       resume: "Une maison en terre et en paille, pour 4 personnes.",
       explication: "Une maison en torchis : de la terre, de la paille et de l'eau collées sur des branches. Les paysans y vivent toute l'année, près de leurs champs.",
       vignettes: [{ img: 'torchis', texte: "On tresse des branches, puis on les couvre de terre mêlée de paille : c'est le torchis." }],
@@ -701,7 +793,7 @@ var Donnees = (function () {
       zone: 'pre', cout: 80, bois: 3, largeur: 140, taille: 1, reserve: 60
     },
     'maison-longue': {
-      evolue: [{ vers: 'maison-cour', cout: 140, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 120 }, { vers: 'maison-briques', cout: 170 }, { vers: 'maison-ville', cout: 210 }],
+      evolue: [{ vers: 'maison-cour', cout: 140, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 120 }, { vers: 'maison-briques', cout: 170 }, { vers: 'maison-ville', cout: 210 }, { vers: 'immeuble-moderne', cout: 270 }],
       resume: "Une grande maison pour 6 personnes.",
       explication: "Une maison longue. Plusieurs familles vivent ensemble sous le même toit : jusqu'à six personnes.",
       vignettes: [{ img: 'torchis', texte: "Tout le monde aide à construire la maison : branches tressées, terre et toit de paille." }],
@@ -845,7 +937,7 @@ var Donnees = (function () {
     },
     // 3. L'âge des métaux et l'Antiquité
     'maison-pierre': {
-      evolue: [{ vers: 'maison-cour', cout: 130, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 110 }, { vers: 'maison-briques', cout: 160 }, { vers: 'maison-ville', cout: 200 }],
+      evolue: [{ vers: 'maison-cour', cout: 130, decouverte: 'monnaie' }, { vers: 'maison-colombages', cout: 110 }, { vers: 'maison-briques', cout: 160 }, { vers: 'maison-ville', cout: 200 }, { vers: 'immeuble-moderne', cout: 260 }],
       resume: "Une maison en pierre au toit de tuiles, pour 5 personnes.", page: 'premieres-villes',
       explication: "Une maison en pierre. Ses murs épais gardent la fraîcheur l'été et la chaleur l'hiver, et son toit de tuiles en terre cuite ne laisse pas passer la pluie.",
       vignettes: [{ img: 'maison-pierre', texte: "On empile les pierres pour les murs, puis on pose les tuiles sur le toit." }],
@@ -853,7 +945,7 @@ var Donnees = (function () {
       zone: 'pre', cout: 160, bois: 4, lits: 5, largeur: 210, taille: 2
     },
     'maison-cour': {
-      evolue: [{ vers: 'maison-etages', cout: 200, decouverte: 'horloge' }, { vers: 'immeuble', cout: 300, decouverte: 'train' }, { vers: 'grand-immeuble', cout: 480, decouverte: 'electricite' }],
+      evolue: [{ vers: 'maison-etages', cout: 200, decouverte: 'horloge' }, { vers: 'immeuble', cout: 300, decouverte: 'train' }, { vers: 'grand-immeuble', cout: 480, decouverte: 'electricite' }, { vers: 'immeuble-moderne', cout: 300 }, { vers: 'tour', cout: 700, decouverte: 'ordinateur' }],
       resume: "Une grande maison autour d'une cour, pour 8 personnes.", page: 'premieres-villes',
       explication: "Une maison à cour. Les pièces entourent une petite cour avec un olivier : toute la famille y vit, et on y travaille à l'ombre.",
       nom: 'Une maison à cour', sprite: '03-metaux/maison-cour', epoque: 3, jusqua: 9, debloque: 'monnaie',
@@ -962,7 +1054,7 @@ var Donnees = (function () {
     },
     // 4. Le Moyen Âge
     'maison-colombages': {
-      evolue: [{ vers: 'maison-etages', cout: 220, decouverte: 'horloge' }, { vers: 'maison-briques', cout: 150 }, { vers: 'maison-ville', cout: 190 }, { vers: 'immeuble', cout: 340, decouverte: 'train' }, { vers: 'grand-immeuble', cout: 520, decouverte: 'electricite' }],
+      evolue: [{ vers: 'maison-etages', cout: 220, decouverte: 'horloge' }, { vers: 'maison-briques', cout: 150 }, { vers: 'maison-ville', cout: 190 }, { vers: 'immeuble', cout: 340, decouverte: 'train' }, { vers: 'grand-immeuble', cout: 520, decouverte: 'electricite' }, { vers: 'immeuble-moderne', cout: 280 }, { vers: 'tour', cout: 720, decouverte: 'ordinateur' }],
       resume: "Une maison à colombages, pour 7 personnes.", page: 'villes-medievales',
       explication: "Une maison à colombages. On monte d'abord une charpente de grosses poutres, puis on remplit les trous avec du torchis. À l'étage, on dort au chaud sous le toit.",
       vignettes: [{ img: 'colombages', texte: "Les charpentiers montent les poutres, puis on remplit les murs de torchis." }],
@@ -972,7 +1064,7 @@ var Donnees = (function () {
     'maison-etages': {
       resume: "Une grande maison de ville à trois étages, pour 10 personnes.", page: 'villes-medievales',
       explication: "Une maison de ville à étages. Pour gagner de la place, on construit en hauteur, et chaque étage dépasse un peu au-dessus de la rue.",
-      evolue: [{ vers: 'immeuble', cout: 280, decouverte: 'train' }, { vers: 'grand-immeuble', cout: 480, decouverte: 'electricite' }],
+      evolue: [{ vers: 'immeuble', cout: 280, decouverte: 'train' }, { vers: 'grand-immeuble', cout: 480, decouverte: 'electricite' }, { vers: 'immeuble-moderne', cout: 260 }, { vers: 'tour', cout: 680, decouverte: 'ordinateur' }],
       nom: 'Une maison à étages', sprite: '04-moyen-age/maison-etages', epoque: 4, jusqua: 9, debloque: 'horloge',
       zone: 'pre', cout: 380, bois: 5, lits: 10, largeur: 205, taille: 2
     },
@@ -1079,14 +1171,14 @@ var Donnees = (function () {
     },
     // 5. L'âge de la vapeur
     'maison-briques': {
-      evolue: [{ vers: 'maison-ville', cout: 180 }, { vers: 'immeuble', cout: 320, decouverte: 'train' }, { vers: 'grand-immeuble', cout: 480, decouverte: 'electricite' }],
+      evolue: [{ vers: 'maison-ville', cout: 180 }, { vers: 'immeuble', cout: 320, decouverte: 'train' }, { vers: 'grand-immeuble', cout: 480, decouverte: 'electricite' }, { vers: 'immeuble-moderne', cout: 250 }, { vers: 'tour', cout: 660, decouverte: 'ordinateur' }],
       resume: "Une maison en briques, pour 9 personnes.", page: 'villes-vapeur',
       explication: "Une maison en briques. Les briques sont cuites par milliers dans de grands fours : on construit vite et solide. Les cheminées fument doucement, chaque famille a son poêle.",
       nom: 'Une maison en briques', sprite: '05-vapeur/maison-briques', epoque: 5, jusqua: 9,
       zone: 'pre', cout: 320, bois: 5, lits: 9, largeur: 200, taille: 2
     },
     immeuble: {
-      evolue: [{ vers: 'grand-immeuble', cout: 420, decouverte: 'electricite' }],
+      evolue: [{ vers: 'grand-immeuble', cout: 420, decouverte: 'electricite' }, { vers: 'immeuble-moderne', cout: 240 }, { vers: 'tour', cout: 620, decouverte: 'ordinateur' }],
       resume: "Un grand immeuble de ville, pour 14 personnes.", page: 'villes-vapeur',
       explication: "Un immeuble. Avec le train, beaucoup de gens viennent vivre en ville : on construit de grandes maisons à quatre étages, avec un appartement pour chaque famille.",
       nom: 'Un immeuble', sprite: '05-vapeur/immeuble', epoque: 5, jusqua: 9, debloque: 'train',
@@ -1202,13 +1294,14 @@ var Donnees = (function () {
     },
     // 6. L'électricité
     'maison-ville': {
-      evolue: [{ vers: 'grand-immeuble', cout: 420, decouverte: 'electricite' }],
+      evolue: [{ vers: 'grand-immeuble', cout: 420, decouverte: 'electricite' }, { vers: 'immeuble-moderne', cout: 220 }, { vers: 'tour', cout: 600, decouverte: 'ordinateur' }],
       resume: "Une maison de ville à balcons, pour 11 personnes.", page: 'villes-electriques',
       explication: "Une maison de ville. Derrière les petits balcons en fer, chaque famille a son appartement, et bientôt la lumière électrique dans toutes les pièces.",
       nom: 'Une maison de ville', sprite: '06-electricite/maison-ville', epoque: 6, jusqua: 9,
       zone: 'pre', cout: 400, bois: 5, lits: 11, largeur: 200, taille: 2
     },
     'grand-immeuble': {
+      evolue: [{ vers: 'immeuble-moderne', cout: 200 }, { vers: 'tour', cout: 520, decouverte: 'ordinateur' }],
       resume: "Un grand immeuble avec un ascenseur, pour 20 personnes.", page: 'villes-electriques',
       explication: "Un grand immeuble de six étages. Pas besoin de monter tout l'escalier : un ascenseur électrique emmène les habitants jusqu'en haut !",
       nom: 'Un grand immeuble', sprite: '06-electricite/grand-immeuble', epoque: 6, jusqua: 9, debloque: 'electricite',
@@ -1323,6 +1416,129 @@ var Donnees = (function () {
       nom: 'La Sagrada Família', sprite: 'deco/sagrada', epoque: 6, jusqua: 6,
       zone: 'pre', cout: 720, bois: 6, largeur: 230, taille: 2, deco: true, merveille: true, unique: true
     },
+    // 7. Le monde moderne
+    'immeuble-moderne': {
+      evolue: [{ vers: 'tour', cout: 480, decouverte: 'ordinateur' }],
+      resume: "Un immeuble moderne à balcons, pour 26 personnes.", page: 'villes-modernes',
+      explication: "Un immeuble moderne. Il est construit en béton, avec de grandes fenêtres : chaque famille a son appartement et son petit balcon plein de fleurs.",
+      nom: 'Un immeuble moderne', sprite: '07-moderne/immeuble-moderne', epoque: 7, jusqua: 9,
+      zone: 'pre', cout: 820, bois: 6, lits: 26, largeur: 205, taille: 2
+    },
+    tour: {
+      resume: "Une grande tour de verre, pour 40 personnes.", page: 'villes-modernes',
+      explication: "Une tour d'habitation. Elle monte très haut pour loger beaucoup de familles sans prendre de place, et sur son toit, il y a même un jardin !",
+      nom: 'Une tour', sprite: '07-moderne/tour', epoque: 7, jusqua: 9, debloque: 'ordinateur',
+      zone: 'pre', cout: 1300, bois: 8, lits: 40, largeur: 200, taille: 2
+    },
+    supermarche: {
+      resume: "Le supermarché vend de tout à manger. Ses grands frigos gardent la nourriture : la réserve grandit.",
+      explication: "Le supermarché. Des fruits, des légumes, du pain, du lait : tout est rangé dans les rayons, et les grands frigos gardent la nourriture bien au frais.",
+      vignettes: [{ img: 'supermarche', texte: "Le caissier passe les courses : bip, bip !" }],
+      nom: 'Le supermarché', sprite: '07-moderne/supermarche', epoque: 7, jusqua: 9,
+      zone: 'pre', cout: 520, bois: 5, largeur: 215, taille: 2, grandit: { 2: 1.1, 3: 1.25 },
+      travail: { metier: 'caissier', aller: null, duree: 6, produit: 'nourriture', qte: 18 }
+    },
+    'centre-recherche': {
+      resume: "Les ingénieurs y inventent des machines : ils ont des idées 💡.",
+      explication: "Le centre de recherche. Les ingénieurs y dessinent, calculent et fabriquent des robots et des machines toutes neuves.",
+      vignettes: [{ img: 'centre-recherche', texte: "L'ingénieur essaie son petit robot." }],
+      nom: 'Le centre de recherche', sprite: '07-moderne/centre-recherche', epoque: 7, jusqua: 9,
+      zone: 'pre', cout: 460, bois: 4, largeur: 195, taille: 1, grandit: { 2: 1.15, 3: 1.3 },
+      travail: { metier: 'ingenieur', aller: null, duree: 12, produit: 'idees', qte: 8 }
+    },
+    bureau: {
+      resume: "L'informaticienne travaille sur ses ordinateurs.",
+      explication: "Le bureau. Derrière les grandes fenêtres, des ordinateurs : on y écrit, on y calcule, on y prépare des cartes et des dessins.",
+      vignettes: [{ img: 'bureau', texte: "L'informaticienne tape très vite sur son clavier." }],
+      nom: 'Le bureau', sprite: '07-moderne/bureau', epoque: 7, jusqua: 9, debloque: 'ordinateur',
+      zone: 'pre', cout: 620, bois: 5, largeur: 185, taille: 1, grandit: { 2: 1.15, 3: 1.3 },
+      travail: { metier: 'informaticien', aller: null, duree: 6, produit: 'pieces', qte: 100 }
+    },
+    'parc-solaire': {
+      resume: "Les panneaux attrapent la lumière du soleil et fabriquent l'électricité, sans fumée.",
+      explication: "Le parc solaire. Des rangées de panneaux tournés vers le soleil fabriquent l'électricité. Le technicien les nettoie et vérifie que tout marche.",
+      vignettes: [{ img: 'parc-solaire', texte: "Le technicien nettoie les panneaux pour qu'ils brillent." }],
+      nom: 'Le parc solaire', sprite: '07-moderne/parc-solaire', epoque: 7, jusqua: 9, debloque: 'solaire',
+      zone: 'pre', cout: 680, bois: 5, largeur: 220, taille: 2, grandit: { 2: 1.1, 3: 1.25 },
+      travail: { metier: 'technicien', aller: null, duree: 6, produit: 'pieces', qte: 110 }
+    },
+    observatoire: {
+      resume: "L'astronome regarde les étoiles et parle aux satellites : elle a des idées 💡.",
+      explication: "L'observatoire. Sous la grande coupole, un télescope regarde les étoiles et les planètes ; à côté, une antenne écoute les satellites.",
+      vignettes: [{ img: 'observatoire', texte: "L'astronome regarde la Lune dans son télescope." }],
+      nom: "L'observatoire", sprite: '07-moderne/observatoire', epoque: 7, jusqua: 9, debloque: 'satellite',
+      zone: 'pre', cout: 720, bois: 5, largeur: 215, taille: 2, unique: true, grandit: { 2: 1.1, 3: 1.25 },
+      travail: { metier: 'astronome', aller: null, duree: 12, produit: 'idees', qte: 11 }
+    },
+    // le pas de tir : la découverte de la fusée lance son chantier, sur le terrain gardé pour lui à l'arrivée du monde moderne
+    'pas-de-tir': {
+      resume: "Le pas de tir : c'est d'ici que la fusée décolle.", page: 'fusee',
+      explication: "Le pas de tir. Une grande tour de métal tient la fusée bien droite. Quand tout est prêt, la tour s'écarte, et la fusée s'envole dans un grand nuage de feu et de fumée !",
+      vignettes: [{ img: 'pas-de-tir', texte: "Le technicien vérifie la fusée avant le grand départ." }],
+      nom: 'Le pas de tir', sprite: '07-moderne/pas-de-tir', epoque: 7, jusqua: 9,
+      zone: 'tir', cout: null, bois: 10, largeur: 215, taille: 2, automatique: true, unique: true
+    },
+    // décorations et merveilles du monde moderne (ADR-023, ADR-024)
+    spoutnik: {
+      resume: "Le tout premier satellite.", page: 'deco-spoutnik',
+      nom: 'Spoutnik', sprite: 'deco/spoutnik', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 300, bois: 2, largeur: 90, taille: 1, deco: true, unique: true
+    },
+    'module-lunaire': {
+      resume: "Le petit vaisseau qui s'est posé sur la Lune.", page: 'deco-module-lunaire',
+      nom: 'Le module lunaire', sprite: 'deco/module-lunaire', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 420, bois: 3, largeur: 125, taille: 1, deco: true, unique: true
+    },
+    concorde: {
+      resume: "L'avion plus rapide que le bruit.", page: 'deco-concorde',
+      nom: 'Le Concorde', sprite: 'deco/concorde', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 400, bois: 3, largeur: 160, taille: 1, deco: true, unique: true
+    },
+    tgv: {
+      resume: "Le train à grande vitesse.", page: 'deco-tgv',
+      nom: 'Le TGV', sprite: 'deco/tgv', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 380, bois: 3, largeur: 150, taille: 1, deco: true, unique: true
+    },
+    'borne-arcade': {
+      resume: "Un des premiers jeux vidéo.", page: 'deco-borne-arcade',
+      nom: "Une borne d'arcade", sprite: 'deco/borne-arcade', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 240, bois: 2, largeur: 60, taille: 1, deco: true, unique: true
+    },
+    rubik: {
+      resume: "Le cube de toutes les couleurs.", page: 'deco-rubik',
+      nom: 'Le cube de Rubik', sprite: 'deco/rubik', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 260, bois: 2, largeur: 80, taille: 1, deco: true, unique: true
+    },
+    'fontaine-stravinsky': {
+      resume: "Une fontaine pleine de sculptures rigolotes.", page: 'deco-fontaine-stravinsky',
+      nom: 'La fontaine Stravinsky', sprite: 'deco/fontaine-stravinsky', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 460, bois: 3, largeur: 160, taille: 1, deco: true, unique: true
+    },
+    velos: {
+      resume: "Des vélos à prendre et à reposer.", page: 'deco-velos',
+      nom: 'Des vélos en libre-service', sprite: 'deco/velos', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 160, bois: 1, largeur: 85, taille: 1, deco: true
+    },
+    atomium: {
+      resume: "Une merveille : neuf grosses boules de métal.", page: 'deco-atomium',
+      nom: "L'Atomium", sprite: 'deco/atomium', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 760, bois: 6, largeur: 170, taille: 2, deco: true, merveille: true, unique: true
+    },
+    'opera-sydney': {
+      resume: "Une merveille : un opéra en forme de voiles.", page: 'deco-opera-sydney',
+      nom: "L'opéra de Sydney", sprite: 'deco/opera-sydney', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 800, bois: 6, largeur: 190, taille: 2, deco: true, merveille: true, unique: true
+    },
+    'pyramide-louvre': {
+      resume: "Une merveille : une pyramide de verre.", page: 'deco-pyramide-louvre',
+      nom: 'La pyramide du Louvre', sprite: 'deco/pyramide-louvre', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 840, bois: 6, largeur: 200, taille: 2, deco: true, merveille: true, unique: true
+    },
+    'burj-khalifa': {
+      resume: "Une merveille : le plus haut immeuble du monde.", page: 'deco-burj-khalifa',
+      nom: 'Le Burj Khalifa', sprite: 'deco/burj-khalifa', epoque: 7, jusqua: 7,
+      zone: 'pre', cout: 880, bois: 7, largeur: 90, taille: 1, deco: true, merveille: true, unique: true
+    },
     // le pont de pierre remplace la passerelle emportée par la crue (le petit problème du Moyen Âge, epoques.md)
     'pont-pierre': {
       resume: "Un pont en arches de pierre : la rivière ne peut plus l'emporter.", page: 'pont',
@@ -1356,7 +1572,13 @@ var Donnees = (function () {
       forgeron: 'e4-marechal', marechal: 'e4-marechal', scribe: 'e3-scribe', marchand: 'e6-citadine', marin: 'e5-matelot', matelot: 'e5-matelot', charron: 'e3-charron',
       boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e4-imprimeur',
       mineur: 'e5-mineur', ouvriere: 'e5-ouvriere', cheminot: 'e5-cheminot', inventeur: 'e5-inventrice', pompier: 'e5-pompier',
-      electricien: 'e6-electricien', standardiste: 'e6-standardiste', aviatrice: 'e6-aviatrice', mecanicien: 'e6-mecanicien', chercheur: 'e6-chercheuse' }
+      electricien: 'e6-electricien', standardiste: 'e6-standardiste', aviatrice: 'e6-aviatrice', mecanicien: 'e6-mecanicien', chercheur: 'e6-chercheuse' },
+    7: { sage: 'sage-assis', bucheron: 'e7-bucheron', paysan: 'e6-fermier', porteur: 'e6-fermier', fermier: 'e6-fermier', berger: 'berger-agneau', potier: 'e3-tour-potier', meunier: 'meuniere', moulinier: 'e4-meunier',
+      forgeron: 'e4-marechal', marechal: 'e4-marechal', scribe: 'e3-scribe', marchand: 'e6-citadine', marin: 'e5-matelot', matelot: 'e5-matelot', charron: 'e3-charron',
+      boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e4-imprimeur',
+      mineur: 'e5-mineur', ouvriere: 'e5-ouvriere', cheminot: 'e5-cheminot', inventeur: 'e5-inventrice', pompier: 'e5-pompier',
+      electricien: 'e6-electricien', standardiste: 'e6-standardiste', aviatrice: 'e6-aviatrice', mecanicien: 'e6-mecanicien', chercheur: 'e6-chercheuse',
+      informaticien: 'e7-informaticienne', caissier: 'e7-caissier', ingenieur: 'e7-ingenieur', technicien: 'e7-technicien', astronome: 'e7-astronome' }
   };
 
   // Ce qu'on porte dans les bras, selon l'époque (h : homme, f : femme)
@@ -1366,9 +1588,10 @@ var Donnees = (function () {
     3: { bois: { h: 'e3-bois-h', f: 'e3-bois-f' }, ble: { h: 'e3-ble-h', f: 'e3-ble-f' }, argile: { h: 'e3-argile-h', f: 'e3-argile-f' }, poisson: 'e3-poisson', minerai: 'e3-minerai' },
     4: { bois: { h: 'e4-bois-h', f: 'e4-bois-f' }, ble: { h: 'e4-ble-h', f: 'e4-ble-f' }, argile: { h: 'e4-argile-h', f: 'e4-argile-f' }, poisson: 'e4-poisson', minerai: 'e4-minerai' },
     5: { bois: { h: 'e5-bois-h', f: 'e5-bois-f' }, ble: { h: 'e5-ble-h', f: 'e5-ble-f' }, argile: { h: 'e5-argile-h', f: 'e5-argile-f' }, poisson: 'e5-poisson', minerai: 'e5-minerai' },
-    6: { bois: { h: 'e6-bois-h', f: 'e6-bois-f' }, ble: { h: 'e6-ble-h', f: 'e6-ble-f' }, argile: { h: 'e6-argile-h', f: 'e6-argile-f' }, poisson: 'e6-poisson', minerai: 'e6-minerai' }
+    6: { bois: { h: 'e6-bois-h', f: 'e6-bois-f' }, ble: { h: 'e6-ble-h', f: 'e6-ble-f' }, argile: { h: 'e6-argile-h', f: 'e6-argile-f' }, poisson: 'e6-poisson', minerai: 'e6-minerai' },
+    7: { bois: { h: 'e7-bois-h', f: 'e7-bois-f' }, ble: { h: 'e7-ble-h', f: 'e7-ble-f' }, argile: { h: 'e7-argile-h', f: 'e7-argile-f' }, poisson: 'e7-poisson', minerai: 'e7-minerai' }
   };
-  var femmes = ['cueilleuse', 'porteuse-jarre', 'e3-paysanne', 'e3-marchande', 'e4-paysanne', 'e4-boulangere', 'e5-ouvriere', 'e5-matelot', 'e5-inventrice', 'e6-standardiste', 'e6-aviatrice', 'e6-chercheuse', 'e6-citadine'];
+  var femmes = ['cueilleuse', 'porteuse-jarre', 'e3-paysanne', 'e3-marchande', 'e4-paysanne', 'e4-boulangere', 'e5-ouvriere', 'e5-matelot', 'e5-inventrice', 'e6-standardiste', 'e6-aviatrice', 'e6-chercheuse', 'e6-citadine', 'e7-informaticienne', 'e7-astronaute', 'e7-astronome', 'e7-citadine'];
 
   // L'allure d'un habitant selon son métier et l'époque
   var allures = {
@@ -1418,6 +1641,18 @@ var Donnees = (function () {
       mineur: 'e5-mineur', ouvriere: 'e5-ouvriere', cheminot: 'e5-cheminot', inventeur: 'e5-inventrice', matelot: 'e5-matelot', pompier: 'e5-pompier',
       electricien: 'e6-electricien', standardiste: 'e6-standardiste', aviatrice: 'e6-aviatrice', mecanicien: 'e6-mecanicien', fermier: 'e6-fermier', chercheur: 'e6-chercheuse',
       adulte: ['e6-electricien', 'e6-standardiste', 'e6-mecanicien', 'e6-chercheuse', 'e6-citadine', 'e6-aviatrice', 'e6-fermier'], enfant: 'e6-enfant'
+    },
+    7: {
+      // une seule tenue quand le métier a sa pose de travail (sinon on change de visage en se mettant au travail)
+      sage: 'sage', bucheron: 'e7-technicien', cueilleur: ['e7-citadine', 'e7-astronaute', 'e6-standardiste'], tailleur: 'e6-mecanicien',
+      chasseur: 'e5-paysan', pecheur: ['e5-matelot', 'e7-caissier'], peintre: 'e7-citadine',
+      paysan: 'e6-fermier', berger: 'e5-paysan', porteur: 'e6-fermier', potier: ['e7-citadine', 'e6-chercheuse'], meunier: ['e7-citadine', 'e7-astronaute'], moulinier: 'e4-meunier',
+      forgeron: 'e6-mecanicien', scribe: 'e7-informaticienne', marchand: 'e7-caissier', marin: 'e5-matelot', charron: ['e6-mecanicien', 'e6-electricien'],
+      marechal: 'e4-marechal', boulanger: 'e4-boulangere', horloger: 'e4-horloger', imprimeur: 'e6-chercheuse',
+      mineur: 'e5-mineur', ouvriere: 'e5-ouvriere', cheminot: 'e5-cheminot', inventeur: 'e5-inventrice', matelot: 'e5-matelot', pompier: 'e5-pompier',
+      electricien: 'e6-electricien', standardiste: 'e6-standardiste', aviatrice: 'e6-aviatrice', mecanicien: 'e6-mecanicien', fermier: 'e6-fermier', chercheur: 'e6-chercheuse',
+      informaticien: 'e7-informaticienne', caissier: 'e7-caissier', ingenieur: 'e7-ingenieur', technicien: 'e7-technicien', astronome: 'e7-astronome',
+      adulte: ['e7-informaticienne', 'e7-caissier', 'e7-astronaute', 'e7-technicien', 'e7-ingenieur', 'e7-citadine', 'e6-electricien', 'e6-aviatrice'], enfant: 'e7-enfant'
     }
   };
 
@@ -1459,6 +1694,11 @@ var Donnees = (function () {
     mecanicien: ['Je répare le moteur !', 'Un petit coup de clé, et voilà !'],
     fermier: ['Mon tracteur laboure tout seul !', 'Le silo est plein de grain !'],
     chercheur: ["J'ai une nouvelle idée !", 'Regarde comme elle brille !'],
+    informaticien: ["J'écris un programme pour l'ordinateur !", 'Encore une ligne, et ça marche !'],
+    caissier: ['Bip ! Et une pomme, une !', 'Bonne journée !'],
+    ingenieur: ['Mon robot sait marcher !', "Je calcule le chemin de la fusée !"],
+    technicien: ['Les panneaux brillent au soleil !', "L'éolienne tourne avec le vent !"],
+    astronome: ['Je vois les cratères de la Lune !', 'Voilà le satellite qui passe !'],
     construit: ['J\'apporte du bois pour construire !', 'On construit une maison !'],
     enfant: ['Youpi !', 'On joue à chat !', 'Tu ne m\'attraperas pas !'],
     libre: ['Bonjour !', 'Il fait bon ici.', 'Quelle belle vallée !']
@@ -1483,6 +1723,11 @@ var Donnees = (function () {
     lampe: ['06-electricite/lampadaire', 'Un lampadaire électrique', "Une ampoule tout en haut : le soir, elle éclaire la rue bien mieux qu'une bougie ou un bec de gaz."],
     voiture: ['06-electricite/voiture-rouge', 'Une voiture', "Un petit moteur fait tourner les roues : plus besoin de cheval ! Sur la route goudronnée, la voiture roule sans secousses."],
     avion: ['06-electricite/avion', "L'avion", "L'aviatrice fait un tour au-dessus de la vallée. L'hélice tourne très vite et tire l'avion dans le ciel."],
+    eolienne: ['niveaux/parc-solaire-3', 'Une éolienne', "Le vent fait tourner ses grandes pales, et l'éolienne fabrique de l'électricité, sans fumée."],
+    panneau: ['07-moderne/panneau', 'Un panneau solaire', "Il attrape la lumière du soleil et la change en électricité. Même par temps gris, il travaille un peu !"],
+    satellite: ['07-moderne/satellite', 'Un satellite', "Très haut, dans l'espace, il tourne autour de la Terre. Le soir, on le voit passer comme une petite étoile qui avance."],
+    fusee: ['07-moderne/fusee', 'La fusée', "Elle est dressée sur le pas de tir, prête à partir. Quand on allume ses moteurs, elle monte jusque dans l'espace !"],
+    airSale: ['07-moderne/parc-solaire', "L'air est sale", "Les cheminées des usines, la centrale à charbon et les voitures font de la fumée : l'air de la ville est devenu tout gris. Avec le soleil et le vent, on peut faire l'électricité sans fumée."],
     goudron: ['nature/galets', 'Une route goudronnée', "Pour les voitures, on recouvre les routes de goudron : c'est lisse, et la poussière ne vole plus."],
     route: ['nature/galets', 'Une route', "Avec la roue, les chemins les plus usés sont devenus des routes de terre et de pierres : les charrettes y roulent sans s'enfoncer."]
   },
@@ -1507,7 +1752,8 @@ var Donnees = (function () {
         3: "Prêt pour l'âge des métaux ? On va inventer la roue, faire fondre le bronze et écrire. Le village va devenir une ville, et l'île va encore s'agrandir !",
         4: "Prêt pour le Moyen Âge ? On va bâtir des moulins, forger le fer et construire un pont de pierre. La ville va encore grandir, et l'île aussi !",
         5: "Prêt pour l'âge de la vapeur ? On va creuser le charbon, inventer des machines et faire rouler des trains. L'île va grandir vers le nord !",
-        6: "Prêt pour l'électricité ? On va allumer des ampoules, téléphoner de loin, rouler en voiture et voler en avion. La ville va briller !"
+        6: "Prêt pour l'électricité ? On va allumer des ampoules, téléphoner de loin, rouler en voiture et voler en avion. La ville va briller !",
+        7: "Prêt pour le monde moderne ? On va inventer l'ordinateur, attraper la lumière du soleil, envoyer un satellite… et construire une fusée !"
       },
       epoque3: "Bienvenue à l'âge des métaux ! Construis des maisons en pierre, et regarde dans les découvertes : la roue, le bronze, l'écriture, la monnaie et la voile t'attendent.",
       maisonsPierre: 'Touche une vieille maison pour la transformer en maison en pierre.',
@@ -1545,6 +1791,19 @@ var Donnees = (function () {
       lignesTel: "Le central téléphonique est prêt ! De nouveaux fils relient la ville : on peut se parler de loin.",
       voitures: "Des voitures roulent dans la ville ! Les routes les plus usées sont maintenant goudronnées.",
       avion: "L'aérodrome est prêt ! Regarde le petit avion décoller au-dessus de la vallée !",
+      epoque7: "Bienvenue dans le monde moderne ! Au bord de l'île, un grand terrain est gardé pour plus tard : c'est là qu'on construira la fusée. Construis un supermarché, un centre de recherche et des immeubles modernes, et regarde dans les découvertes.",
+      maisonsModernes: 'Touche une vieille maison pour la transformer en immeuble moderne.',
+      modernArrive: "Nouveau : le monde moderne est arrivé ! Quand tu veux, touche le bouton doré en haut pour continuer l'histoire.",
+      airSale: "Oh ! Avec toutes ces cheminées et ces voitures, l'air de la ville est devenu tout gris. Kof, kof ! Plus personne n'a envie de venir habiter ici. Il faudrait fabriquer l'électricité sans fumée…",
+      airSaleEncore: "L'air est toujours tout gris ! Regarde dans les découvertes : l'énergie solaire.",
+      airPur: "Le soleil et le vent ! Des panneaux solaires et des éoliennes fabriquent l'électricité sans fumée, et la vieille centrale ne fume plus. Regarde : le ciel redevient tout bleu !",
+      satellite: "Un satellite tourne maintenant autour de la Terre ! Le soir, regarde bien le ciel : on le voit passer comme une petite étoile.",
+      pasDeTir: "La fusée ! Les habitants construisent le pas de tir au bord de l'île. Quand il sera prêt, la fusée sera dressée dessus.",
+      fuseePrete: "La fusée est prête ! Touche le gros bouton pour la faire décoller !",
+      fuseeNouvelle: "Une nouvelle fusée est prête sur le pas de tir ! Tu peux la faire décoller quand tu veux.",
+      fuseePartie: "Et voilà, la fusée file vers les étoiles ! Une autre sera bientôt prête sur le pas de tir.",
+      compteRebours: ['Trois !', 'Deux !', 'Un !', 'Décollage !'],
+      faim7: "Il n'y avait pas assez à manger ce soir ! Construis un supermarché, une ferme au tracteur ou un champ de blé.",
       faim6: "Il n'y avait pas assez à manger ce soir ! Construis un champ de blé, un moulin, un port à vapeur ou une ferme au tracteur.",
       merveilles: 'Les merveilles ! De grands monuments qui se construisent en trois étapes. Choisis-en une !',
       merveilleEtape: 'Une étape de la merveille est finie ! Ouvre les merveilles pour lancer la suivante.',
@@ -1569,14 +1828,15 @@ var Donnees = (function () {
         2: "Tu as fait toutes les découvertes du néolithique ! Ton village est prêt pour l'âge des métaux. Quand tu veux, touche le bouton doré en haut.",
         3: "Tu as fait toutes les découvertes de l'âge des métaux ! Ta ville est prête pour le Moyen Âge. Quand tu veux, touche le bouton doré en haut.",
         4: "Tu as fait toutes les découvertes du Moyen Âge ! Ta ville est prête pour l'âge de la vapeur. Quand tu veux, touche le bouton doré en haut.",
-        5: "Tu as fait toutes les découvertes de l'âge de la vapeur ! Ta ville est prête pour l'électricité. Quand tu veux, touche le bouton doré en haut."
+        5: "Tu as fait toutes les découvertes de l'âge de la vapeur ! Ta ville est prête pour l'électricité. Quand tu veux, touche le bouton doré en haut.",
+        6: "Tu as fait toutes les découvertes de l'électricité ! Ta ville est prête pour le monde moderne. Quand tu veux, touche le bouton doré en haut."
       },
       amelioration: "Les habitants vont chercher du bois pour améliorer le bâtiment. Ensuite, une personne de plus y travaillera !",
       outilsBois: 'Avec les outils de pierre, le bûcheron peut maintenant couper les arbres !',
       plusDeChasse: "Avec l'élevage, plus besoin d'aller chasser : la viande vient de l'enclos !",
       embellir: "Embellis ton village avec les monuments de l'époque ! Chacun raconte une vraie histoire.",
       dejaConstruit: 'Tu l\'as déjà ! Il n\'en existe qu\'un seul.',
-      finJeu: "Tu as fait toutes les découvertes de l'électricité ! La suite de l'histoire arrivera plus tard."
+      finJeu: "Bravo ! Ta fusée est partie vers les étoiles. Ta ville continue de vivre : tu peux encore la faire grandir et faire décoller d'autres fusées."
     },
     // L'histoire : une intro au début de la partie, un passage à la fin du néolithique (la tribu est devenue un village),
     // un passage à la fin de l'âge des métaux (le village est devenu une ville), un passage à la fin du Moyen Âge,
@@ -1604,9 +1864,13 @@ var Donnees = (function () {
         fr: { titre: 'Bravo !', l1: "Du premier feu de camp jusqu'aux trains à vapeur, la petite tribu est devenue une grande ville pleine de machines !", l2: "Ce soir, sur le quai de la gare, les enfants regardent les étoiles et rêvent d'une machine encore plus forte : une fusée pour aller tout là-haut.", go: 'Continuer' },
         en: { titre: 'Well done!', l1: 'From the very first campfire to steam trains, the little tribe has become a big town full of machines!', l2: 'Tonight, on the station platform, the children look at the stars and dream of an even stronger machine: a rocket to go all the way up there.', go: 'Continue' }
       },
-      fin: {
+      electricite: {
         fr: { titre: 'Bravo !', l1: "Du premier feu de camp jusqu'à l'ampoule, la petite tribu est devenue une grande ville pleine de lumières !", l2: "Ce soir, un petit avion passe au-dessus des toits, et les enfants rêvent d'aller encore plus haut : jusqu'aux étoiles, en fusée !", go: 'Continuer' },
         en: { titre: 'Well done!', l1: 'From the very first campfire to the light bulb, the little tribe has become a big town full of lights!', l2: 'Tonight a little airplane flies over the rooftops, and the children dream of going even higher: all the way to the stars, in a rocket!', go: 'Continue' }
+      },
+      fin: {
+        fr: { titre: 'Bravo !', l1: "Du tout premier feu de camp jusqu'à la fusée, la petite tribu est devenue une grande ville moderne !", l2: "Ce soir, sa fusée file vers les étoiles. Et dans la vallée, la vie continue, pleine de nouvelles idées.", go: 'Continuer' },
+        en: { titre: 'Well done!', l1: 'From the very first campfire all the way to the rocket, the little tribe has become a big modern city!', l2: 'Tonight its rocket soars towards the stars. And down in the valley, life goes on, full of new ideas.', go: 'Continue' }
       },
       passer: { fr: 'Passer', en: 'Skip' },
       fini: { fr: 'Fini', en: 'Finished' }
