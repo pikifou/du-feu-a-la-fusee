@@ -506,7 +506,10 @@
   // la travée suivante) est répétée vers le large jusqu'à sortir de l'écran : on n'en voit jamais la fin, il relie l'île
   // à autre chose. Mesures : tour54-feu-golden-gate/outils/mesures.json (en pixels des images, 1 pour 1 dans le monde).
   // (les tailles d'origine des deux images, pour les poser à la bonne échelle quelle que soit la taille du fichier)
-  var GG = { ancrage: [898, 325], travee: [177, 0], pas: [-501.8, 267.5], depart: [1064, 768], tra: [503, 768] };
+  // « e » : l'échelle à laquelle on pose le pont dans le monde (les mesures sont en pixels des images)
+  // tour 54 bis : le départ a une rampe qui part du sol (le pied du pont est le bout de plage où la route commence) ;
+  // le pont est posé à 60 % de la taille des images (il était trop gros)
+  var GG = { e: 0.6, ancrage: [1127, 173], travee: [125.8, 0], pas: [-495, 222], depart: [1272, 672], tra: [495, 672] };
   function goldenGate(b) { return b.type === 'golden-gate' && IMG['deco/golden-gate-depart'] && IMG['deco/golden-gate-travee']; }
   // vers où part le pont : le long de j (en bas à gauche) ou le long de i (en bas à droite, l'image retournée),
   // du côté où il passe le plus au-dessus de la mer (et le moins au-dessus de la terre) avant de sortir de l'île
@@ -528,9 +531,9 @@
     var dep = IMG['deco/golden-gate-depart'], tra = IMG['deco/golden-gate-travee'];
     var fini = b.etat === 'fini' && M.merveilleFinie(b), miroir = sensGG(b) === 'i' ? -1 : 1;
     var pied = [b.x, b.y + b.k * TR.TH]; // la pointe avant de ses cases, sur la plage
-    var o = [pied[0] - miroir * GG.ancrage[0], pied[1] - GG.ancrage[1]]; // le coin de l'image du départ, dans le monde
+    var e = GG.e, o = [pied[0] - miroir * GG.ancrage[0] * e, pied[1] - GG.ancrage[1] * e]; // le coin de l'image du départ, dans le monde
     var dessine = function (im, x, y, alpha) {
-      var t0 = im === dep ? GG.depart : GG.tra, p = E(x, y), w = t0[0] * V.s, h = t0[1] * V.s;
+      var t0 = im === dep ? GG.depart : GG.tra, p = E(x, y), w = t0[0] * V.s * e, h = t0[1] * V.s * e;
       if (miroir > 0 ? (p[0] > V.W || p[0] + w < 0) : (p[0] < 0 || p[0] - w > V.W)) return;
       if (p[1] > V.H || p[1] + h < 0) return;
       ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; ctx.translate(p[0], p[1]); ctx.scale(miroir, 1);
@@ -541,8 +544,8 @@
       var part = Math.min(1, ((b.etape || 0) + (b.etat === 'chantier' && b.besoin ? b.livre / b.besoin : 0)) / 3);
       liste.push({ y: pied[1], f: function () {
         dessine(dep, o[0], o[1], 0.2);
-        var p = E(o[0], o[1]), h = GG.depart[1] * V.s;
-        ctx.save(); ctx.beginPath(); ctx.rect(miroir > 0 ? p[0] : p[0] - GG.depart[0] * V.s, p[1] + h * (1 - 0.15 - 0.85 * part), GG.depart[0] * V.s, h); ctx.clip();
+        var p = E(o[0], o[1]), h = GG.depart[1] * V.s * e;
+        ctx.save(); ctx.beginPath(); ctx.rect(miroir > 0 ? p[0] : p[0] - GG.depart[0] * V.s * e, p[1] + h * (1 - 0.15 - 0.85 * part), GG.depart[0] * V.s * e, h); ctx.clip();
         dessine(dep, o[0], o[1]); ctx.restore();
       } });
       return;
@@ -550,10 +553,10 @@
     liste.push({ y: pied[1], f: function () { dessine(dep, o[0], o[1]); } });
     // les travées, vers le large, jusqu'à sortir de l'écran
     for (var k = 1; k < 40; k++) {
-      var x = o[0] + miroir * (GG.travee[0] + k * GG.pas[0]), y = o[1] + GG.travee[1] + k * GG.pas[1];
+      var x = o[0] + miroir * (GG.travee[0] + k * GG.pas[0]) * e, y = o[1] + (GG.travee[1] + k * GG.pas[1]) * e;
       var p = E(x, y);
-      if (p[1] > V.H + 50 || (miroir > 0 ? p[0] + GG.tra[0] * V.s < -50 : p[0] - GG.tra[0] * V.s > V.W + 50)) break;
-      (function (x, y) { liste.push({ y: y + GG.tra[1] * 0.9, f: function () { dessine(tra, x, y); } }); })(x, y);
+      if (p[1] > V.H + 50 || (miroir > 0 ? p[0] + GG.tra[0] * V.s * e < -50 : p[0] - GG.tra[0] * V.s * e > V.W + 50)) break;
+      (function (x, y) { liste.push({ y: y + GG.tra[1] * 0.9 * e, f: function () { dessine(tra, x, y); } }); })(x, y);
     }
   }
   function composee(b) { var d = D.batiments[b.type]; return d && d.plan && b.k >= d.taille && b.etat === 'fini'; }
