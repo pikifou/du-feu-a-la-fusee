@@ -90,6 +90,8 @@ def assets() -> dict:
                 cible_l = 420
             if cle.endswith("chevre"):
                 cible_l = 170
+            if cle.startswith("deco/golden-gate-"):
+                cible_l = im.width  # les pièces du grand pont gardent leur taille : le jeu les met bout à bout (tour 54)
             if cle.startswith("nature/"):
                 cible_l = min(im.width, 420 if cle.endswith("grotte") else 300)
             im = im.resize((cible_l, round(im.height * cible_l / im.width)), Image.LANCZOS)
