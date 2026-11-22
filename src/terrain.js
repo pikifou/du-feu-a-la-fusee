@@ -245,11 +245,29 @@ var Terrain = (function () {
     return l;
   }
   function centreEmpreinte(i, j, k) { return centre(i + (k - 1) / 2, j + (k - 1) / 2); }
+  // Le Golden Gate (tour 54, reprise 3) : il part vers le large, à l'opposé du centre du village, le long de j (vers le
+  // bas à gauche de l'écran) ou de i (vers le bas à droite). La route y arrive tout droit par les deux cases de derrière,
+  // dans son axe : « entree » touche le pont, « avant » est la case d'avant.
+  function accesPont(T, b) {
+    var k = b.k || 1, m = Math.floor((k - 1) / 2), di = b.i + (k - 1) / 2 - CI, dj = b.j + (k - 1) / 2 - CJ;
+    function mer(sens) {
+      for (var q = 1; q <= 8; q++) {
+        var t = sens === 'j' ? tuile(T, b.i + m, b.j + k - 1 + q) : tuile(T, b.i + k - 1 + q, b.j + m);
+        if (t && t.sol === 'eau') return true;
+      }
+      return false;
+    }
+    var sens = dj >= di ? 'j' : 'i', autre = sens === 'j' ? 'i' : 'j';
+    if (!mer(sens) && mer(autre)) sens = autre;
+    return sens === 'j'
+      ? { sens: 'j', entree: [b.i + m, b.j - 1], avant: [b.i + m, b.j - 2] }
+      : { sens: 'i', entree: [b.i - 1, b.j + m], avant: [b.i - 2, b.j + m] };
+  }
 
   return {
     N: N, TW: TW, TH: TH, OX: OX, OY: OY, CI: CI, CJ: CJ, RAYONS: RAYONS, P: P, ANCIEN_N: ANCIEN_N,
     generer: generer, tuile: tuile, tuileDe: tuileDe, centre: centre, centreEmpreinte: centreEmpreinte,
-    empreinte: empreinte, pres: pres, surIle: surIle, bloque: bloque, chemin: chemin,
+    empreinte: empreinte, accesPont: accesPont, pres: pres, surIle: surIle, bloque: bloque, chemin: chemin,
     user: user, repousser: repousser, etatHerbe: etatHerbe, riviereU: riviereU, h2: h2
   };
 })();

@@ -101,10 +101,17 @@ var Routes = (function () {
     var bats = m.batiments.filter(function (b) { return b.etat === 'fini' && dessert(b); });
     bats.sort(function (a, b) { return Math.hypot(a.x - c0[0], a.y - c0[1]) - Math.hypot(b.x - c0[0], b.y - c0[1]); });
     bats.forEach(function (b) {
-      var p = portes(T, b);
-      if (!p.length || p.some(function (t) { return r[idx(T, t)]; })) return;
+      var p = portes(T, b), fin = null;
+      if (b.type === 'golden-gate') {
+        // le Golden Gate : la route arrive dans son axe, par les deux cases de derrière (TR.accesPont)
+        var a = TR.accesPont(T, b), e = TR.tuile(T, a.entree[0], a.entree[1]), v = TR.tuile(T, a.avant[0], a.avant[1]);
+        if (praticable(T, e) && praticable(T, v)) { p = [v]; fin = e; }
+        else if (praticable(T, e)) p = [e];
+        if (fin && r[idx(T, fin)]) return;
+      }
+      if (!p.length || p.some(function (t) { return r[idx(T, t)]; })) { if (fin) r[idx(T, fin)] = true; return; }
       var l = chemin(m, r, p, cout, virage == null ? 0.35 : virage);
-      if (l) l.forEach(function (k) { r[k] = true; });
+      if (l) { l.forEach(function (k) { r[k] = true; }); if (fin) r[idx(T, fin)] = true; }
     });
     return r;
   }
@@ -122,6 +129,12 @@ var Routes = (function () {
       DIRS.forEach(function (d, n) { var t = TR.tuile(T, i + d[0], j + d[1]); if (t && r[idx(T, t)]) mq |= 1 << n; });
       // une route touche aussi les ponts du gué
       cases[k] = mq;
+    });
+    // la route entre sur le tablier du Golden Gate : un bras de plus vers le pont, sur la case d'entrée
+    m.batiments.forEach(function (b) {
+      if (b.type !== 'golden-gate' || b.etat !== 'fini') return;
+      var a = TR.accesPont(T, b), k = a.entree[0] * T.N + a.entree[1];
+      if (cases[k] != null) cases[k] |= a.sens === 'j' ? 2 : 1;
     });
     return { mode: mode, cases: cases };
   }

@@ -238,6 +238,7 @@ var Monde = (function () {
     m.pieces -= D.batiments[type].cout;
     var b = poser(m, type, ancre[0], ancre[1], false);
     if (D.batiments[type].merveille) { b.etape = 0; b.etapeVisee = 1; } // ADR-030 : une merveille se bâtit en 3 étapes
+    if (type === 'golden-gate') degagerGoldenGate(m);
     m.evenements.push({ type: 'chantier', bat: b.id });
     return b;
   }
@@ -369,6 +370,17 @@ var Monde = (function () {
       var v = TR.tuile(m.terrain, b.i + di, b.j + dj);
       if (v && !v.bat && v.ile >= 5 && (v.obj === 'arbre' || v.obj === 'souche') && !v.reserve) { v.obj = null; v.bois = 0; }
     }
+  }
+  // le Golden Gate : ses deux cases d'accès sont dégagées, pour que la route y arrive tout droit (tour 54, reprise 3)
+  function degagerGoldenGate(m) {
+    m.batiments.forEach(function (b) {
+      if (b.type !== 'golden-gate') return;
+      var a = TR.accesPont(m.terrain, b);
+      [a.entree, a.avant].forEach(function (ij) {
+        var t = TR.tuile(m.terrain, ij[0], ij[1]);
+        if (t && !t.bat && !t.rail && t.obj && !t.reserve) { t.obj = null; t.bois = 0; }
+      });
+    });
   }
   function retirer(m, b) {
     m.habitants.forEach(function (h) {
@@ -1716,6 +1728,7 @@ var Monde = (function () {
     if (o.terrain && o.terrain.tuiles) {
       agrandirMerveilles(o);
       prolongerRails(o);
+      degagerGoldenGate(o);
       if (o.epoque >= 5 && !o.demenage) demenager(o);
     }
     return o;

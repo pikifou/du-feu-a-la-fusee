@@ -509,37 +509,19 @@
   // « e » : l'échelle à laquelle on pose le pont dans le monde (les mesures sont en pixels des images)
   // tour 54 bis : le départ a une rampe qui part du sol (le pied du pont est le bout de plage où la route commence) ;
   // le pont est posé à 60 % de la taille des images (il était trop gros)
-  var GG = { e: 0.6, ancrage: [1127, 173], travee: [125.8, 0], pas: [-495, 222], depart: [1272, 672], tra: [495, 672] };
+  // reprise 3 : plus de bout de plage peint sous la rampe ; le milieu du bout du tablier (« entree ») est posé au bord
+  // de la case par où la route arrive, et la route y entre (TR.accesPont, Routes.calculer)
+  var GG = { e: 0.6, entree: [1168.8, 73.1], travee: [125.8, 0], pas: [-495, 222], depart: [1272, 672], tra: [495, 672] };
   function goldenGate(b) { return b.type === 'golden-gate' && IMG['deco/golden-gate-depart'] && IMG['deco/golden-gate-travee']; }
   // vers où part le pont : le long de j (en bas à gauche) ou le long de i (en bas à droite, l'image retournée),
-  // du côté où il passe le plus au-dessus de la mer (et le moins au-dessus de la terre) avant de sortir de l'île
-  function sensGG(b) {
-    // d'abord la route : si une route arrive au pont par l'arrière, le pont la prolonge dans le même sens (retour de Julien)
-    if (routesActives()) {
-      var R = reseauRoutes().cases, N0 = monde.terrain.N;
-      for (var q = 1; q <= 2; q++) {
-        if (R[b.i * N0 + (b.j - q)] != null) return 'j';
-        if (R[(b.i - q) * N0 + b.j] != null) return 'i';
-      }
-    }
-    if (b.__sens) return b.__sens;
-    var T0 = monde.terrain, note = function (di, dj) {
-      var n = 0;
-      for (var k = 1; k < 16; k++) {
-        var t = TR.tuile(T0, b.i + di * k, b.j + dj * k);
-        if (!t || !TR.surIle(T0, t)) break;
-        n += t.sol === 'eau' ? 1 : t.sol === 'sable' ? -1 : -3;
-      }
-      return n;
-    };
-    b.__sens = note(1, 0) > note(0, 1) ? 'i' : 'j';
-    return b.__sens;
-  }
+  // vers le large, à l'opposé du centre du village (TR.accesPont, reprise 3)
+  function sensGG(b) { return TR.accesPont(monde.terrain, b).sens; }
   function piecesGoldenGate(b, liste) {
     var dep = IMG['deco/golden-gate-depart'], tra = IMG['deco/golden-gate-travee'];
     var fini = b.etat === 'fini' && M.merveilleFinie(b), miroir = sensGG(b) === 'i' ? -1 : 1;
-    var pied = [b.x, b.y + b.k * TR.TH]; // la pointe avant de ses cases, sur la plage
-    var e = GG.e, o = [pied[0] - miroir * GG.ancrage[0] * e, pied[1] - GG.ancrage[1] * e]; // le coin de l'image du départ, dans le monde
+    var pied = [b.x, b.y + b.k * TR.TH]; // la pointe avant de ses cases (pour l'ordre de dessin)
+    var bout = [b.x + miroir * TR.TW * b.k / 2, b.y - TR.TH * b.k / 2]; // le milieu du bord de ses cases du côté de la route
+    var e = GG.e, o = [bout[0] - miroir * GG.entree[0] * e, bout[1] - GG.entree[1] * e]; // le coin de l'image du départ, dans le monde
     var dessine = function (im, x, y, alpha) {
       var t0 = im === dep ? GG.depart : GG.tra, p = E(x, y), w = t0[0] * V.s * e, h = t0[1] * V.s * e;
       if (miroir > 0 ? (p[0] > V.W || p[0] + w < 0) : (p[0] < 0 || p[0] - w > V.W)) return;
