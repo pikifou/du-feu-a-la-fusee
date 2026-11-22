@@ -73,6 +73,26 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #btn-merveilles { width: 52px; height: 52px; font-size: 26px; }
 #btn-merveilles.pret { background: #fff1b8; }
 #merveilles .fenetre { max-width: 860px; }
+#disparus .fenetre { max-width: 900px; }
+#grille-disparus { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0 14px; max-height: 56vh; overflow-y: auto; }
+.disparu { background: var(--carte-2); border-radius: 18px; padding: 8px 10px 10px; text-align: center; border: 3px solid transparent; cursor: pointer; }
+.disparu.lu { border-color: #f2c94c; background: #fff6cc; }
+.disparu .cadre { position: relative; }
+.disparu img { width: 100%; height: 86px; object-fit: contain; filter: saturate(.55); }
+.disparu .cadre::after { content: '✕'; position: absolute; right: 2px; top: 0; width: 26px; height: 26px; line-height: 26px; border-radius: 50%; background: #b5532e; color: #fff; font-weight: 700; font-size: 15px; }
+.disparu .nom { font-weight: 700; font-size: 15px; line-height: 1.15; margin-top: 4px; }
+.disparu .pourquoi { font-size: 13px; line-height: 1.25; margin-top: 4px; color: #5a4632; }
+/* téléphone en paysage : la fenêtre tient dans l'écran, les cartes défilent sur une ligne */
+@media (max-height: 520px) {
+  #disparus .fenetre { padding: 10px 16px; }
+  #disparus h2 { font-size: 22px; margin: 0; }
+  #disparus .sous { font-size: 13px; line-height: 1.2; }
+  #grille-disparus { display: flex; overflow-x: auto; overflow-y: hidden; max-height: none; gap: 8px; margin: 6px 0 8px; scroll-snap-type: x mandatory; }
+  .disparu { flex: 0 0 200px; scroll-snap-align: start; padding: 6px 8px 8px; }
+  .disparu img { height: 52px; }
+  .disparu .nom { font-size: 14px; }
+  .disparu .pourquoi { font-size: 12px; }
+}
 #grille-merv { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
 .merv { background: var(--carte-2); border-radius: 20px; padding: 10px; text-align: center; border: 4px solid transparent; position: relative; }
 .merv.encours { border-color: var(--orange); background: #fff1d6; }
@@ -314,6 +334,12 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #info-ameliorer { border: 0; background: var(--vert, #5a9a3c); color: #fff; font-family: inherit; font-weight: 700; font-size: 15px; border-radius: 999px;
   padding: 6px 14px; margin-top: 7px; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.25); }
 #info-ameliorer.non { filter: grayscale(.8); opacity: .65; }
+#bac { position: fixed; left: 12px; top: 118px; z-index: 50; background: rgba(255,250,240,.94); border-radius: 14px; padding: 8px 10px; font: 600 13px/1.2 system-ui, sans-serif; color: #3a2a1a; box-shadow: 0 4px 14px rgba(0,0,0,.2); max-width: 46vw; }
+#bac .ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 3px 0; }
+#bac b { width: 58px; }
+#bac button { border: 0; border-radius: 8px; padding: 5px 8px; background: #eadfcc; color: #3a2a1a; font: inherit; cursor: pointer; }
+#bac button.on { background: #2f5d8a; color: #fff; }
+#info-ameliorer.doree { background: linear-gradient(#f2b632, #d98a12); color: #3a2400; }
 #info-ameliorer { display: inline-flex; align-items: center; gap: 8px; }
 #info-ameliorer img { width: 54px; height: 42px; object-fit: contain; background: rgba(255,255,255,.25); border-radius: 10px; padding: 2px; }
 /* ce que produit un bâtiment, en haut à gauche de sa carte (ADR-037) */
@@ -379,6 +405,16 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   <h2>🏛 Les merveilles</h2>
   <div class="sous" id="merv-sous">De grands monuments qui ont vraiment existé. Chacun se construit en trois étapes.</div>
   <div id="grille-merv"></div>
+</div></div>
+
+<div class="voile" id="disparus"><div class="fenetre">
+  <h2 id="disparus-titre"></h2>
+  <div class="sous" id="disparus-sous"></div>
+  <div id="grille-disparus"></div>
+  <div class="ligne-boutons">
+    <button class="bouton-rond" id="disparus-voix" aria-label="Écouter">🔊</button>
+    <button class="gros-bouton" id="disparus-ok">J'ai compris</button>
+  </div>
 </div></div>
 
 <div class="voile" id="scene"><div class="fenetre">

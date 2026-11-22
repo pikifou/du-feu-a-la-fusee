@@ -24,7 +24,11 @@
   var ui = { voix: true, aide: {}, nouveaux: [] };
   function charger() {
     try {
-      var o = JSON.parse(localStorage.getItem(CLE) || 'null');
+      var brut = localStorage.getItem(CLE) || 'null', o = JSON.parse(brut);
+      // ADR-051 : une partie de l'ancienne carte (44 x 44) va être remise sur la nouvelle ; on garde d'abord une copie intacte
+      if (o && o.monde && o.monde.terrain && ((o.monde.terrain.tuiles || []).length === 1936 || o.monde.terrain.n === 1936)) {
+        try { if (!localStorage.getItem(CLE + '-carte-44')) localStorage.setItem(CLE + '-carte-44', brut); } catch (e) {}
+      }
       if (o && o.v === 2 && o.monde && o.monde.terrain) { ui = Object.assign(ui, o.ui || {}); return M.importer(o.monde); }
     } catch (e) {}
     return null;
@@ -214,11 +218,30 @@
     if (usureT < 1.5) return;
     usureT = 0;
     var T = monde.terrain, u = usureCv.getContext('2d');
-    var routes = !!monde.decouvertes.roue; // avec la roue, les chemins les plus usés deviennent des routes de pierre
-    var goudron = !!monde.decouvertes.voiture; // avec la voiture, elles sont goudronnées
+    // avec la roue, les chemins les plus usés deviennent des routes de pierre ; avec la voiture, elles sont goudronnées.
+    // Quand les vraies routes sont dessinées (ADR-044), les chemins hors des routes restent de la terre.
+    var routes = !!monde.decouvertes.roue && !routesActives();
+    var goudron = !!monde.decouvertes.voiture && !routesActives();
     u.clearRect(0, 0, usureCv.width, usureCv.height);
+    var rcases = routesActives() ? reseauRoutes().cases : null;
+    // ADR-053 : avec la ville aménagée, on garde les taches d'herbe usée (de l'herbe plus ou moins verte, de la terre) partout
+    // où il n'y a ni rue ni parcelle ; autour de la ville, une bordure d'herbe tassée fait la transition en douceur.
+    var sv = villeActive() && solsVille() ? solVille() : null;
+    var enVille = function (k) { return sv && (sv.cases[k] || sv.rues[k] != null); };
+    var bordVille = function (t) {
+      if (!sv) return 0;
+      var n = 0;
+      for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { if ((di || dj) && enVille((t.i + di) * T.N + t.j + dj)) n++; }
+      return n;
+    };
     T.tuiles.forEach(function (t) {
-      if (t.sol !== 'herbe' || t.usure < 0.1 || !TR.surIle(T, t)) return;
+      if (t.sol !== 'herbe' || !TR.surIle(T, t) || t.bat) return;
+      var k = t.i * T.N + t.j;
+      if (rcases && (routesCfg.sansTaches || rcases[k] != null)) return;
+      if (enVille(k)) return;
+      var halo = bordVille(t), usure = Math.max(t.usure, halo ? 0.12 + Math.min(halo, 4) * 0.05 : 0);
+      if (usure < 0.1) return;
+      t = Object.assign({}, t, { usure: usure });
       var e = TR.etatHerbe(t);
       var col = e <= 1 ? [200, 192, 118] : e === 2 ? [190, 156, 104] : goudron ? [118, 118, 122] : routes ? [166, 156, 142] : [172, 130, 86];
       var a = e <= 1 ? 0.3 + t.usure * 0.8 : e === 2 ? 0.7 : 0.9;
@@ -229,7 +252,547 @@
       gr.addColorStop(0, 'rgba(' + col + ',' + a + ')'); gr.addColorStop(0.6, 'rgba(' + col + ',' + (a * 0.75) + ')'); gr.addColorStop(1, 'rgba(' + col + ',0)');
       u.fillStyle = gr; u.beginPath(); u.arc(0, 0, r, 0, 7); u.fill(); u.restore();
     });
+    if (rcases) dessinerRoutes(u, rcases);
     dessinerRails(u);
+  }
+
+  // ---------- les routes (ADR-044) : le bac à sable (?bac) compare les façons de les faire naître et de les dessiner ----------
+  var BAC = /[?&]bac(=|&|$)/.test(location.search);
+  function param(n, d) { var r = new RegExp('[?&]' + n + '=([^&]*)').exec(location.search); return r ? decodeURIComponent(r[1]) : d; }
+  var routesCfg = { ville: param('ville', 'oui'), sols: param('sols', 'parcelles'), reseau: param('routes', 'melange'), rendu: param('rendu', 'matiere'), style: param('style', 'auto'), largeur: param('largeur', 'large'), cacher: false, grille: false, sansTaches: false, ombres: param('ombres', 'projetees') };
+  var STYLES_ROUTE = {
+    romain: { mat: 'dalles', bord: '#9b8f7e', w: 0.2, b: 0.035 },
+    'moyen-age': { mat: 'paves', bord: '#7a6754', w: 0.2, b: 0.035 },
+    vapeur: { mat: 'setts', trot: 'trottoir', bord: '#b9a68e', w: 0.15, b: 0.07 },
+    electricite: { mat: 'asphalte', trot: 'trottoir', bord: '#b9a68e', w: 0.15, b: 0.07, ligne: 'rgba(246,240,224,0.9)' },
+    moderne: { mat: 'asphalte-neuf', trot: 'sol-place', bord: '#a9a39a', w: 0.15, b: 0.07, ligne: 'rgba(255,255,255,0.95)' }
+  };
+  var STYLE_EPOQUE = { 3: 'romain', 4: 'moyen-age', 5: 'vapeur', 6: 'electricite', 7: 'moderne' };
+  // ADR-044 : dans le vrai jeu, les routes, les sols de ville et le mobilier arrivent avec la roue (l'âge des métaux),
+  // réglés comme Julien les a choisis dans le bac à sable (ADR-046, ADR-048, ADR-049). Le bac à sable les montre toujours.
+  function amenage() { return BAC || !!monde.decouvertes.roue; }
+  function routesActives() { return amenage() && routesCfg.reseau !== 'aucun' && routesCfg.rendu !== 'taches'; }
+  var reseauCache = null, reseauCle = '';
+  function reseauRoutes() {
+    var cle = routesCfg.reseau + '|' + monde.batiments.length + '|' + monde.batiments.filter(function (b) { return b.etat === 'fini'; }).length + '|' + Math.floor(monde.t / 20);
+    if (!reseauCache || cle !== reseauCle) { reseauCache = Routes.calculer(monde, routesCfg.reseau, { virage: 2, attrait: 0.6 }); reseauCle = cle; }
+    return reseauCache;
+  }
+  function styleRoute() { return routesCfg.style === 'auto' ? (STYLE_EPOQUE[Math.max(3, Math.min(7, monde.epoque))]) : routesCfg.style; }
+  var motifsRoute = {};
+  function motifRoute(u, nom) {
+    var im = IMG['routes/mat-' + nom]; if (!im) return '#8a8a8a';
+    if (!motifsRoute[nom]) { motifsRoute[nom] = u.createPattern(im, 'repeat'); try { motifsRoute[nom].setTransform(new DOMMatrix().scale(1 / 300)); } catch (e) {} }
+    return motifsRoute[nom];
+  }
+  // la forme d'une route sur sa case, en coordonnées de la grille : un carré au centre et un bras par voisine
+  function formeRoute(u, i, j, mq, w) {
+    u.rect(i - w, j - w, 2 * w, 2 * w);
+    if (mq & 1) u.rect(i, j - w, 0.5 + 0.002, 2 * w);
+    if (mq & 2) u.rect(i - w, j, 2 * w, 0.5 + 0.002);
+    if (mq & 4) u.rect(i - 0.502, j - w, 0.502, 2 * w);
+    if (mq & 8) u.rect(i - w, j - 0.502, 2 * w, 0.502);
+  }
+  var BORD_VILLE = { romain: '#d9ccb2', 'moyen-age': '#a8927a', vapeur: '#d6cab4', electricite: '#e2d6bf', moderne: '#d4d0c8' };
+  var FONCE_VILLE = { romain: 0.1, 'moyen-age': 0.12, vapeur: 0.22 };
+  // ecran : les rues de la ville, dessinées à pleine résolution sur l'écran, par-dessus la matière de la rue (ADR-049)
+  function dessinerRoutes(u, cases, ecran) {
+    var T = monde.terrain, st = styleRoute(), S0 = STYLES_ROUTE[st], k0 = routesCfg.largeur === 'large' ? 0.62 / 0.44 : 1, cles = Object.keys(cases);
+    var S = Object.assign({}, S0, { w: S0.w * k0, b: S0.b * k0 });
+    u.save();
+    if (ecran) grilleEcran(u);
+    else u.setTransform(TR.TW * G, TR.TH * G, -TR.TW * G, TR.TH * G, TR.OX * G, (TR.OY + TR.TH) * G);
+    u.imageSmoothingEnabled = true; u.imageSmoothingQuality = 'high';
+    var matiere = routesCfg.rendu === 'matiere', reste = [];
+    if (!matiere) {
+      cles.forEach(function (k) {
+        var i = Math.floor(k / T.N), j = k % T.N, pc = Routes.piece(cases[k]), im = IMG['routes/' + st + '-' + pc[0] + (routesCfg.largeur === 'large' ? '-l' : '')];
+        if (!im) { reste.push(k); return; } // la pièce manque : on la dessine en matière
+        u.save(); u.translate(i, j); u.rotate(pc[1] * Math.PI / 2); u.drawImage(im, -0.5, -0.5, 1, 1); u.restore();
+      });
+    }
+    var liste = matiere ? cles : reste;
+    if (liste.length) {
+      // 1. le bord (ou le trottoir), un peu plus large ; 2. la chaussée ; 3. la ligne du milieu
+      var forme = function (w, dx) { u.beginPath(); liste.forEach(function (k) { formeRoute(u, Math.floor(k / T.N) + (dx || 0), k % T.N + (dx || 0), cases[k], w); }); };
+      if (ecran) { // en ville, le trottoir est déjà là : seulement la bordure, et une rigole sombre au pied
+        forme(S.w + 0.045); u.fillStyle = BORD_VILLE[st] || S.bord; u.fill();
+        forme(S.w + 0.012); u.fillStyle = 'rgba(30,25,20,0.35)'; u.fill();
+      }
+      else {
+        forme(S.w + S.b, 0.03); u.fillStyle = 'rgba(40,30,20,0.18)'; u.fill(); // une ombre douce vers le bas de l'écran
+        forme(S.w + S.b); u.fillStyle = S.trot ? motifRoute(u, S.trot) : S.bord; u.fill();
+        if (S.trot) { forme(S.w + 0.028); u.fillStyle = S.bord; u.fill(); } // la bordure du trottoir
+      }
+      forme(S.w + 0.012, 0.012); u.fillStyle = 'rgba(30,25,20,0.25)'; u.fill(); // la chaussée un peu plus bas que le bord
+      forme(S.w); u.fillStyle = motifRoute(u, S.mat); u.fill();
+      if (ecran && FONCE_VILLE[st]) { u.fillStyle = 'rgba(28,22,18,' + FONCE_VILLE[st] + ')'; u.fill(); } // la chaussée plus sombre que le trottoir
+      if (S.ligne) {
+        u.strokeStyle = S.ligne; u.lineWidth = 0.018; u.setLineDash([0.07, 0.07]); u.beginPath();
+        liste.forEach(function (k) {
+          var i = Math.floor(k / T.N), j = k % T.N, mq = cases[k];
+          Routes.DIRS.forEach(function (d, n) { if (mq & (1 << n)) { u.moveTo(i + d[0] * 0.12, j + d[1] * 0.12); u.lineTo(i + d[0] * 0.5, j + d[1] * 0.5); } });
+        });
+        u.stroke(); u.setLineDash([]);
+      }
+    }
+    if (routesCfg.grille) {
+      u.strokeStyle = 'rgba(0,0,0,0.25)'; u.lineWidth = 0.01; u.beginPath();
+      cles.forEach(function (k) { var i = Math.floor(k / T.N), j = k % T.N; u.rect(i - 0.5, j - 0.5, 1, 1); });
+      u.stroke();
+    }
+    u.restore();
+  }
+  // ---------- le sol de la ville (ADR-049) : chaque maison de ville est posée sur sa parcelle ----------
+  // Des carrés vus de dessus (assets/sprites/parcelles/<style>-<n>.png, tour 49) posés sur le losange de la case :
+  // 1 à 6 sous les maisons, 7 (jardinet) et 8 (cour) dans les trous entre les parcelles et la rue,
+  // 9 la matière de la rue, posée de bord à bord sous les routes de la ville (les trottoirs).
+  // Les huttes, les champs, les prés et les monuments restent dans l'herbe.
+  var DANS_L_HERBE = { 'grand-champ': 1, 'grand-elevage': 1, 'champ-ble': 1, 'champ-laboure': 1, 'enclos-moutons': 1, etable: 1, 'ferme-laitiere': 1, ferme: 1, 'buisson-baies': 1, 'parc-solaire': 1, 'pas-de-tir': 1, passerelle: 1, 'pont-pierre': 1, 'grotte-peinte': 1 };
+  function urbain(b) {
+    var d = D.batiments[b.type];
+    return d && !DANS_L_HERBE[b.type] && !d.deco && (d.epoque || 1) >= 3 && b.etat === 'fini';
+  }
+  function solsVille() { return amenage() && routesCfg.sols === 'parcelles' && routesActives(); }
+  var solCache = null, solCle = '';
+  function solVille() {
+    if (!solsVille()) return null;
+    var T = monde.terrain, N = T.N, rc = reseauRoutes().cases, amen = amenagement(), st = styleRoute();
+    var cle = reseauCle + '|' + st + '|' + (amen ? amen.liste.length : 0);
+    if (solCache && cle === solCle) return solCache;
+    var occupe = {}, cases = {}, rues = {};
+    monde.batiments.forEach(function (b) { for (var a = 0; a < b.k; a++) for (var c = 0; c < b.k; c++) occupe[(b.i + a) * N + b.j + c] = b; });
+    var lieu = {}; // les places et les jardinets du tour 48 ont déjà leur propre sol
+    if (amen) amen.liste.forEach(function (a) { if (a.quoi !== 'place' && a.quoi !== 'jardin') return; var z = a.z || 1; for (var x = 0; x < z; x++) for (var y = 0; y < z; y++) lieu[(a.i + x) * N + a.j + y] = 1; });
+    function h(i, j, s) { return TR.h2(i, j, s); }
+    // 1. les parcelles sous les maisons de la ville
+    monde.batiments.forEach(function (b) {
+      if (!urbain(b)) return;
+      for (var a = 0; a < b.k; a++) for (var c = 0; c < b.k; c++) {
+        var i = b.i + a, j = b.j + c;
+        cases[i * N + j] = { n: 1 + Math.floor(h(i, j, 31) * 6), r: Math.floor(h(i, j, 32) * 4) };
+      }
+    });
+    // 2. les trous entre les parcelles, les places et la rue : une cour ou un jardinet
+    function libre(i, j) {
+      var t = TR.tuile(T, i, j), k = i * N + j;
+      if (!t || !TR.surIle(T, t) || t.sol !== 'herbe' || t.gue || t.rail) return false;
+      if (t.obj && t.obj !== 'souche') return false;
+      return !occupe[k] && rc[k] == null && !lieu[k] && !cases[k];
+    }
+    function plein(i, j) { var k = i * N + j; return cases[k] || lieu[k] || rc[k] != null ? 1 : 0; }
+    function pres(i, j, f) { return [[1, 0], [0, 1], [-1, 0], [0, -1]].some(function (d) { return f(i + d[0], j + d[1]); }); }
+    for (var passe = 0; passe < 2; passe++) {
+      var ajout = [];
+      T.tuiles.forEach(function (t) {
+        var i = t.i, j = t.j; if (!libre(i, j)) return;
+        var e = plein(i + 1, j), o = plein(i - 1, j), s = plein(i, j + 1), n = plein(i, j - 1);
+        var entre = (e && o) || (s && n) || e + o + s + n >= 3;
+        // devant une maison, entre elle et la rue : la cour d'entrée
+        var devant = pres(i, j, function (a, c) { var x = cases[a * N + c]; return x && x.n <= 6; }) && pres(i, j, function (a, c) { return rc[a * N + c] != null; });
+        if (entre || devant) ajout.push(t);
+      });
+      ajout.forEach(function (t) { cases[t.i * N + t.j] = { n: h(t.i, t.j, 33) < 0.3 ? 7 : 8, r: Math.floor(h(t.i, t.j, 34) * 4) }; });
+    }
+    // 3. les rues de la ville : celles qui longent une parcelle, une cour ou une place
+    Object.keys(rc).forEach(function (k) {
+      k = +k; var i = Math.floor(k / N), j = k % N, oui = false;
+      for (var a = -1; a <= 1 && !oui; a++) for (var c = -1; c <= 1; c++) { var kk = (i + a) * N + j + c; if (cases[kk] || lieu[kk]) { oui = true; break; } }
+      if (oui) rues[k] = rc[k];
+    });
+    solCache = { cases: cases, rues: rues }; solCle = cle;
+    return solCache;
+  }
+  function dansLaVille(t) { var s = solVille(); return !!(s && s.cases[t.i * monde.terrain.N + t.j]); }
+  // la grille du jeu sur l'écran : (i, j) -> le centre du losange de la case
+  var secousse = { e: 0, f: 0 }; // la secousse de l'écran au décollage de la fusée, lue au début du dessin du sol
+  function grilleEcran(c) {
+    var s = V.s * V.dpr;
+    c.setTransform(TR.TW * s, TR.TH * s, -TR.TW * s, TR.TH * s, secousse.e + (V.ox + TR.OX * V.s) * V.dpr, secousse.f + (V.oy + (TR.OY + TR.TH) * V.s) * V.dpr);
+  }
+  // ---------- les ombres au sol (tour 50) : une ombre douce sous chaque bâtiment, posée avant les images ----------
+  // Les images ont chacune leur ombre (ou pas) ; celle-ci, la même pour tous, pose les objets sur le sol.
+  var SANS_OMBRE = { 'golden-gate': 1, passerelle: 1, 'pont-pierre': 1, feu: 1, 'grand-champ': 1, 'grand-elevage': 1, ferme: 1, 'ferme-laitiere': 1 };
+  // ADR-053 : l'ombre projetée d'un bâtiment suit sa forme. Elle est calculée une fois par image, à partir de sa silhouette :
+  // dans chaque colonne, le pixel le plus bas touche le sol ; un point situé h pixels plus haut fait son ombre h × OMBRE.kx
+  // plus à gauche et h × OMBRE.ky plus haut (la lumière des images vient de la droite : leurs faces de droite sont les plus
+  // claires, mesuré sur les maisons). Une tour donne une longue ombre fine,
+  // un pont l'ombre de ses piliers, une maison basse une ombre courte. Calculée en petit, puis agrandie : les bords sont doux.
+  var OMBRE = { kx: -0.6, ky: 0.14, ech: 0.25, seuil: 150, force: 0.42 };
+  function ombreDe(im) {
+    if (im.__ombre !== undefined) return im.__ombre;
+    im.__ombre = null;
+    try {
+      var e = OMBRE.ech, w = Math.max(8, Math.round(im.width * e)), h = Math.max(8, Math.round(im.height * e));
+      var c = document.createElement('canvas'); c.width = w; c.height = h;
+      var g = c.getContext('2d'); g.drawImage(im, 0, 0, w, h);
+      var a = g.getImageData(0, 0, w, h).data, bas = new Int32Array(w).fill(-1);
+      for (var x = 0; x < w; x++) for (var y = h - 1; y >= 0; y--) if (a[(y * w + x) * 4 + 3] > OMBRE.seuil) { bas[x] = y; break; }
+      var dec = Math.ceil(h * Math.max(0, -OMBRE.kx)), pad = 4, W = w + Math.ceil(h * Math.abs(OMBRE.kx)) + 2 * pad, H = h + 2 * pad;
+      var o = document.createElement('canvas'); o.width = W; o.height = H;
+      var og = o.getContext('2d'), od = og.createImageData(W, H), d = od.data;
+      for (var x2 = 0; x2 < w; x2++) {
+        if (bas[x2] < 0) continue;
+        for (var y2 = 0; y2 <= bas[x2]; y2++) {
+          if (a[(y2 * w + x2) * 4 + 3] <= OMBRE.seuil) continue;
+          var hh = bas[x2] - y2, X = Math.round(x2 + hh * OMBRE.kx) + pad + dec, Y = Math.round(bas[x2] - hh * OMBRE.ky) + pad;
+          for (var sx = 0; sx < 2; sx++) for (var sy = 0; sy < 2; sy++) {
+            var q = ((Y + sy) * W + X + sx) * 4;
+            if (Y + sy < H && X + sx < W && X + sx >= 0) { d[q] = 34; d[q + 1] = 28; d[q + 2] = 20; d[q + 3] = 255; }
+          }
+        }
+      }
+      og.putImageData(od, 0, 0);
+      // un flou bon marché : on réduit puis on agrandit deux fois
+      var f = document.createElement('canvas'); f.width = Math.max(2, Math.round(W / 3)); f.height = Math.max(2, Math.round(H / 3));
+      var fg = f.getContext('2d'); fg.imageSmoothingQuality = 'high'; fg.drawImage(o, 0, 0, f.width, f.height);
+      og.clearRect(0, 0, W, H); og.imageSmoothingQuality = 'high'; og.drawImage(f, 0, 0, W, H);
+      im.__ombre = { cv: o, pad: pad, dec: dec, e: e };
+    } catch (err) { im.__ombre = null; im.__err = String(err); }
+    return im.__ombre;
+  }
+  function dessinerOmbresSol() {
+    var mode = BAC ? routesCfg.ombres : 'projetees';
+    if (mode === 'avant') return;
+    monde.batiments.forEach(function (b) {
+      if (SANS_OMBRE[b.type] || (BAC && routesCfg.cacher)) return;
+      if (!visible(b.x, b.y, 400)) return;
+      var t = tailleBat(b); if (!t.im) return;
+      if (mode === 'projetees') {
+        var sh = ombreDe(t.im); if (!sh) return;
+        var p = E(b.x, basBat(b)), k = t.w / (t.im.width * sh.e);
+        var gauche = p[0] - t.w / 2, haut = p[1] - t.h * 0.93;
+        ctx.globalAlpha = b.etat === 'fini' ? OMBRE.force : OMBRE.force * 0.5;
+        ctx.drawImage(sh.cv, gauche - (sh.pad + sh.dec) * k, haut - sh.pad * k, sh.cv.width * k, sh.cv.height * k);
+        ctx.globalAlpha = 1;
+        return;
+      }
+      var rx = Math.min(t.w * 0.44, b.k * TR.TW * V.s * 0.98), ry = rx * 0.46;
+      var c = E(b.x + b.k * TR.TW * 0.06, b.y + b.k * TR.TH * 0.22);
+      var a = b.etat === 'fini' ? 0.34 : 0.2;
+      ctx.save(); ctx.translate(c[0], c[1]); ctx.scale(1, ry / rx);
+      var g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+      g.addColorStop(0, 'rgba(48,34,18,' + a + ')'); g.addColorStop(0.55, 'rgba(48,34,18,' + (a * 0.6) + ')'); g.addColorStop(1, 'rgba(48,34,18,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    });
+  }
+  // ---------- ADR-053 : les grandes exploitations, à l'échelle du jeu, composées sur leurs 6 x 6 cases ----------
+  // Pas une seule image réduite : des sols de champs et de prés vus de dessus, posés sur les cases (comme les parcelles),
+  // des bâtiments de ferme de la taille des autres bâtiments, des machines qui vont et viennent dans les champs,
+  // des vaches (ou des moutons) qui broutent dans des prés clôturés. Le niveau ajoute des bêtes, des machines et du foin.
+  var PIECES_FERME = {
+    vapeur: { cour: 'sol-cour-terre', jeune: 'sol-jeune', grange: 'grange-briques', annexe: 'grange-foin', etable: 'etable-briques', silo: 'silo-briques',
+      machine: 'locomobile', charrette: 'charrette', tas: 'meule', lait: 'bidons', vaches: ['vache-rousse', 'vache-rousse', 'vache-couchee'], autres: 'mouton' },
+    moderne: { cour: 'sol-cour-beton', jeune: 'sol-mais', grange: 'hangar', annexe: 'silos-grain', etable: 'etable-metal', silo: 'silos-aliment',
+      machine: 'moissonneuse', charrette: 'tracteur', tas: 'balles', lait: 'citerne', vaches: ['vache-noire', 'vache-noire', 'vache-broute'], autres: 'vache' }
+  };
+  // rectangles en cases depuis le coin de l'exploitation : [a (le long de i), b (le long de j), largeur, hauteur, sol]
+  var PLANS_FERME = {
+    champ: {
+      sols: [[0, 0, 3, 2, 'cour'], [3, 0, 3, 3, 'sol-ble'], [0, 2, 3, 2, 'jeune'], [0, 4, 3, 2, 'sol-laboure'], [3, 3, 3, 3, 'sol-chaume']],
+      bats: [['grange', 0, 0, 2], ['annexe', 2, 0, 1]],
+      machines: [['machine', [3, 0, 3, 3], 1], ['charrette', [0, 4, 3, 2], 2], ['machine', [0, 2, 3, 2], 3]],
+      tas: [3, 3, 3, 3]
+    },
+    elevage: {
+      sols: [[0, 0, 3, 3, 'cour'], [3, 0, 3, 6, 'sol-pre'], [0, 3, 3, 3, 'sol-pre']],
+      bats: [['etable', 0, 0, 2], ['silo', 2, 0, 1], ['lait', 2, 2, 1]],
+      enclos: [[3, 0, 3, 6, 'vaches'], [0, 3, 3, 3, 'autres']]
+    }
+  };
+  // ---------- le Golden Gate (tour 54) : il part de la plage et sort de l'écran ----------
+  // Le départ (l'ancrage sur la plage, une travée, la deuxième tour) est posé sur ses cases ; puis la travée (une tour et
+  // la travée suivante) est répétée vers le large jusqu'à sortir de l'écran : on n'en voit jamais la fin, il relie l'île
+  // à autre chose. Mesures : tour54-feu-golden-gate/outils/mesures.json (en pixels des images, 1 pour 1 dans le monde).
+  var GG = { ancrage: [898, 325], travee: [177, 0], pas: [-501.8, 267.5] };
+  function goldenGate(b) { return b.type === 'golden-gate' && IMG['deco/golden-gate-depart'] && IMG['deco/golden-gate-travee']; }
+  // vers où part le pont : le long de j (en bas à gauche) ou le long de i (en bas à droite, l'image retournée),
+  // du côté où il passe le plus au-dessus de la mer (et le moins au-dessus de la terre) avant de sortir de l'île
+  function sensGG(b) {
+    if (b.__sens) return b.__sens;
+    var T0 = monde.terrain, note = function (di, dj) {
+      var n = 0;
+      for (var k = 1; k < 16; k++) {
+        var t = TR.tuile(T0, b.i + di * k, b.j + dj * k);
+        if (!t || !TR.surIle(T0, t)) break;
+        n += t.sol === 'eau' ? 1 : t.sol === 'sable' ? -1 : -3;
+      }
+      return n;
+    };
+    b.__sens = note(1, 0) > note(0, 1) ? 'i' : 'j';
+    return b.__sens;
+  }
+  function piecesGoldenGate(b, liste) {
+    var dep = IMG['deco/golden-gate-depart'], tra = IMG['deco/golden-gate-travee'];
+    var fini = b.etat === 'fini' && M.merveilleFinie(b), miroir = sensGG(b) === 'i' ? -1 : 1;
+    var pied = [b.x, b.y + b.k * TR.TH]; // la pointe avant de ses cases, sur la plage
+    var o = [pied[0] - miroir * GG.ancrage[0], pied[1] - GG.ancrage[1]]; // le coin de l'image du départ, dans le monde
+    var dessine = function (im, x, y, alpha) {
+      var p = E(x, y), w = im.width * V.s, h = im.height * V.s;
+      if (miroir > 0 ? (p[0] > V.W || p[0] + w < 0) : (p[0] < 0 || p[0] - w > V.W)) return;
+      if (p[1] > V.H || p[1] + h < 0) return;
+      ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; ctx.translate(p[0], p[1]); ctx.scale(miroir, 1);
+      ctx.drawImage(im, 0, 0, w, h); ctx.restore();
+    };
+    if (!fini) {
+      // le chantier : le départ sort de terre, de bas en haut
+      var part = Math.min(1, ((b.etape || 0) + (b.etat === 'chantier' && b.besoin ? b.livre / b.besoin : 0)) / 3);
+      liste.push({ y: pied[1], f: function () {
+        dessine(dep, o[0], o[1], 0.2);
+        var p = E(o[0], o[1]), h = dep.height * V.s;
+        ctx.save(); ctx.beginPath(); ctx.rect(miroir > 0 ? p[0] : p[0] - dep.width * V.s, p[1] + h * (1 - 0.15 - 0.85 * part), dep.width * V.s, h); ctx.clip();
+        dessine(dep, o[0], o[1]); ctx.restore();
+      } });
+      return;
+    }
+    liste.push({ y: pied[1], f: function () { dessine(dep, o[0], o[1]); } });
+    // les travées, vers le large, jusqu'à sortir de l'écran
+    for (var k = 1; k < 40; k++) {
+      var x = o[0] + miroir * (GG.travee[0] + k * GG.pas[0]), y = o[1] + GG.travee[1] + k * GG.pas[1];
+      var p = E(x, y);
+      if (p[1] > V.H + 50 || (miroir > 0 ? p[0] + tra.width * V.s < -50 : p[0] - tra.width * V.s > V.W + 50)) break;
+      (function (x, y) { liste.push({ y: y + tra.height * 0.9, f: function () { dessine(tra, x, y); } }); })(x, y);
+    }
+  }
+  function composee(b) { var d = D.batiments[b.type]; return d && d.plan && b.k >= d.taille && b.etat === 'fini'; }
+  function imFerme(cle) { return IMG['ferme/' + cle]; }
+  // un nombre au hasard, mais toujours le même pour une exploitation et un rang donnés
+  function hasardFerme(b, n) { var x = Math.sin(b.id * 91.7 + n * 37.3) * 43758.5; return x - Math.floor(x); }
+  function dessinerSolsFermes() {
+    var liste = monde.batiments.filter(function (b) { return composee(b) && visible(b.x, b.y, 700); });
+    if (!liste.length) return;
+    ctx.save(); grilleEcran(ctx); ctx.imageSmoothingQuality = 'high';
+    liste.forEach(function (b) {
+      var d = D.batiments[b.type], F = PIECES_FERME[d.forme], P = PLANS_FERME[d.plan];
+      P.sols.forEach(function (r) {
+        var im = imFerme(F[r[4]] || r[4]); if (!im) return;
+        for (var a = 0; a < r[2]; a++) for (var c = 0; c < r[3]; c++) {
+          var i = b.i + r[0] + a, j = b.j + r[1] + c;
+          ctx.drawImage(im, i - 0.502, j - 0.502, 1.004, 1.004);
+        }
+      });
+    });
+    ctx.restore();
+  }
+  // l'état des choses qui bougent (machines, bêtes) : seulement à l'écran, pas dans la sauvegarde
+  var animFermes = {};
+  function animFerme(b) {
+    var A0 = animFermes[b.id];
+    if (A0 && A0.type === b.type && A0.niveau === (b.niveau || 1)) return A0;
+    var d = D.batiments[b.type], P = PLANS_FERME[d.plan], n = b.niveau || 1;
+    A0 = animFermes[b.id] = { type: b.type, niveau: n, machines: [], betes: [] };
+    (P.machines || []).forEach(function (m, k) {
+      if (n < m[2]) return;
+      A0.machines.push({ cle: m[0], r: m[1], voie: k % m[1][2], pos: hasardFerme(b, k) * (m[1][3] - 1), sens: 1 });
+    });
+    (P.enclos || []).forEach(function (e, k) {
+      var nb = (e[4] === 'vaches' ? 3 : 2) + n * 2;
+      for (var q = 0; q < nb; q++) {
+        var x = e[0] + 0.25 + hasardFerme(b, 10 + k * 20 + q) * (e[2] - 0.5), y = e[1] + 0.25 + hasardFerme(b, 30 + k * 20 + q) * (e[3] - 0.5);
+        A0.betes.push({ e: e, genre: e[4], q: q, a: x, c: y, va: x, vc: y, attente: hasardFerme(b, 50 + q) * 6, dir: 1 });
+      }
+    });
+    return A0;
+  }
+  function majFermes(dt) {
+    monde.batiments.forEach(function (b) {
+      if (!composee(b)) return;
+      var A0 = animFerme(b);
+      A0.machines.forEach(function (m) {
+        // la machine va et vient le long de sa rangée, puis passe à la rangée d'à côté
+        m.pos += m.sens * dt * 0.28;
+        if (m.pos > m.r[3] - 1) { m.pos = m.r[3] - 1; m.sens = -1; m.voie = (m.voie + 1) % m.r[2]; }
+        if (m.pos < 0) { m.pos = 0; m.sens = 1; m.voie = (m.voie + 1) % m.r[2]; }
+      });
+      A0.betes.forEach(function (v) {
+        var couchee = v.genre === 'vaches' && v.q % 3 === 2;
+        if (couchee) return;
+        if (v.attente > 0) { v.attente -= dt; return; }
+        var dx = v.va - v.a, dy = v.vc - v.c, dd = Math.hypot(dx, dy);
+        if (dd < 0.05) {
+          v.va = v.e[0] + 0.25 + Math.random() * (v.e[2] - 0.5); v.vc = v.e[1] + 0.25 + Math.random() * (v.e[3] - 0.5);
+          v.attente = 2 + Math.random() * 6; return;
+        }
+        var pas = Math.min(dd, dt * 0.18);
+        v.a += dx / dd * pas; v.c += dy / dd * pas;
+        // à l'écran, i va vers la droite et j vers la gauche
+        var ecranX = dx - dy; if (Math.abs(ecranX) > 0.01) v.dir = ecranX > 0 ? 1 : -1;
+      });
+    });
+  }
+  function piecesFerme(b, liste) {
+    var d = D.batiments[b.type], F = PIECES_FERME[d.forme], P = PLANS_FERME[d.plan], A0 = animFerme(b), n = b.niveau || 1;
+    // les bâtiments
+    P.bats.forEach(function (q) {
+      var cle = F[q[0]], im = imFerme(cle); if (!im) return;
+      var k = q[3], c = TR.centreEmpreinte(b.i + q[1], b.j + q[2], k), vehicule = q[0] === 'lait' && d.forme === 'moderne';
+      var w = vehicule ? 110 : q[0] === 'lait' ? 52 : k === 1 ? 128 : 250, sol = c[1] + k * TR.TH * 0.55;
+      liste.push({ y: sol - 6, f: function () { var p = E(c[0], sol), W = w * V.s, H = W * im.height / im.width; ombreSprite(im, p[0], p[1], W, H); dessinerSprite(im, p[0], p[1], W, H); } });
+    });
+    // le foin sur le chaume
+    if (P.tas) {
+      var r = P.tas, nbTas = 1 + n * 2;
+      for (var t = 0; t < nbTas; t++) {
+        var a = r[0] + 0.3 + hasardFerme(b, 70 + t) * (r[2] - 0.6), c2 = r[1] + 0.3 + hasardFerme(b, 80 + t) * (r[3] - 0.6);
+        (function (a, c2) {
+          var w0 = TR.centre(b.i + a, b.j + c2), im = imFerme(F.tas); if (!im) return;
+          liste.push({ y: w0[1], f: function () { var p = E(w0[0], w0[1] + 8), W = 62 * V.s, H = W * im.height / im.width; dessinerSprite(im, p[0], p[1], W, H); } });
+        })(a, c2);
+      }
+    }
+    // les machines
+    A0.machines.forEach(function (m) {
+      var a = m.r[0] + m.voie, c3 = m.r[1] + m.pos, w0 = TR.centre(b.i + a, b.j + c3);
+      var dos = m.sens < 0, im = imFerme(F[m.cle] + (dos ? '-dos' : '')); if (!im) return;
+      liste.push({ y: w0[1] + 4, f: function () {
+        var p = E(w0[0], w0[1] + 12), W = 96 * V.s, H = W * im.height / im.width;
+        ombre(p[0], p[1] - 2 * V.s, W * 0.36, 7 * V.s, 0.18);
+        ctx.drawImage(im, p[0] - W / 2, p[1] - H * 0.88, W, H);
+        if (F[m.cle] === 'locomobile' && Math.random() < 0.08) particule({ type: 'pouf', x: w0[0] + (dos ? 14 : -30), y: w0[1] - 50, vx: 6, vy: -24, max: 1.4, r: 7, c: '240,240,235' });
+      } });
+    });
+    // les prés : clôtures tout autour (une ouverture du côté de la cour), et les bêtes
+    (P.enclos || []).forEach(function (e, k) {
+      var segs = [];
+      for (var a = 0; a < e[2]; a++) { segs.push(['i', e[0] + a, e[1] - 0.5]); segs.push(['i', e[0] + a, e[1] + e[3] - 0.5]); }
+      for (var c = 0; c < e[3]; c++) { segs.push(['j', e[0] - 0.5, e[1] + c]); segs.push(['j', e[0] + e[2] - 0.5, e[1] + c]); }
+      segs.forEach(function (sg, z) {
+        if (z === 1 + k * 2) return; // une barrière ouverte
+        var w0 = TR.centre(b.i + sg[1], b.j + sg[2]), im = imFerme(sg[0] === 'i' ? 'cloture-i' : 'cloture-j'); if (!im) return;
+        liste.push({ y: w0[1] + 2, f: function () { var p = E(w0[0], w0[1]), W = 74 * V.s, H = W * im.height / im.width; ctx.drawImage(im, p[0] - W / 2, p[1] - H * 0.7, W, H); } });
+      });
+    });
+    A0.betes.forEach(function (v) {
+      var w0 = TR.centre(b.i + v.a, b.j + v.c);
+      var cle = v.genre === 'autres' ? F.autres : F.vaches[v.q % F.vaches.length];
+      var im = cle === 'mouton' ? IMG['faune/mouton'] : cle === 'vache' ? imFerme(F.vaches[v.q % 2]) : imFerme(cle);
+      if (!im) return;
+      liste.push({ y: w0[1], f: function () {
+        var p = E(w0[0], w0[1]), W = (cle === 'mouton' ? 40 : 52) * V.s, H = W * im.height / im.width;
+        ombre(p[0], p[1] - V.s, W * 0.34, 4 * V.s, 0.18);
+        ctx.save(); ctx.translate(p[0], p[1]); ctx.scale(v.dir > 0 ? -1 : 1, 1); ctx.drawImage(im, -W / 2, -H * 0.9, W, H); ctx.restore();
+      } });
+    });
+    // les étoiles du niveau, devant l'exploitation
+    if (n > 1) { var tip = TR.centre(b.i + b.k - 0.5, b.j + b.k - 0.5); liste.push({ y: tip[1] + 40, f: function () { dessinerEtoiles(b, E(tip[0], tip[1]), tailleBat(b), n, 0); } }); }
+  }
+  // l'ombre projetée d'une image posée par le code (même calcul que pour les bâtiments)
+  function ombreSprite(im, x, y, W, H) {
+    if (BAC && routesCfg.ombres === 'avant') return;
+    var sh = ombreDe(im); if (!sh) return;
+    var k = W / (im.width * sh.e);
+    ctx.globalAlpha = OMBRE.force;
+    ctx.drawImage(sh.cv, x - W / 2 - (sh.pad + sh.dec) * k, y - H * 0.93 - sh.pad * k, sh.cv.width * k, sh.cv.height * k);
+    ctx.globalAlpha = 1;
+  }
+  function dessinerSolVille() {
+    var S = solVille(); if (!S) return;
+    var T = monde.terrain, N = T.N, st = styleRoute();
+    var rue = IMG['parcelles/' + st + '-9'];
+    ctx.save();
+    var base = ctx.getTransform();
+    secousse = { e: base.e, f: base.f };
+    grilleEcran(ctx);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    var vus = function (k) { var i = Math.floor(k / N), j = k % N, c = TR.centre(i, j); return visible(c[0], c[1], 140); };
+    // 1. les rues de la ville : la matière de la rue de bord à bord (les trottoirs), puis la chaussée
+    var rk = Object.keys(S.rues).filter(vus);
+    if (rue) rk.forEach(function (k) { var i = Math.floor(k / N), j = k % N; ctx.drawImage(rue, i - 0.502, j - 0.502, 1.004, 1.004); });
+    if (rk.length) { var sous = {}; rk.forEach(function (k) { sous[k] = S.rues[k]; }); dessinerRoutes(ctx, sous, true); }
+    // 2. les parcelles, les cours et les jardinets
+    Object.keys(S.cases).filter(vus).forEach(function (k) {
+      var x = S.cases[k], im = IMG['parcelles/' + st + '-' + x.n]; if (!im) return;
+      var i = Math.floor(k / N), j = k % N;
+      ctx.save(); ctx.translate(i, j); ctx.rotate(x.r * Math.PI / 2);
+      ctx.drawImage(im, -0.502, -0.502, 1.004, 1.004);
+      ctx.restore();
+    });
+    ctx.setTransform(base);
+    ctx.restore();
+  }
+  // ---------- la ville qui s'aménage (ADR-048) : places, jardinets, réverbères, bancs, bacs à fleurs ----------
+  var NUM_EPOQUE = { romain: 3, 'moyen-age': 4, vapeur: 5, electricite: 6, moderne: 7 };
+  // le centre du losange de chaque case, en part de la hauteur de l'image (outils/coupe.py du tour 48)
+  var ANCRES_VILLE = { 'place-romaine': 0.6098, 'place-marche': 0.5429, 'place-fontaine': 0.619, 'place-fleurs': 0.6121, 'aire-jeux': 0.5224, square: 0.5844, 'jardin-romain': 0.6049, potager: 0.5871, 'jardin-barriere': 0.619, 'jardin-haie': 0.5188, 'jardin-moderne': 0.5762, verger: 0.5897 };
+  var amenCache = null, amenCle = '';
+  function villeActive() { return amenage() && routesCfg.ville === 'oui' && routesActives(); }
+  function amenagement() {
+    if (!villeActive()) return null;
+    var r = reseauRoutes(), cle = reseauCle;
+    if (!amenCache || cle !== amenCle) {
+      var l = Routes.amenager(monde, r.cases), parCase = {};
+      l.forEach(function (a) { parCase[a.i * monde.terrain.N + a.j] = a; });
+      amenCache = { liste: l, parCase: parCase }; amenCle = cle;
+    }
+    return amenCache;
+  }
+  function imageVille(a) {
+    var e = NUM_EPOQUE[styleRoute()] || 3, v = a.v;
+    var n = {
+      lampe: [null, null, null, 'ville/lampe-romaine', 'ville/lanterne', 'deco/lampadaire', '06-electricite/lampadaire', 'ville/lampe-moderne'][e],
+      banc: ['ville/banc-romain', 'ville/banc-bois', 'ville/banc-fonte', 'ville/banc-fonte', 'ville/banc-moderne'][e - 3],
+      bac: ['ville/amphore', 'ville/tonneau-fleurs', 'ville/urne-fonte', v < 0.91 ? 'ville/arbre-grille' : 'ville/urne-fonte', v < 0.91 ? 'ville/arbre-grille' : 'ville/bac-beton'][e - 3],
+      place: ['ville/place-romaine', 'ville/place-marche', 'ville/place-fontaine', v < 0.6 ? 'ville/place-fleurs' : 'ville/square', v < 0.5 ? 'ville/aire-jeux' : 'ville/square'][e - 3],
+      jardin: ['ville/jardin-romain', v < 0.7 ? 'ville/potager' : 'ville/verger', v < 0.7 ? 'ville/jardin-barriere' : 'ville/verger', v < 0.75 ? 'ville/jardin-haie' : 'ville/verger', v < 0.6 ? 'ville/jardin-moderne' : 'ville/jardin-haie'][e - 3]
+    }[a.quoi];
+    return n;
+  }
+  var TAILLE_VILLE = { lampe: 100, banc: 64, bac: 50 }; // en pixels du monde : hauteur des réverbères, largeur des bancs, hauteur des bacs
+  function piedVille(a) {
+    var z = a.z || 1, c = TR.centre(a.i + (z - 1) / 2, a.j + (z - 1) / 2), dx = a.dx || 0, dy = a.dy || 0;
+    if (dx || dy) { var kt = solsVille() ? 0.64 / 0.34 : 1; dx *= kt; dy *= kt; } // avec le sol de la ville : sur le trottoir
+    return [c[0] + (dx - dy) * TR.TW, c[1] + (dx + dy) * TR.TH];
+  }
+  function dessinerVille(a) {
+    var nom = imageVille(a), im = nom && IMG[nom]; if (!im) return;
+    var q = piedVille(a), p = E(q[0], q[1]);
+    if (a.quoi === 'place' || a.quoi === 'jardin') {
+      var w = 2 * TR.TW * V.s * (a.z || 1) * 1.01, h = w * im.height / im.width;
+      ctx.drawImage(im, p[0] - w / 2, p[1] - h * (ANCRES_VILLE[nom.slice(6)] || 0.6), w, h);
+      return;
+    }
+    var w2, h2;
+    if (a.quoi === 'banc') { w2 = TAILLE_VILLE.banc * V.s; h2 = w2 * im.height / im.width; }
+    else { h2 = (nom === 'ville/arbre-grille' ? 100 : TAILLE_VILLE[a.quoi]) * V.s; w2 = h2 * im.width / im.height; }
+    ombre(p[0], p[1], w2 * 0.3, 3 * V.s, 0.16);
+    // le banc tourne le dos à la maison : de face vers la route (on retourne l'image pour l'autre axe)
+    var retourne = a.quoi === 'banc' ? (a.sens % 2 === 0) : (a.quoi === 'lampe' && nom === 'ville/lanterne' && a.v < 0.5);
+    ctx.save(); ctx.translate(p[0], p[1]); if (retourne) ctx.scale(-1, 1);
+    ctx.drawImage(im, -w2 / 2, -h2 * 0.93, w2, h2); ctx.restore();
+  }
+  function panneauBac() {
+    if (!BAC || document.getElementById('bac')) return;
+    var el = document.createElement('div'); el.id = 'bac';
+    var groupes = [
+      ['ville', 'Ville', [['oui', 'Aménagée'], ['non', 'Sans']]],
+      ['sols', 'Sols', [['parcelles', 'Parcelles'], ['non', 'Herbe']]],
+      ['ombres', 'Ombres', [['projetees', 'Projetées'], ['douces', 'Rondes'], ['avant', 'Sans']]],
+      ['reseau', 'Réseau', [['usure', 'Sentiers usés'], ['plan', 'Tracé'], ['melange', 'Mélange'], ['aucun', 'Aucune route']]],
+      ['rendu', 'Dessin', [['pieces', 'Pièces'], ['matiere', 'Matière'], ['taches', 'Taches d\'avant']]],
+      ['style', 'Époque', [['auto', 'Celle du jeu'], ['romain', 'Romains'], ['moyen-age', 'Moyen Âge'], ['vapeur', 'Vapeur'], ['electricite', 'Électricité'], ['moderne', 'Moderne']]],
+      ['largeur', 'Largeur', [['etroite', 'Étroite'], ['large', 'Large']]],
+      ['vue', 'Voir', [['sansTaches', 'Sans les taches'], ['cacher', 'Sans bâtiments'], ['grille', 'Cases']]]
+    ];
+    el.innerHTML = groupes.map(function (g) {
+      return '<div class="ligne"><b>' + g[1] + '</b>' + g[2].map(function (o) { return '<button data-g="' + g[0] + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>';
+    }).join('');
+    document.body.appendChild(el);
+    function maj() {
+      el.querySelectorAll('button').forEach(function (b) {
+        var g = b.dataset.g, v = b.dataset.v;
+        b.classList.toggle('on', g === 'vue' ? !!routesCfg[v] : routesCfg[g] === v);
+      });
+    }
+    el.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+    el.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.g === 'vue') routesCfg[b.dataset.v] = !routesCfg[b.dataset.v];
+      else routesCfg[b.dataset.g] = b.dataset.v;
+      reseauCache = null; amenCache = null; solCache = null; usureT = 99; maj();
+    });
+    maj();
   }
   // les rails : des traverses en bois et deux rails, d'une case à l'autre (le long des axes de la grille)
   function dessinerRails(u) {
@@ -275,17 +838,23 @@
   }
   function pointTrain(pts, s) {
     var k = Math.min(pts.length - 2, Math.floor(s)), f = s - k, a = pts[k], b = pts[k + 1];
-    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, (b[0] - a[0]) * train.sens >= 0 ? 1 : -1];
+    // [x, y, sens gauche-droite (1 = vers la droite), monte (true = il s'éloigne vers le haut de l'écran)]
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, (b[0] - a[0]) * train.sens >= 0 ? 1 : -1, (b[1] - a[1]) * train.sens < 0];
+  }
+  // un véhicule a deux images : de face (il descend vers la gauche) et de dos (il monte vers la droite) ;
+  // retournées, elles donnent les deux autres directions de la perspective
+  function vueVehicule(nom, versDroite, monte) {
+    var dos = monte && IMG[nom + '-dos'];
+    return { im: dos || IMG[nom], miroir: dos ? !versDroite : versDroite };
   }
   function dessinerTrain() {
-    var pts = cheminTrain(), im = IMG['05-vapeur/train']; if (!pts || !im || (train.etat === 'tunnel' && train.attente > 0)) return;
-    var q = pointTrain(pts, train.s);
+    var pts = cheminTrain(); if (!pts || !IMG['05-vapeur/train'] || (train.etat === 'tunnel' && train.attente > 0)) return;
+    var q = pointTrain(pts, train.s), vu = vueVehicule('05-vapeur/train', q[2] > 0, q[3]), im = vu.im;
     var a = Math.min(1, train.s / 0.8); // il sort du tunnel peu à peu
-    var w = 190 * V.s, H = w * im.height / im.width, p = E(q[0], q[1] + 4);
+    var w = (im === IMG['05-vapeur/train'] ? 190 : 158) * V.s, H = w * im.height / im.width, p = E(q[0], q[1] + 4);
     ctx.globalAlpha = a;
     ombre(p[0], p[1], w * 0.42, 7 * V.s, 0.18);
-    // l'image va vers la gauche : on la retourne quand le train va vers la droite
-    ctx.save(); ctx.translate(p[0], p[1]); ctx.scale(q[2] > 0 ? -1 : 1, 1);
+    ctx.save(); ctx.translate(p[0], p[1]); ctx.scale(vu.miroir ? -1 : 1, 1);
     ctx.drawImage(im, -w / 2, -H * 0.86, w, H); ctx.restore();
     ctx.globalAlpha = 1;
   }
@@ -311,8 +880,17 @@
   }
 
   // ---------- son ----------
-  var audio = null;
+  var audio = null, bruitages = {};
+  // quelques bruitages enregistrés (ElevenLabs, assets/sons) ; sinon les petites notes ci-dessous
   function son(type) {
+    var src = typeof SONS !== 'undefined' && SONS[type];
+    if (src) {
+      try {
+        var a = bruitages[type] || (bruitages[type] = new Audio(src));
+        a.currentTime = 0; var p = a.play(); if (p && p.catch) p.catch(function () {});
+        return;
+      } catch (e) {}
+    }
     try {
       if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
       var t = audio.currentTime;
@@ -379,11 +957,16 @@
   function tailleBat(b) {
     var d = D.batiments[b.type], n = b.niveau || 1, im = IMG[d.sprite], k = 1;
     if (b.type === 'lampadaire' && monde.decouvertes.ampoule && IMG['06-electricite/lampadaire']) im = IMG['06-electricite/lampadaire'];
-    if (n > 1 && IMG['niveaux/' + b.type + '-' + n]) { im = IMG['niveaux/' + b.type + '-' + n]; k = d.grandit ? d.grandit[n] : GRANDIT[n] / (b.k > 1 ? 1.06 : 1); }
+    if (n > 1 && IMG['niveaux/' + b.type + '-' + n] && (!d.postes || b.k >= (d.taille || 1))) { im = IMG['niveaux/' + b.type + '-' + n]; k = d.grandit ? d.grandit[n] : GRANDIT[n] / (b.k > 1 ? 1.06 : 1); }
+    // ADR-042, ADR-051 : les monuments sont plus grands ; ceux posés avant, sur moins de place, gardent leur ancienne taille
+    if (d.grand && b.k >= (d.taille || 1)) k *= d.grand;
+    else if (d.grandAvant && b.k >= (d.tailleAvant || 1)) k *= d.grandAvant;
     var w = d.largeur * V.s * k;
     return { w: w, h: im ? w * im.height / im.width : w, im: im };
   }
-  function basBat(b) { return b.y + b.k * TR.TH * 0.55; }
+  function basBat(b) {
+    return b.y + b.k * TR.TH * 0.55;
+  }
   function dessinerSprite(im, x, y, w, h, alpha) {
     if (!im) return;
     ctx.globalAlpha = alpha == null ? 1 : alpha;
@@ -430,7 +1013,8 @@
     }
     if (b.ancien) {
       var da = D.batiments[b.ancien], ia = IMG[da.sprite], wa = da.largeur * V.s;
-      dessinerSprite(ia, p[0], p[1], wa, wa * ia.height / ia.width, 1 - prog * 0.9);
+      var pa = b.ancienXY ? E(b.ancienXY[0], b.ancienXY[1] + (b.ancienK || 1) * TR.TH * 0.55) : p;
+      dessinerSprite(ia, pa[0], pa[1], wa, wa * ia.height / ia.width, 1 - prog * 0.9);
     }
     // piquets et cordeau du chantier, aux coins de l'empreinte
     var c = E(b.x, b.y), rx = b.k * TR.TW * V.s * 0.9, ry = b.k * TR.TH * V.s * 0.9;
@@ -797,9 +1381,10 @@
       ctx.drawImage(il, -lw / 2, -lh * pied(il), lw, lh); ctx.restore();
       return;
     }
-    var im = IMG[a.espece === 'mammouth' ? '01-pierre/mammouth' : a.espece === 'cheval' ? 'faune/cheval' : '02-neolithique/chevre'];
+    var im = IMG[a.espece === 'mammouth' ? '01-pierre/mammouth' : a.espece === 'cheval' ? 'faune/cheval' : a.espece === 'mouton' ? 'faune/mouton' : '02-neolithique/chevre'];
+    if (!im && a.espece === 'mouton') im = IMG['02-neolithique/chevre'];
     if (!im) return;
-    var w = (a.espece === 'mammouth' ? 165 : a.espece === 'cheval' ? 74 : 50) * V.s, H = w * im.height / im.width;
+    var w = (a.espece === 'mammouth' ? 165 : a.espece === 'cheval' ? 74 : a.espece === 'mouton' ? 46 : 50) * V.s, H = w * im.height / im.width;
     var p = E(a.x, a.y), bob = a.marche ? Math.abs(Math.sin(T * (a.espece === 'mammouth' ? 4 : 9) + a.id)) * 3 * V.s : 0;
     // le mammouth : ses défenses descendent plus bas que ses pattes, on le pose sur ses pattes
     var mam = a.espece === 'mammouth', pd = mam ? 0.835 : pied(im);
@@ -871,9 +1456,16 @@
   function dessinerFleches() {
     fleches = [];
     if (choix) return;
+    var dorees = [];
     monde.batiments.forEach(function (b) {
-      var trF = D.batiments[b.type].travail;
-      var a = b.etat === 'fini' && trF && trF.produit === 'pieces' ? M.amelioration(monde, b) : null; // ce qui rapporte des pièces
+      if (b.etat !== 'fini' || b.cadeau) return;
+      var trF = D.batiments[b.type].travail, a = M.amelioration(monde, b);
+      // la dorée : ce bâtiment peut prendre la forme d'une époque plus récente (ADR-040)
+      if (a && a.cout <= monde.pieces && ((a.genre === 'moderne' && a.place) || (a.genre === 'maison' && a.moderne))) {
+        if (visible(b.x, b.y, 100)) dorees.push({ b: b, rang: (trF ? 0 : 100) + D.batiments[b.type].epoque * 10 + a.cout / 1000 });
+        return;
+      }
+      if (!trF || trF.produit !== 'pieces') return; // la verte : ce qui rapporte des pièces
       if (!a || a.genre !== 'niveau' || a.cout > monde.pieces) return;
       var t = tailleBat(b), p = E(b.x, basBat(b));
       var r = Math.max(13, Math.min(20, 24 * V.s));
@@ -887,7 +1479,61 @@
       ctx.moveTo(x, y - r * 0.62); ctx.lineTo(x + r * 0.55, y); ctx.lineTo(x + r * 0.22, y); ctx.lineTo(x + r * 0.22, y + r * 0.55);
       ctx.lineTo(x - r * 0.22, y + r * 0.55); ctx.lineTo(x - r * 0.22, y); ctx.lineTo(x - r * 0.55, y); ctx.closePath(); ctx.fill();
     });
-    if (fleches.length && !enScene) aideUneFois('fleche-verte', A.flecheVerte);
+    // quelques-unes à la fois seulement (d'abord ce qui produit, le plus ancien), sinon une vieille ville en est couverte
+    dorees.sort(function (x, y) { return x.rang - y.rang; });
+    dorees.slice(0, DOREES_MAX).forEach(function (d) { dessinerFlecheDoree(d.b); });
+    if (dorees.length && !enScene) aideUneFois('fleche-doree', A.flecheDoree);
+    else if (fleches.length && !enScene) aideUneFois('fleche-verte', A.flecheVerte);
+  }
+  var DOREES_MAX = 4;
+  // la flèche dorée : un rond doré et deux chevrons (une forme à part, pas seulement une autre couleur)
+  function dessinerFlecheDoree(b) {
+    var t = tailleBat(b), p = E(b.x, basBat(b));
+    var r = Math.max(14, Math.min(22, 26 * V.s));
+    var x = p[0] + t.w * 0.3, y = p[1] - t.h * 0.8 - Math.abs(Math.sin(T * 3.2 + b.id)) * 9;
+    fleches.push({ bat: b.id, x: x, y: y, r: r * 1.5 });
+    ctx.fillStyle = 'rgba(80,50,0,.25)'; ctx.beginPath(); ctx.arc(x, y + 4, r, 0, 7); ctx.fill();
+    var g = ctx.createLinearGradient(x, y - r, x, y + r); g.addColorStop(0, '#ffd75e'); g.addColorStop(1, '#e09a17');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+    ctx.lineWidth = Math.max(3, r * 0.2); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    [-0.05, 0.38].forEach(function (dy) {
+      ctx.beginPath(); ctx.moveTo(x - r * 0.45, y + r * dy); ctx.lineTo(x, y + r * (dy - 0.42)); ctx.lineTo(x + r * 0.45, y + r * dy); ctx.stroke();
+    });
+    // une petite étincelle qui tourne autour
+    var a = T * 2.4 + b.id, sx = x + Math.cos(a) * r * 1.25, sy = y + Math.sin(a) * r * 1.25;
+    ctx.fillStyle = '#fff6c8'; ctx.beginPath(); ctx.arc(sx, sy, Math.max(2, r * 0.13), 0, 7); ctx.fill();
+  }
+  // le cadeau d'une modernisation finie (ADR-040) : une boîte qui saute au-dessus du bâtiment
+  var cadeaux = [];
+  function dessinerCadeaux() {
+    cadeaux = [];
+    if (choix) return;
+    monde.batiments.forEach(function (b) {
+      if (!b.cadeau || !visible(b.x, b.y, 120)) return;
+      var t = tailleBat(b), p = E(b.x, basBat(b));
+      var r = Math.max(15, Math.min(24, 28 * V.s)), saut = Math.abs(Math.sin(T * 4 + b.id)) * 12;
+      var x = p[0], y0 = p[1] - t.h * 0.85, y = y0 - saut;
+      cadeaux.push({ bat: b.id, x: x, y: y, r: r * 1.6 });
+      ctx.fillStyle = 'rgba(60,30,40,.22)'; ctx.beginPath(); ctx.ellipse(x, y0 + r, r * (1.1 - saut / 40), r * 0.3, 0, 0, 7); ctx.fill();
+      ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(T * 6 + b.id) * 0.08);
+      ctx.fillStyle = '#c8384a'; ctx.fillRect(-r, -r * 0.6, r * 2, r * 1.5);
+      ctx.fillStyle = '#e0505f'; ctx.fillRect(-r * 1.12, -r * 0.95, r * 2.24, r * 0.5);
+      ctx.fillStyle = '#ffd24a'; ctx.fillRect(-r * 0.2, -r * 0.95, r * 0.4, r * 1.9);
+      ctx.beginPath(); ctx.ellipse(-r * 0.38, -r * 1.12, r * 0.38, r * 0.22, -0.5, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(r * 0.38, -r * 1.12, r * 0.38, r * 0.22, 0.5, 0, 7); ctx.fill();
+      ctx.restore();
+    });
+    if (cadeaux.length && !enScene) aideUneFois('cadeau', A.cadeau);
+  }
+  function ouvrirCadeau(id) {
+    var b = M.bat(monde, id), c = M.ouvrirCadeau(monde, id); if (!b || !c) return;
+    var t = tailleBat(b), y = b.y - t.h / V.s * 0.85;
+    son('decouverte');
+    pouf(b.x, y, 26, '255,210,63'); pouf(b.x, y, 14, '200,56,74');
+    particule({ type: 'gain', texte: '🎁 +' + c.pieces + ' 🪙' + (c.idees ? '  +' + c.idees + ' 💡' : ''), x: b.x, y: y - 20, vy: -18, max: 2.6 });
+    aide(A.modernise, true);
+    signatureBarre = ''; sauver();
   }
   function dessinerBulles() {
     bulles = [];
@@ -1124,6 +1770,9 @@
     if (braises > 0) feux.forEach(function (f) { var p = E(f.x, f.y - 20); trou(p[0], p[1], M.RAYON_FEU * V.s * vacille * (noire ? 0.35 : 1), braises, 0.62); });
     // les lampadaires électriques éclairent les rues toute la nuit
     (monde.lampes || []).forEach(function (c) { var q = piedLampe(c), p = E(q[0], q[1]); trou(p[0], p[1] - 30 * V.s, 190 * V.s, 0.9, 0.62); });
+    // les réverbères, torches et lanternes de la ville aménagée (ADR-048)
+    var amen = amenagement();
+    if (amen) amen.liste.forEach(function (a) { if (a.quoi !== 'lampe') return; var q = piedVille(a), p = E(q[0], q[1]); trou(p[0], p[1] - 40 * V.s, 150 * V.s, 0.85, 0.6); });
     // un peu de clair de lune sur les dormeurs, pour bien les voir
     monde.batiments.forEach(function (b) {
       if (!enCoupe(b)) return;
@@ -1281,14 +1930,18 @@
 
   // les voitures roulent sur les routes goudronnées (décor animé, comme les pirogues)
   var voitures = [], routesCle = -1, routesT = 0, routes = [];
-  function estRoute(t) { return t && t.sol === 'herbe' && !t.bat && !t.lampe && !t.poteau && TR.surIle(monde.terrain, t) && TR.etatHerbe(t) === 3; }
+  function estRoute(t) {
+    if (t && routesActives()) return reseauRoutes().cases[t.i * monde.terrain.N + t.j] != null; // dans le bac à sable : les vraies routes
+    return t && t.sol === 'herbe' && !t.bat && !t.lampe && !t.poteau && TR.surIle(monde.terrain, t) && TR.etatHerbe(t) === 3; }
   function majVoitures(dt) {
     if (!monde.decouvertes.voiture) { voitures = []; return; }
     routesT -= dt;
     if (routesT <= 0) { routesT = 4; routes = monde.terrain.tuiles.filter(estRoute); }
     if (routes.length < 6) return;
-    var IM = ['06-electricite/voiture-rouge', '06-electricite/voiture-jaune', '06-electricite/camionnette'];
-    while (voitures.length < Math.min(3, Math.floor(routes.length / 8) + 1)) {
+    // au monde moderne, la voiture électrique et le bus remplacent peu à peu les vieilles voitures (quand elles sont garées)
+    var IM = monde.epoque >= 7 ? ['07-moderne/voiture-electrique', '07-moderne/bus', '06-electricite/camionnette', '07-moderne/voiture-electrique']
+      : ['06-electricite/voiture-rouge', '06-electricite/voiture-jaune', '06-electricite/camionnette'];
+    while (voitures.length < Math.min(monde.epoque >= 7 ? 4 : 3, Math.floor(routes.length / 8) + 1)) {
       var t0 = routes[Math.floor(Math.random() * routes.length)], c0 = TR.centre(t0.i, t0.j);
       voitures.push({ x: c0[0], y: c0[1], route: [], attente: Math.random() * 3, dir: -1, im: IM[voitures.length % 3], id: voitures.length });
     }
@@ -1296,6 +1949,7 @@
     voitures.forEach(function (v) {
       v.marche = false;
       if (!v.route.length) {
+        if (v.im !== IM[v.id % IM.length]) { v.im = IM[v.id % IM.length]; v.pouf = 0.5; }
         if (v.attente > 0 || nuit) { v.attente -= dt; return; }
         var tc = TR.tuileDe(v.x, v.y), ici = TR.tuile(monde.terrain, tc[0], tc[1]);
         if (!estRoute(ici)) { var tr = routes[Math.floor(Math.random() * routes.length)], cr = TR.centre(tr.i, tr.j); v.x = cr[0]; v.y = cr[1]; v.attente = 1; return; }
@@ -1304,7 +1958,8 @@
         venu[cle(ici)] = ici;
         while (file.length && vus.length < 400) {
           var c = file.shift(); vus.push(c);
-          [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]].forEach(function (d) {
+          // seulement le long des cases : à l'écran, la voiture suit toujours une des quatre diagonales de la perspective
+          [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
             var n = TR.tuile(monde.terrain, c.i + d[0], c.j + d[1]);
             if (!estRoute(n) || venu[cle(n)]) return;
             venu[cle(n)] = c; file.push(n);
@@ -1320,18 +1975,21 @@
       }
       var q = v.route[0], dx = q[0] - v.x, dy = q[1] - v.y, d = Math.hypot(dx, dy), pas = 75 * dt;
       if (Math.abs(dx) > 1) v.dir = dx > 0 ? 1 : -1;
+      if (Math.abs(dy) > 0.5) v.monte = dy < 0;
       v.marche = true;
       if (d <= pas) { v.x = q[0]; v.y = q[1]; v.route.shift(); } else { v.x += dx / d * pas; v.y += dy / d * pas; }
     });
   }
   function dessinerVoiture(v) {
-    var im = IMG[v.im]; if (!im) return;
-    var w = (v.im.indexOf('camionnette') > 0 ? 82 : 86) * V.s, H = w * im.height / im.width, p = E(v.x, v.y + 8);
+    if (!IMG[v.im]) return;
+    var vu = vueVehicule(v.im, v.dir > 0, v.monte), im = vu.im;
+    var w = (v.im.indexOf('bus') > 0 ? 100 : v.im.indexOf('camionnette') > 0 ? 82 : 86) * V.s, H = w * im.height / im.width, p = E(v.x, v.y + 8);
     var bob = v.marche ? Math.abs(Math.sin(T * 18 + v.id)) * 1.2 * V.s : 0;
     ombre(p[0], p[1], w * 0.4, 6 * V.s, 0.2);
-    ctx.save(); ctx.translate(p[0], p[1] - bob); ctx.scale(v.dir > 0 ? -1 : 1, 1);
+    ctx.save(); ctx.translate(p[0], p[1] - bob); ctx.scale(vu.miroir ? -1 : 1, 1);
     ctx.drawImage(im, -w / 2, -H * 0.9, w, H); ctx.restore();
-    if (v.marche && Math.random() < 0.05) particule({ type: 'fumee', x: v.x - v.dir * 40, y: v.y - 6, vx: -v.dir * 10, vy: -10, max: 1.2, r: 5, c: '235,232,228' });
+    if (v.pouf) { pouf(v.x, v.y - 20, 6); v.pouf = 0; } // une petite bouffée quand elle change de modèle
+    if (v.marche && v.im.indexOf('electrique') < 0 && Math.random() < 0.05) particule({ type: 'fumee', x: v.x - v.dir * 40, y: v.y - 6, vx: -v.dir * 10, vy: -10, max: 1.2, r: 5, c: '235,232,228' });
   }
 
   // le petit avion : il décolle de l'aérodrome, fait le tour de la vallée et revient se poser
@@ -1495,22 +2153,32 @@
     if (monde.fusee === 'vol' && (monde.vol || 0) < 3) ctx.translate((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3);
     ctx.imageSmoothingQuality = 'high';
     dessinerFond(dt);
+    dessinerSolVille();
+    dessinerSolsFermes();
+    dessinerOmbresSol();
     dessinerEau();
     dessinerEmplacements();
     dessinerTerrainTir();
-    var T0 = monde.terrain, liste = [];
+    var T0 = monde.terrain, liste = [], amen = amenagement();
+    if (amen) amen.liste.forEach(function (a) {
+      var q = piedVille(a); if (!visible(q[0], q[1], 200)) return;
+      liste.push({ y: a.quoi === 'place' || a.quoi === 'jardin' ? q[1] - TR.TH * 0.6 * (a.z || 1) : q[1], f: dessinerVille, o: a });
+    });
     T0.tuiles.forEach(function (t) {
       if (!TR.surIle(T0, t)) return;
       if (!t.obj && !t.deco) return;
       var c = TR.centre(t.i, t.j);
       if (!visible(c[0], c[1], 260)) return;
-      if (t.deco) dessinerDeco(t);
-      if (t.obj) liste.push({ y: c[1] + 16, f: dessinerTuileObjet, o: t });
+      var pave = amenage() && (t.obj === 'souche' || t.deco) && (dansLaVille(t) || (amen && amen.parCase[t.i * T0.N + t.j]));
+      if (t.deco && !pave) dessinerDeco(t);
+      if (t.obj && !(pave && t.obj === 'souche')) liste.push({ y: c[1] + 16, f: dessinerTuileObjet, o: t });
     });
     monde.batiments.forEach(function (b) {
+      if (composee(b)) { if (!(BAC && routesCfg.cacher) && visible(b.x, b.y, 700)) piecesFerme(b, liste); return; }
+      if (goldenGate(b)) { if (!(BAC && routesCfg.cacher)) piecesGoldenGate(b, liste); return; }
       var plat = b.type === 'champ-ble' || b.type === 'passerelle' || b.type === 'pont-pierre';
       // le champ est bas mais ses épis sont hauts : il passe devant ce qui est derrière lui
-      liste.push({ y: b.type === 'champ-ble' ? b.y - b.k * TR.TH * 0.5 : plat ? b.y - 200 : basBat(b) - 6, f: dessinerBat, o: b });
+      if (!(BAC && routesCfg.cacher)) liste.push({ y: b.type === 'champ-ble' ? b.y - b.k * TR.TH * 0.5 : plat ? b.y - 200 : basBat(b) - 6, f: dessinerBat, o: b });
     });
     monde.habitants.forEach(function (h) {
       if (!visible(h.x, h.y, 120)) return;
@@ -1531,6 +2199,7 @@
     (monde.lignes || []).forEach(function (l) { l.poteaux.forEach(function (c) { var q = piedPoteau(c); if (visible(q[0], q[1], 150)) liste.push({ y: q[1], f: dessinerPoteau, o: c }); }); });
     (monde.lampes || []).forEach(function (c) { var q = piedLampe(c); if (visible(q[0], q[1], 150)) liste.push({ y: q[1], f: dessinerLampe, o: c }); });
     majVoitures(Math.min(dt || 0, 0.1) * VITESSE);
+    majFermes(Math.min(dt || 0, 0.1) * VITESSE);
     voitures.forEach(function (v) { if (visible(v.x, v.y, 120)) liste.push({ y: v.y + 8, f: dessinerVoiture, o: v }); });
     (monde.eoliennes || []).forEach(function (c) { var q = piedEolienne(c); if (visible(q[0], q[1], 300)) liste.push({ y: q[1], f: dessinerEolienne, o: c }); });
     (monde.panneaux || []).forEach(function (c) { var q = piedPanneau(c); if (visible(q[0], q[1], 120)) liste.push({ y: q[1], f: dessinerPanneau, o: c }); });
@@ -1547,6 +2216,7 @@
     dessinerNuit();
     dessinerSatellite(Math.min(dt || 0, 0.1));
     dessinerFleches();
+    dessinerCadeaux();
     dessinerBulles();
     barks();
     dessinerParoles();
@@ -1886,6 +2556,30 @@
     } });
   }
 
+  // ADR-054 : au changement d'âge, les bâtiments qui ne se construisent plus, chacun avec la raison de sa disparition.
+  // Toucher une carte lit sa raison à voix haute. Ceux déjà bâtis restent dans la ville.
+  function montrerDisparus(liste) {
+    enScene = true;
+    ui.disparus = null;
+    $('disparus-titre').textContent = A.disparusTitre;
+    $('disparus-sous').textContent = A.disparusIntro;
+    var g = $('grille-disparus');
+    g.innerHTML = '';
+    liste.forEach(function (k) {
+      var d = D.batiments[k]; if (!d || !d.disparait) return;
+      var c = document.createElement('div'); c.className = 'disparu';
+      c.innerHTML = '<div class="cadre"><img alt="" src="' + (ASSETS[d.sprite] || '') + '"></div><div class="nom"></div><div class="pourquoi"></div>';
+      c.querySelector('.nom').textContent = d.nom;
+      c.querySelector('.pourquoi').textContent = nb(d.disparait.pourquoi);
+      c.addEventListener('click', function () { c.classList.add('lu'); son('clic'); dire(d.nom + '. ' + d.disparait.pourquoi); });
+      g.appendChild(c);
+    });
+    $('disparus-voix').onclick = function () { dire(A.disparusIntro); };
+    $('disparus-ok').onclick = function () { fermer('disparus'); enScene = false; sauver(); };
+    ouvrir('disparus');
+    setTimeout(function () { dire(A.disparusIntro); }, 300);
+  }
+
   // ---------- la fusée : un gros bouton, un compte à rebours, et elle décolle ----------
   var lancement = null;
   function majBoutonFusee() {
@@ -1906,7 +2600,7 @@
       var m = mots[lancement.n], dernier = lancement.n === mots.length - 1;
       box.innerHTML = '<span class="' + (dernier ? 'go' : '') + '">' + (dernier ? m.replace(' !', '') : m.replace(/ !$/, '').replace('Trois', '3').replace('Deux', '2').replace('Un', '1')) + '</span>';
       if (lancement.n === 2) lancement.feu = true;
-      dire(m); son(dernier ? 'decouverte' : 'pop');
+      dire(m); son(dernier ? 'fini' : 'pop');
       lancement.n++;
       setTimeout(etape, 1000);
     }
@@ -1956,6 +2650,44 @@
   }
   $('btn-merveilles').addEventListener('click', function () { son('clic'); ouvrirMerveilles(); aideUneFois('merveilles', A.merveilles); });
   function centrerSur(x, y) { V.cx = x; V.cy = y - 60; borner(); }
+  // la caméra glisse doucement vers un point (le grand déménagement des fermes)
+  function glisserVers(x, y, duree) {
+    var x0 = V.cx, y0 = V.cy, t0 = performance.now();
+    (function pas() {
+      var k = Math.min(1, (performance.now() - t0) / duree); k = k * k * (3 - 2 * k);
+      V.cx = x0 + (x - x0) * k; V.cy = y0 + (y - 60 - y0) * k; borner();
+      if (k < 1) requestAnimationFrame(pas);
+    })();
+  }
+  // ADR-050, ADR-051 : le grand déménagement des fermes. On voit les champs et les enclos de la ville disparaître
+  // dans un nuage, les moutons partir à pied, puis la caméra glisse jusqu'aux grandes exploitations de la campagne.
+  var demenagementEnCours = false;
+  function jouerDemenagement(d) {
+    demenagementEnCours = true;
+    var cx = 0, cy = 0;
+    d.anciens.forEach(function (o) { cx += o.x; cy += o.y; });
+    cx /= d.anciens.length; cy /= d.anciens.length;
+    glisserVers(cx, cy, 900);
+    son('chantier');
+    aide(A.demenagement1);
+    d.anciens.forEach(function (o, k) { setTimeout(function () { pouf(o.x, o.y - 30, 18, '236,222,190'); }, 700 + k * 260); });
+    var nouv = d.nouveaux.map(function (id) { return M.bat(monde, id); }).filter(Boolean);
+    setTimeout(function () {
+      if (nouv.length) {
+        var nx = 0, ny = 0;
+        nouv.forEach(function (b) { nx += b.x; ny += b.y; });
+        glisserVers(nx / nouv.length, ny / nouv.length, 2200);
+      }
+      setTimeout(function () {
+        nouv.forEach(function (b, k) { setTimeout(function () { var t = tailleBat(b); pouf(b.x, b.y - t.h / V.s * 0.3, 26, '255,210,63'); }, k * 400); });
+        son('fini');
+        aide(A.demenagement2);
+        demenagementEnCours = false;
+        ui.demenagement = null;
+        sauver();
+      }, 2300);
+    }, 1400 + d.anciens.length * 260);
+  }
 
   // menu
   $('btn-menu').addEventListener('click', function () { $('menu-voix').textContent = '🔊 Voix : ' + (ui.voix ? 'oui' : 'non'); ouvrir('menu'); });
@@ -2123,15 +2855,20 @@
     ba.hidden = !am;
     if (am) {
       // on montre à quoi il ressemblera (ADR-038)
-      var apres = am.genre === 'maison' ? D.batiments[am.vers].sprite : am.genre === 'niveau' ? 'niveaux/' + o.bat.type + '-' + am.niveau : null;
+      var apres = am.genre === 'maison' || am.genre === 'moderne' ? D.batiments[am.vers].sprite : am.genre === 'niveau' ? 'niveaux/' + o.bat.type + '-' + am.niveau : null;
+      if (am.genre === 'moderne' && (o.bat.niveau || 1) > 1 && ASSETS['niveaux/' + am.vers + '-' + o.bat.niveau]) apres = 'niveaux/' + am.vers + '-' + o.bat.niveau;
       var trA = D.batiments[o.bat.type].travail;
+      var nomVers = am.vers ? D.batiments[am.vers].nom.replace(/^(Une?|Les|La|Le) /, '').replace(/^L'/, '').toLowerCase() : '';
+      ba.classList.toggle('doree', am.genre === 'moderne' || (am.genre === 'maison' && !!am.moderne));
       ba.innerHTML = (apres && ASSETS[apres] ? '<img src="' + ASSETS[apres] + '" alt="">' : '') + '<span>' +
-        (am.genre === 'maison' ? '⬆ Transformer en ' + D.batiments[am.vers].nom.replace(/^Une? /, '').toLowerCase()
+        (am.genre === 'moderne' ? (am.place ? '✨ Moderniser : ' + nomVers : '✨ ' + nomVers + ' : il faut plus de place autour')
+        : am.genre === 'maison' ? (am.moderne ? '✨ Moderniser : ' : '⬆ Transformer en ') + nomVers
         : am.genre === 'etape' ? '🏛 Étape ' + am.etape
         : '⬆ Niveau ' + am.niveau + ' · 👷 +1' + (trA ? ' · ' + EMOJI[trA.produit] + ' +' + M.quantite(o.bat, monde) : '')) + ' · 🪙 ' + am.cout + '</span>';
-      ba.classList.toggle('non', monde.pieces < am.cout);
+      ba.classList.toggle('non', monde.pieces < am.cout || am.place === false);
       ba.onclick = function (e) {
         e.stopPropagation();
+        if (am.place === false) { son('non'); return; }
         if (monde.pieces < am.cout) { son('non'); aide(A.piecesManquent, true); return; }
         if (M.ameliorer(monde, o.bat.id)) {
           son('pose'); cacherInfo();
@@ -2255,6 +2992,9 @@
       } else son('non');
       return;
     }
+    for (var cg = 0; cg < cadeaux.length; cg++) {
+      if (Math.hypot(x - cadeaux[cg].x, y - cadeaux[cg].y) < cadeaux[cg].r) { ouvrirCadeau(cadeaux[cg].bat); return; }
+    }
     for (var f = 0; f < fleches.length; f++) {
       if (Math.hypot(x - fleches[f].x, y - fleches[f].y) < fleches[f].r) { var bf = M.bat(monde, fleches[f].bat); if (bf) { son('clic'); infoBatiment(bf); } return; }
     }
@@ -2357,7 +3097,7 @@
     ev.forEach(function (e) {
       if (e.type === 'fini') {
         var b = M.bat(monde, e.bat);
-        if (b) { var t = tailleBat(b); pouf(b.x, b.y - t.h / V.s * 0.3, 14); son('fini'); }
+        if (b) { var t = tailleBat(b); pouf(b.x, b.y - t.h / V.s * 0.3, 14); son('chantier'); }
         if (b && D.batiments[b.type].lits) aideUneFois('maison', A.maison);
         if (b && b.type === 'pont-pierre') { centrerSur(b.x, b.y); aideUneFois('pont-fini', A.pontFini); }
         if (b && b.type === 'aerodrome') { avion.etat = 'hangar'; avion.attente = 3; centrerSur(b.x, b.y); aideUneFois('avion', A.avion); }
@@ -2424,7 +3164,7 @@
         aide(e.nouvelle ? A.fuseeNouvelle : A.fuseePrete);
         sauver();
       } else if (e.type === 'decollage') {
-        son('decouverte');
+        son('decollage');
       } else if (e.type === 'fusee-partie') {
         sauver();
         if (e.n === 1) {
@@ -2444,6 +3184,12 @@
       } else if (e.type === 'ligne') {
         if (!enScene) centrerSur(e.x, e.y);
         aideUneFois(e.genre === 'tel' ? 'lignes-tel' : 'lignes', e.genre === 'tel' ? A.lignesTel : A.lignes);
+        sauver();
+      } else if (e.type === 'disparus') {
+        ui.disparus = e.liste; // montrée après la scène de la nouvelle époque
+        sauver();
+      } else if (e.type === 'demenagement') {
+        ui.demenagement = { anciens: e.anciens, nouveaux: e.nouveaux }; // joué dès qu'aucune scène n'est ouverte
         sauver();
       } else if (e.type === 'rails') {
         train.etat = 'tunnel'; train.attente = 2; train.s = 0;
@@ -2481,6 +3227,9 @@
       if (coq && ludiNuit !== (monde.jour || 0)) { ludiNuit = monde.jour || 0; ludiArret('nuit'); }
     }
     if (ui.crueAide && !enScene) { ui.crueAide = false; aideUneFois('crue', A.crue); }
+    if (ui.disparus && !enScene && !demenagementEnCours && !ui.demenagement) montrerDisparus(ui.disparus);
+    // la scène attend que la bulle d'aide soit libre (au chargement, d'autres messages passent d'abord)
+    if (ui.demenagement && !enScene && !demenagementEnCours && T - derniereAide > 5.5) jouerDemenagement(ui.demenagement);
     if (ui.incendieAide && !enScene) { ui.incendieAide = false; aideUneFois('incendie', A.incendie); }
     if (ui.nuitNoireAide && !enScene) { ui.nuitNoireAide = false; aideUneFois('nuit-noire', A.nuitNoire); }
     if (ui.airSaleAide && !enScene) { ui.airSaleAide = false; aideUneFois('air-sale', A.airSale); }
@@ -2518,7 +3267,8 @@
   addEventListener('resize', redim);
 
   // pour les tests automatiques
-  window.__jeu = { monde: function () { return monde; }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; }, centrerSur: centrerSur, padTir: padTir };
+  setTimeout(panneauBac, 500);
+  window.__jeu = { montrerDisparus: function (l) { montrerDisparus(l); }, ombreDe: function (k) { try { return ombreDe(IMG[k]); } catch (e) { return String(e); } }, IMG: IMG, routesCfg: routesCfg, monde: function () { return monde; }, fleches: function () { return fleches; }, cadeaux: function () { return cadeaux; }, voitures: function () { return voitures; }, train: function () { var pts = cheminTrain(); return Object.assign({ pos: pts ? pointTrain(pts, train.s) : null }, train); }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; }, centrerSur: centrerSur, padTir: padTir };
 
   chargerImages(function () {
     redim();

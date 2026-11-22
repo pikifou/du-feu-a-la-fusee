@@ -83,7 +83,10 @@ var Monde = (function () {
       stock: 0, ouvriers: [], apparu: fini ? -10 : null, cree: m.t
     };
     if (!surGue(type)) {
-      (TR.empreinte(T, i, j, k) || []).forEach(function (t) { t.bat = bat.id; t.deco = null; if (t.obj === 'souche') t.obj = null; t.usure = 0; });
+      (TR.empreinte(T, i, j, k) || []).forEach(function (t) {
+        t.bat = bat.id; t.deco = null; t.usure = 0;
+        if (t.obj === 'souche' || (def.zone === 'campagne' && t.obj === 'arbre')) { t.obj = null; t.bois = 0; t.reserve = false; }
+      });
     }
     m.batiments.push(bat);
     return bat;
@@ -129,8 +132,9 @@ var Monde = (function () {
     }, 0);
   }
   // un travailleur par niveau (ADR-031)
-  function places(b) { return D.batiments[b.type].travail ? (b.niveau || 1) : 0; }
-  function stockMax(b) { return BULLES_MAX * (b.niveau || 1); }
+  // les grandes exploitations de la campagne ont plus de postes (ADR-051)
+  function places(b) { var d = D.batiments[b.type]; return d.travail ? (d.postes ? d.postes[b.niveau || 1] : (b.niveau || 1)) : 0; }
+  function stockMax(b) { return BULLES_MAX * Math.max(b.niveau || 1, places(b)); }
   function aFeu(m) { return m.batiments.some(function (b) { return b.type === 'feu' && b.etat === 'fini'; }); }
 
   function construisibles(m) {
@@ -139,7 +143,17 @@ var Monde = (function () {
       if (d.cout == null || d.automatique) return false;
       if (d.epoque > m.epoque || (d.jusqua || 9) < m.epoque) return false;
       if (d.debloque && !m.decouvertes[d.debloque]) return false;
+      if (d.travail && depasse(m, d)) return false;
+      if (m.demenage && FERMES_VILLE[k] && d.zone !== 'campagne') return false; // ADR-051 : plus de fermes dans la ville
+      if (d.disparait && m.epoque >= d.disparait.epoque) return false; // ADR-054 : il est dépassé
       return true;
+    });
+  }
+  // un bâtiment qui produit est dépassé quand sa forme d'une époque plus récente peut se bâtir
+  function depasse(m, d) {
+    return [].concat(d.evolue || []).some(function (ev) {
+      var c = D.batiments[ev.vers];
+      return c.epoque > d.epoque && c.cout != null && cibleDispo(m, ev);
     });
   }
 
@@ -151,7 +165,8 @@ var Monde = (function () {
     for (var n = 0; n < tuiles.length; n++) {
       var t = tuiles[n];
       if (!TR.surIle(T, t) || t.bat || t.gue || t.rail || t.poteau || t.lampe || t.tir || t.eolienne || t.panneau) return false;
-      if (t.obj && t.obj !== 'souche') return false;
+      if (t.obj && t.obj !== 'souche' && !(d.zone === 'campagne' && t.obj === 'arbre')) return false;
+      if (d.zone === 'campagne' && t.ile < 5) return false; // ADR-051 : la campagne, c'est la terre gagnée à partir de la vapeur
       if (d.zone === 'plage') { if (t.sol !== 'sable') return false; }
       else if (d.zone === 'grotte' || d.zone === 'colline') { if (t.sol !== 'herbe' && t.sol !== 'roche') return false; }
       else if (t.sol !== 'herbe') return false;
@@ -164,6 +179,8 @@ var Monde = (function () {
       var v = TR.tuile(T, i + a, j + b2);
       if (v && v.bat) { var vb = bat(m, v.bat); if (vb && !surGue(vb.type)) return false; }
     }
+    // la campagne est hors de la ville : pas de bâtiment de la ville à moins de trois cases
+    if (d.zone === 'campagne' && !loinDeLaVille(m, i, j, k, 3)) return false;
     var t0 = tuiles[0];
     if (d.zone === 'rive' || d.zone === 'plage') return tuiles.some(function (t) { return TR.pres(T, t, 'eau'); });
     if (d.zone === 'grotte') {
@@ -189,6 +206,13 @@ var Monde = (function () {
     var k = D.batiments[type].taille || 1;
     var essais = k === 1 ? [[0, 0]] : [[-1, -1], [0, -1], [-1, 0], [0, 0]];
     if (k === 2) essais = [[0, 0], [-1, 0], [0, -1], [-1, -1]];
+    if (k >= 3) {
+      // on essaie d'abord de centrer le bâtiment sur la case touchée
+      essais = [];
+      for (var da = -(k - 1); da <= 0; da++) for (var db = -(k - 1); db <= 0; db++) essais.push([da, db]);
+      var mi = -(k - 1) / 2;
+      essais.sort(function (x, y) { return Math.hypot(x[0] - mi, x[1] - mi) - Math.hypot(y[0] - mi, y[1] - mi); });
+    }
     for (var n = 0; n < essais.length; n++) {
       var a = i + essais[n][0], b = j + essais[n][1];
       if (ancreValide(m, type, a, b)) return [a, b];
@@ -278,6 +302,8 @@ var Monde = (function () {
     if (m.epoque === 5) {
       // le petit problème de la vapeur (epoques.md) : bientôt, une étincelle de cheminée met le feu à une maison
       m.feuPrevu = m.t + DELAI_INCENDIE;
+      // ADR-051 : la ville a grandi, la campagne s'ouvre autour d'elle ; les champs et les bêtes y partent
+      demenager(m);
     }
     if (m.epoque === 6) {
       // le petit problème de l'électricité (epoques.md) : au premier soir, la ville trop grande reste dans le noir
@@ -294,9 +320,127 @@ var Monde = (function () {
       // un grand terrain au bord de l'île est gardé pour le pas de tir de la fusée
       reserverTir(m);
     }
+    agrandirMerveilles(m);
+    prolongerRails(m);
+    // ADR-054 : ce qui ne se construit plus à partir de cette époque (seulement ce que le joueur pouvait déjà bâtir)
+    var partis = Object.keys(D.batiments).filter(function (k) {
+      var d = D.batiments[k];
+      return d.disparait && d.disparait.epoque === m.epoque && d.epoque < m.epoque && d.cout != null && (!d.debloque || m.decouvertes[d.debloque]);
+    });
+    if (partis.length) m.evenements.push({ type: 'disparus', liste: partis });
     m.habitants.forEach(function (h) { h.changeTenue = hasard(m) * 8; });
     m.evenements.push({ type: 'epoque', epoque: m.epoque });
     return true;
+  }
+
+  // ---------- le grand déménagement des fermes (ADR-050, ADR-051) ----------
+  // Au passage à la vapeur, tous les champs et tous les enclos de la ville partent à la campagne : un seul très grand champ,
+  // une seule grande ferme d'élevage, sur la terre gagnée autour de la ville. Les cases libérées redeviennent de la ville.
+  var FERMES_VILLE = { 'buisson-baies': 'champ', 'champ-ble': 'champ', 'champ-laboure': 'champ', ferme: 'champ', 'enclos-moutons': 'elevage', etable: 'elevage', 'ferme-laitiere': 'elevage' };
+  function formeCampagne(m, genre) { return genre === 'champ' ? (m.epoque >= 6 ? 'ferme' : 'grand-champ') : (m.epoque >= 6 ? 'ferme-laitiere' : 'grand-elevage'); }
+  function estVille(b) { var d = D.batiments[b.type]; return d && d.zone !== 'campagne' && !surGue(b.type); }
+  function loinDeLaVille(m, i, j, k, r) {
+    var T = m.terrain;
+    for (var a = -r; a < k + r; a++) for (var c = -r; c < k + r; c++) {
+      var v = TR.tuile(T, i + a, j + c);
+      if (v && v.bat) { var vb = bat(m, v.bat); if (vb && estVille(vb)) return false; }
+    }
+    return true;
+  }
+  // la meilleure place à la campagne : la plus proche de la ville, de ce côté-ci de la rivière si possible
+  // (on préfère un pré dégagé à une clairière dans la forêt : chaque arbre autour compte comme un peu plus de distance)
+  function ancreCampagne(m, type, pres) {
+    var T = m.terrain, k = D.batiments[type].taille || 1;
+    var l = emplacementsLibres(m, type, pres);
+    var ici = l.filter(function (a) { var t = TR.tuile(T, a[0], a[1]); return !t.sauvage; });
+    if (!ici.length) ici = l;
+    var best = null, bs = 1e9;
+    ici.slice(0, 400).forEach(function (a) {
+      var arbres = 0;
+      for (var di = -2; di < k + 2; di++) for (var dj = -2; dj < k + 2; dj++) { var v = TR.tuile(T, a[0] + di, a[1] + dj); if (v && v.obj === 'arbre') arbres++; }
+      var sc = Math.hypot(a[0] + k / 2 - pres[0], a[1] + k / 2 - pres[1]) + arbres * 0.35;
+      if (sc < bs) { bs = sc; best = a; }
+    });
+    return best;
+  }
+  // autour d'une grande exploitation, une bordure de pré : les arbres tout contre s'en vont
+  function degagerAutour(m, b) {
+    for (var di = -1; di <= b.k; di++) for (var dj = -1; dj <= b.k; dj++) {
+      var v = TR.tuile(m.terrain, b.i + di, b.j + dj);
+      if (v && !v.bat && v.ile >= 5 && (v.obj === 'arbre' || v.obj === 'souche') && !v.reserve) { v.obj = null; v.bois = 0; }
+    }
+  }
+  function retirer(m, b) {
+    m.habitants.forEach(function (h) {
+      if (h.reserve === b.id || h.travail === b.id || h.dans === b.id) lacher(m, h);
+      if (h.travail === b.id) { h.travail = null; h.metier = null; }
+    });
+    m.terrain.tuiles.forEach(function (t) { if (t.bat === b.id) { t.bat = null; t.usure = 0; } });
+    m.batiments = m.batiments.filter(function (x) { return x !== b; });
+  }
+  function demenager(m) {
+    if (m.demenage || m.epoque < 5) return null;
+    m.demenage = true;
+    var genres = { champ: [], elevage: [] }, anciens = [], nouveaux = [];
+    m.batiments.forEach(function (b) { var g = FERMES_VILLE[b.type]; if (g) genres[g].push(b); });
+    var centre = [TR.CI, TR.CJ];
+    ['champ', 'elevage'].forEach(function (g) {
+      var l = genres[g];
+      if (!l.length) return;
+      var type = formeCampagne(m, g), d = D.batiments[type];
+      var a = ancreCampagne(m, type, nouveaux.length ? [nouveaux[0].i, nouveaux[0].j] : centre);
+      if (!a) return; // pas de place à la campagne : ces fermes restent en ville
+      var postes = 0, reserve = 0, rendu = 0;
+      l.forEach(function (b) {
+        postes += b.etat === 'fini' ? places(b) : 0;
+        reserve += b.etat === 'fini' ? (RESERVE[b.type] || 0) : 0;
+        if (b.etat === 'chantier' && !b.niveauVise && !b.ancien) rendu += D.batiments[b.type].cout || 0; // un chantier pas fini est remboursé
+        anciens.push({ x: b.x, y: b.y, type: b.type, genre: g });
+        retirer(m, b);
+      });
+      m.pieces += rendu;
+      var nb = poser(m, type, a[0], a[1], true);
+      degagerAutour(m, nb);
+      nb.niveau = 1;
+      while (nb.niveau < NIVEAU_MAX && d.postes[nb.niveau] < postes) nb.niveau++;
+      if (reserve > (RESERVE[type] || 0)) nb.reserve = reserve;
+      nouveaux.push(nb);
+    });
+    if (!anciens.length) return null;
+    // les bêtes de l'enclos partent à pied vers la grande ferme d'élevage
+    var el = nouveaux.filter(function (b) { return b.type === 'grand-elevage' || b.type === 'ferme-laitiere'; })[0];
+    if (el) anciens.filter(function (o) { return o.genre === 'elevage'; }).forEach(function (o, n) {
+      for (var q = 0; q < 3; q++) {
+        var dep = [o.x + (q - 1) * 26, o.y + 10 + q * 6];
+        var arr = [el.x + (hasard(m) - 0.5) * 120, el.y + (hasard(m) - 0.2) * 40];
+        var ch = TR.chemin(m.terrain, dep, arr);
+        m.animaux.push({ id: m.prochainId++, espece: 'mouton', x: dep[0], y: dep[1], etapes: ch, dir: 1, marche: true, part: true, depart: n * 1.5 + q * 0.4 });
+      }
+    });
+    m.evenements.push({ type: 'demenagement', anciens: anciens, nouveaux: nouveaux.map(function (b) { return b.id; }) });
+    return { anciens: anciens, nouveaux: nouveaux };
+  }
+  // ADR-051 : les monuments posés avant prennent leur nouvelle taille quand ils en ont la place autour d'eux
+  function agrandirMerveilles(m) {
+    var n = 0;
+    m.batiments.forEach(function (b) {
+      var d = D.batiments[b.type];
+      if (!d || b.k >= (d.taille || 1)) return;
+      if (d.merveille && d.tailleAvant) {
+        var a = ancreModerne(m, b, b.type);
+        if (!a) return;
+        deplacerEmpreinte(m, b, a, d.taille);
+        n++;
+      } else if (d.plan) {
+        // ADR-053 : une grande exploitation posée plus petite (avant) prend ses 6 x 6 cases, sur place ou ailleurs à la campagne
+        var a2 = ancreModerne(m, b, b.type) || ancreCampagne(m, b.type, [b.i, b.j]);
+        if (!a2) return;
+        deplacerEmpreinte(m, b, a2, d.taille);
+        degagerAutour(m, b);
+        n++;
+      }
+    });
+    return n;
   }
 
   // ---------- l'incendie et les pompiers (le petit problème de la vapeur) ----------
@@ -426,6 +570,11 @@ var Monde = (function () {
       for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) { var v = TR.tuile(T, t.i + di, t.j + dj); if (v && v.obj === 'arbre') return; }
       t.obj = null;
     });
+  }
+
+  // chaque matin, les souches des arbres coupés la veille s'en vont (on en garde une sur cinq) : la place se libère (ADR-041)
+  function nettoyerSouches(m) {
+    m.terrain.tuiles.forEach(function (t) { if (t.obj === 'souche' && !t.bat && !garderSouche(t)) t.obj = null; });
   }
 
   // ---------- le monde moderne : l'air sale, les éoliennes, le pas de tir et la fusée ----------
@@ -656,6 +805,36 @@ var Monde = (function () {
     });
   }
 
+  // ADR-051 : quand l'île grandit, le tunnel ne doit pas rester au milieu des prés. Les rails continuent par le plus court
+  // chemin libre jusqu'au nouveau bord de l'île (sans bâtiment, eau, poteau ni lampadaire sur la route ; sinon le tunnel reste).
+  function prolongerRails(m) {
+    var T = m.terrain, R = m.rails && m.rails.tuiles;
+    if (!R || R.length < 2) return 0;
+    var bord = function (t) { return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(function (d) { var v = TR.tuile(T, t.i + d[0], t.j + d[1]); return !v || !TR.surIle(T, v); }); };
+    var libre = function (t) { return t && TR.surIle(T, t) && !t.rail && !t.bat && t.sol !== 'eau' && !t.gue && !t.poteau && !t.lampe && !t.eolienne && !t.panneau && !t.tir && t.obj !== 'grotte'; };
+    var fin = TR.tuile(T, R[R.length - 1][0], R[R.length - 1][1]);
+    if (!fin || bord(fin)) return 0;
+    var venu = {}, file = [fin], cle = function (t) { return t.i * TR.N + t.j; }, but = null;
+    venu[cle(fin)] = null;
+    while (file.length && !but) {
+      var t = file.shift();
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+        if (but) return;
+        var v = TR.tuile(T, t.i + d[0], t.j + d[1]);
+        if (!libre(v) || cle(v) in venu) return;
+        venu[cle(v)] = t;
+        if (bord(v)) but = v; else file.push(v);
+      });
+    }
+    if (!but) return 0;
+    var chemin = [];
+    for (var x = but; x && x !== fin; x = venu[cle(x)]) chemin.unshift(x);
+    if (chemin.length > 30) return 0;
+    chemin.forEach(function (t) { t.rail = true; t.deco = null; if (t.obj) { t.obj = null; t.bois = 0; } R.push([t.i, t.j]); });
+    degagerRails(m);
+    return chemin.length;
+  }
+
   // ---------- le pont emporté, puis le pont de pierre (le petit problème du Moyen Âge) ----------
   var DELAI_CRUE = 45;
   function crue(m) {
@@ -696,10 +875,59 @@ var Monde = (function () {
 
   // ---------- améliorations payantes (ADR-021) ----------
   var NIVEAU_MAX = 3;
+  function cibleDispo(m, ev) {
+    var cible = D.batiments[ev.vers];
+    return (!ev.decouverte || m.decouvertes[ev.decouverte]) && (!cible.debloque || m.decouvertes[cible.debloque]) &&
+      cible.epoque <= m.epoque && (cible.jusqua || 9) >= m.epoque && !(m.demenage && FERMES_VILLE[ev.vers] && cible.zone !== 'campagne');
+  }
+  // moderniser coûte moins cher que bâtir à neuf (ADR-040 : on pousse à le faire)
+  function prixModerne(type) { return Math.round((D.batiments[type].cout || 100) * 0.6 / 5) * 5; }
+  // le cadeau d'une modernisation finie (ADR-040) : une partie du prix rendue, et deux idées
+  function cadeauDe(cout) { return { pieces: Math.max(10, Math.round(cout * 0.5 / 5) * 5), idees: 2 }; }
+  // où poser la forme moderne : son empreinte recouvre l'ancienne ; les tuiles en plus doivent être libres
+  // (les arbres et les souches y sont dégagés)
+  function ancreModerne(m, b, type) {
+    var k2 = D.batiments[type].taille || 1, T = m.terrain;
+    if (k2 <= b.k) return [b.i, b.j];
+    var e = k2 - b.k, essais = [];
+    for (var di = -e; di <= 0; di++) for (var dj = -e; dj <= 0; dj++) essais.push([b.i + di, b.j + dj]);
+    // d'abord les ancres qui gardent le bâtiment centré sur sa place
+    essais.sort(function (a, c) { return Math.abs(a[0] - b.i + e / 2) + Math.abs(a[1] - b.j + e / 2) - Math.abs(c[0] - b.i + e / 2) - Math.abs(c[1] - b.j + e / 2); });
+    for (var n = 0; n < essais.length; n++) {
+      var tuiles = TR.empreinte(T, essais[n][0], essais[n][1], k2);
+      if (tuiles && tuiles.every(function (t) {
+        if (t.bat === b.id) return true;
+        if (!TR.surIle(T, t) || t.bat || t.gue || t.rail || t.poteau || t.lampe || t.tir || t.eolienne || t.panneau) return false;
+        if (t.obj && t.obj !== 'souche' && t.obj !== 'arbre') return false;
+        return t.sol === 'herbe' || t.sol === 'roche' || t.sol === 'sable';
+      })) return essais[n];
+    }
+    return null;
+  }
+  function deplacerEmpreinte(m, b, ancre, k) {
+    var T = m.terrain;
+    T.tuiles.forEach(function (t) { if (t.bat === b.id) t.bat = null; });
+    b.i = ancre[0]; b.j = ancre[1]; b.k = k;
+    var c = TR.centreEmpreinte(b.i, b.j, k); b.x = c[0]; b.y = c[1];
+    (TR.empreinte(T, b.i, b.j, k) || []).forEach(function (t) {
+      t.bat = b.id; t.deco = null; t.usure = 0;
+      if (t.obj === 'souche' || t.obj === 'arbre') { t.obj = null; t.bois = 0; t.reserve = false; }
+    });
+  }
+  function ouvrirCadeau(m, id) {
+    var b = bat(m, id);
+    if (!b || !b.cadeau) return null;
+    var c = b.cadeau;
+    b.cadeau = null;
+    m.pieces += c.pieces || 0;
+    m.idees += c.idees || 0;
+    m.modernises = (m.modernises || 0) + 1;
+    return c;
+  }
   // ce qu'on peut faire de mieux avec un bâtiment : l'agrandir (maison), monter de niveau, ou bâtir l'étape suivante d'une merveille
   function amelioration(m, b) {
     if (!b || b.etat !== 'fini') return null;
-    var d = D.batiments[b.type];
+    var d = D.batiments[b.type], sansPlace = null;
     if (d.merveille) {
       var et = b.etape == null ? 3 : b.etape;
       return et < 3 ? { genre: 'etape', etape: et + 1, cout: d.cout } : null;
@@ -708,27 +936,47 @@ var Monde = (function () {
       var evs = [].concat(d.evolue);
       for (var i = evs.length - 1; i >= 0; i--) {
         var ev = evs[i], cible = D.batiments[ev.vers];
-        if ((!ev.decouverte || m.decouvertes[ev.decouverte]) && cible.epoque <= m.epoque && (cible.jusqua || 9) >= m.epoque)
-          return { genre: 'maison', vers: ev.vers, cout: ev.cout };
+        if (!cibleDispo(m, ev)) continue;
+        // ADR-041 : un bâtiment qui produit prend la forme de son temps, au même endroit (il lui faut parfois plus de place)
+        if (d.travail) {
+          if (inactif(m, b)) break;
+          var anc = ancreModerne(m, b, ev.vers);
+          sansPlace = { genre: 'moderne', vers: ev.vers, cout: ev.cout || prixModerne(ev.vers), ancre: anc, place: !!anc };
+          if (anc) return sansPlace;
+          break; // pas la place : on peut encore monter de niveau en attendant
+        }
+        return { genre: 'maison', vers: ev.vers, cout: ev.cout, moderne: cible.epoque > (D.batiments[b.type].epoque || 1) };
       }
-      return null;
+      if (!d.travail) return null;
     }
     var n = b.niveau || 1;
     if (d.travail && n < NIVEAU_MAX && !inactif(m, b)) {
       var base = d.prixNiveau || d.cout || 10;
-      return { genre: 'niveau', niveau: n + 1, cout: Math.round(base * (n === 1 ? 1.5 : 3) / 5) * 5 };
+      return { genre: 'niveau', niveau: n + 1, cout: Math.round(base * (n === 1 ? 1.5 : 3) / 5) * 5, sansPlace: sansPlace ? sansPlace.vers : null };
     }
-    return null;
+    return sansPlace;
   }
   function ameliorer(m, id) {
     var b = bat(m, id), a = amelioration(m, b);
     if (!a || m.pieces < a.cout) return null;
     m.pieces -= a.cout;
-    if (a.genre === 'maison') {
+    if (a.genre === 'moderne') {
+      if (!a.place) { m.pieces += a.cout; return null; }
+      // ceux qui y travaillaient laissent ce qu'ils faisaient : ils reprendront le travail du nouveau bâtiment
+      m.habitants.forEach(function (h) { if (h.reserve === b.id) lacher(m, h); });
+      b.ancien = b.type; b.ancienK = b.k; b.ancienXY = [b.x, b.y];
+      b.type = a.vers;
+      var k2 = D.batiments[a.vers].taille || 1;
+      if (a.ancre[0] !== b.i || a.ancre[1] !== b.j || k2 !== b.k) deplacerEmpreinte(m, b, a.ancre, k2);
+      b.besoin = D.batiments[a.vers].bois || 2;
+      b.stock = 0;
+      b.cadeauPrevu = cadeauDe(a.cout);
+    } else if (a.genre === 'maison') {
       b.renove = D.batiments[b.type].lits || 0;
       b.ancien = b.type;
       b.type = a.vers;
       b.besoin = D.batiments[a.vers].bois;
+      if (a.moderne) b.cadeauPrevu = cadeauDe(a.cout);
     } else if (a.genre === 'etape') {
       b.etapeVisee = a.etape;
       b.besoin = D.batiments[b.type].bois;
@@ -778,7 +1026,7 @@ var Monde = (function () {
   }
   function changerPhase(m, ph) {
     m.cycle = { phase: ph, t: 0 };
-    if (ph === 'aube') m.jour = (m.jour || 0) + 1;
+    if (ph === 'aube') { m.jour = (m.jour || 0) + 1; nettoyerSouches(m); }
     if (ph === 'aube' && m.airSale === true) m.evenements.push({ type: 'air-sale', encore: true });
     m.evenements.push({ type: 'phase', phase: ph });
     if (ph === 'soir') manger(m);
@@ -792,9 +1040,11 @@ var Monde = (function () {
     }
   }
   // la réserve de nourriture : ce qu'on sait conserver (ADR-036)
-  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40, moulin: 50, 'port-vapeur': 60, ferme: 70, supermarche: 90 };
+  var RESERVE = { base: 30, 'sechoir-poissons': 20, grenier: 60, 'atelier-potier': 30, port: 40, moulin: 50, 'port-vapeur': 60, ferme: 70, supermarche: 90, 'grand-champ': 40, 'grand-elevage': 30, 'ferme-laitiere': 30 };
+  // b.reserve : une grande exploitation garde au moins ce que gardaient les fermes de la ville qu'elle remplace (ADR-051)
+  function reserveDe(b) { return Math.max(RESERVE[b.type] || 0, b.reserve || 0); }
   function reserveMax(m) {
-    return m.batiments.reduce(function (s, b) { return s + (b.etat === 'fini' || b.niveau ? (RESERVE[b.type] || 0) : 0); }, RESERVE.base);
+    return m.batiments.reduce(function (s, b) { return s + (b.etat === 'fini' || b.niveau ? reserveDe(b) : 0); }, RESERVE.base);
   }
   function ajouter(m, produit, n) {
     if (produit !== 'nourriture') { m[produit] = (m[produit] || 0) + n; return n; }
@@ -961,7 +1211,9 @@ var Monde = (function () {
       et.push({ fait: 'prendre', objet: objet });
     } else if (!foret) {
       var dedans = b.type === 'cercle-pierres'; // le sage s'assoit au milieu du cercle
-      var p = b.type === 'champ-ble' || b.type === 'enclos-moutons'
+      var grande = D.batiments[b.type].zone === 'campagne';
+      var p = grande ? [b.x + (hasard(m) - 0.5) * b.k * TR.TW * 0.9, b.y + (hasard(m) - 0.5) * b.k * TR.TH * 0.8]
+        : b.type === 'champ-ble' || b.type === 'enclos-moutons'
         ? [b.x + (hasard(m) - 0.5) * 120, b.y + (hasard(m) - 0.5) * 40] : dedans ? [b.x, b.y] : devant(m, b);
       et.push({ fait: 'aller', p: p });
       et.push({ fait: 'attendre', d: tr.duree, anim: 'travail', pose: pose, dans: dedans ? b.id : null });
@@ -1165,6 +1417,11 @@ var Monde = (function () {
             if (c.livre >= c.besoin) {
               c.etat = 'fini'; c.apparu = m.t; c.renove = 0;
               if (c.niveauVise) { c.niveau = c.niveauVise; c.niveauVise = null; }
+              if (c.cadeauPrevu) {
+                c.cadeau = c.cadeauPrevu; c.cadeauPrevu = null; c.ancien = null; c.ancienK = null; c.ancienXY = null;
+                if (D.batiments[c.type].travail) (c.ouvriers || []).forEach(function (oid) { var ho = m.habitants.filter(function (x) { return x.id === oid; })[0]; if (ho) affecter(m, ho, c); });
+                m.evenements.push({ type: 'modernise', bat: c.id });
+              }
               if (c.etapeVisee) {
                 c.etape = c.etapeVisee; c.etapeVisee = null;
                 if (c.etape >= 3) m.evenements.push({ type: 'merveille', bat: c.id });
@@ -1213,6 +1470,7 @@ var Monde = (function () {
       return;
     }
     if (a.chasse) { a.marche = false; return; }
+    if (a.depart > 0) { a.depart -= dt; a.marche = false; return; } // les moutons du déménagement partent les uns après les autres
     if (!a.etapes.length) {
       if (a.part) { a.parti = true; return; }
       if (a.attente > 0) { a.attente -= dt; a.marche = false; return; }
@@ -1225,7 +1483,7 @@ var Monde = (function () {
       a.attente = a.espece === 'lapin' ? 1 + hasard(m) * 3 : 3 + hasard(m) * 6;
     }
     var c = a.etapes[0], dx = c[0] - a.x, dy = c[1] - a.y, d = Math.hypot(dx, dy);
-    var v = (a.espece === 'mammouth' ? 20 : a.espece === 'lapin' ? 55 : 40) * dt;
+    var v = (a.espece === 'mammouth' ? 20 : a.espece === 'lapin' ? 55 : a.espece === 'mouton' ? 60 : 40) * dt;
     a.marche = true;
     if (Math.abs(dx) > 2) a.dir = dx > 0 ? 1 : -1;
     if (d <= v) { a.x = c[0]; a.y = c[1]; a.etapes.shift(); } else { a.x += dx / d * v; a.y += dy / d * v; }
@@ -1349,27 +1607,96 @@ var Monde = (function () {
     c.terrain = { leger: true, partiel: true, n: T.tuiles.length, meta: meta, delta: delta };
     return c;
   }
+  // ADR-051 : une sauvegarde faite sur l'ancienne grille (44 x 44) est remise sur la nouvelle (64 x 64).
+  // L'ancienne carte est au milieu de la nouvelle, décalée de P cases ; les positions en pixels bougent d'autant.
+  var ANCIEN = TR.ANCIEN_N * TR.ANCIEN_N;
+  function decalerPt(p, dx, dy) { if (Array.isArray(p) && typeof p[0] === 'number') { p[0] += dx; p[1] += dy; } }
+  function decalerCase(c) { if (Array.isArray(c) && typeof c[0] === 'number') { c[0] += TR.P; c[1] += TR.P; } }
+  function elargirMonde(o) {
+    var P = TR.P, dx = (TR.N - TR.ANCIEN_N) * TR.TW, dy = 2 * P * TR.TH;
+    var xy = function (a) { if (a && typeof a.x === 'number') { a.x += dx; a.y += dy; } };
+    (o.batiments || []).forEach(function (b) {
+      xy(b); if (typeof b.i === 'number') { b.i += P; b.j += P; }
+      decalerPt(b.ancienXY, dx, dy);
+    });
+    (o.habitants || []).forEach(function (h) {
+      xy(h);
+      (h.etapes || []).forEach(function (e) {
+        decalerPt(e.p, dx, dy);
+        if (Array.isArray(e.route)) e.route.forEach(function (q) { decalerPt(q, dx, dy); });
+        if (e.fait === 'couper' && typeof e.i === 'number') { e.i += P; e.j += P; }
+      });
+    });
+    (o.animaux || []).forEach(function (a) {
+      xy(a); decalerPt(a.fuit, dx, dy);
+      (a.etapes || []).forEach(function (q) { if (Array.isArray(q)) decalerPt(q, dx, dy); else if (q && q.p) decalerPt(q.p, dx, dy); });
+    });
+    if (o.rails && o.rails.tuiles) o.rails.tuiles.forEach(decalerCase);
+    ['lampes', 'eoliennes', 'panneaux'].forEach(function (k) { (o[k] || []).forEach(decalerCase); });
+    (o.lignes || []).forEach(function (l) { (l.poteaux || []).forEach(decalerCase); });
+    decalerCase(o.tir);
+    var T = o.terrain;
+    if (T) { decalerCase(T.gue); decalerCase(T.grotte); (T.gues || []).forEach(decalerCase); T.N = TR.N; }
+    o.elargi = true;
+    return o;
+  }
+  // les cases d'une ancienne carte (dans l'ordre de l'ancienne grille) posées au milieu de la nouvelle
+  function poserAnciennes(base, anciennes) {
+    anciennes.forEach(function (t, k) {
+      var i = Math.floor(k / TR.ANCIEN_N) + TR.P, j = (k % TR.ANCIEN_N) + TR.P, n = base.tuiles[i * TR.N + j];
+      if (n.campagne) return; // hors de l'ancienne île : personne n'y a rien changé, c'est la campagne d'aujourd'hui
+      Object.keys(n).forEach(function (c) { if (!(c in t)) delete n[c]; });
+      Object.keys(t).forEach(function (c) { n[c] = t[c]; });
+      n.i = i; n.j = j;
+    });
+  }
   // Rend un monde complet, ou null si la sauvegarde ne correspond plus à la carte de ce jeu.
   // (les sauvegardes d'avant le monde moderne gardent des cases entières : partiel absent)
   function developper(o) {
     var L = o && o.terrain;
     if (!L || !L.leger) return o || null;
-    var base = TR.generer();
-    if (base.tuiles.length !== L.n) return null;
+    var base = TR.generer(), ancienne = L.n === ANCIEN && base.tuiles.length !== ANCIEN;
+    if (base.tuiles.length !== L.n && !ancienne) return null;
     var T = {};
     Object.keys(L.meta).forEach(function (k) { T[k] = L.meta[k]; });
+    if (ancienne) {
+      // on refait l'ancienne carte de départ (le milieu de la nouvelle), on y applique les changements, puis on la repose
+      var vieilles = [];
+      for (var a = 0; a < TR.ANCIEN_N; a++) for (var b = 0; b < TR.ANCIEN_N; b++) {
+        var t0 = JSON.parse(JSON.stringify(base.tuiles[(a + TR.P) * TR.N + b + TR.P]));
+        t0.i = a; t0.j = b; delete t0.campagne;
+        vieilles.push(t0);
+      }
+      appliquer(vieilles, L);
+      poserAnciennes(base, vieilles);
+      T.tuiles = base.tuiles;
+      o.terrain = T;
+      return elargirMonde(o);
+    }
     T.tuiles = base.tuiles;
-    L.delta.forEach(function (d) {
-      if (!L.partiel) { T.tuiles[d[0]] = d[1]; return; }
-      var t = T.tuiles[d[0]];
-      Object.keys(d[1]).forEach(function (k) { if (k !== '_sans') t[k] = d[1][k]; });
-      (d[1]._sans || []).forEach(function (k) { delete t[k]; });
-    });
+    appliquer(T.tuiles, L);
     o.terrain = T;
     return o;
   }
+  function appliquer(tuiles, L) {
+    L.delta.forEach(function (d) {
+      if (!L.partiel) { tuiles[d[0]] = d[1]; return; }
+      var t = tuiles[d[0]];
+      Object.keys(d[1]).forEach(function (k) { if (k !== '_sans') t[k] = d[1][k]; });
+      (d[1]._sans || []).forEach(function (k) { delete t[k]; });
+    });
+  }
+  // une sauvegarde complète (toutes les cases) de l'ancienne grille
+  function elargir(o) {
+    if (!o || !o.terrain || !o.terrain.tuiles || o.terrain.tuiles.length !== ANCIEN || TR.N === TR.ANCIEN_N) return o;
+    var base = TR.generer();
+    poserAnciennes(base, o.terrain.tuiles);
+    o.terrain.tuiles = base.tuiles;
+    return elargirMonde(o);
+  }
   function importer(o) {
     o.evenements = [];
+    elargir(o);
     // l'île grandit d'une époque de plus : on reprend de la carte de départ à quelle époque chaque case rejoint l'île
     // (une partie sauvée avant l'âge des métaux n'avait pas le dernier anneau)
     if (o.terrain && o.terrain.tuiles) {
@@ -1384,6 +1711,13 @@ var Monde = (function () {
       if (!b.ouvriers) { b.ouvriers = b.ouvrier ? [b.ouvrier] : []; delete b.ouvrier; }
       if (D.batiments[b.type] && D.batiments[b.type].merveille && b.etape == null) b.etape = 3;
     });
+    // ADR-051, aussi dans une partie reprise : les monuments grandissent s'ils ont la place, et une partie déjà à la vapeur
+    // (ou plus tard) vit le grand déménagement des fermes à son retour
+    if (o.terrain && o.terrain.tuiles) {
+      agrandirMerveilles(o);
+      prolongerRails(o);
+      if (o.epoque >= 5 && !o.demenage) demenager(o);
+    }
     return o;
   }
 
@@ -1395,10 +1729,10 @@ var Monde = (function () {
     epoqueTerminee: epoqueTerminee, passerEpoque: passerEpoque, recolter: recolter, poserRails: poserRails, poserLigne: poserLigne, allumerVille: allumerVille,
     poserEoliennes: poserEoliennes, poserPasDeTir: poserPasDeTir, reserverTir: reserverTir, decoller: decoller, partieFinie: partieFinie, derniereEpoque: derniereEpoque,
     DUREE_VOL: DUREE_VOL, NOUVELLE_FUSEE: NOUVELLE_FUSEE, DELAI_AIR: DELAI_AIR,
-    lits: lits, bat: bat, exporter: exporter, arrondir: arrondir, sansVides: sansVides, importer: importer, exporterLeger: exporterLeger, developper: developper, BULLES_MAX: BULLES_MAX,
+    lits: lits, bat: bat, exporter: exporter, arrondir: arrondir, sansVides: sansVides, importer: importer, exporterLeger: exporterLeger, developper: developper, elargir: elargir, demenager: demenager, agrandirMerveilles: agrandirMerveilles, prolongerRails: prolongerRails, FERMES_VILLE: FERMES_VILLE, BULLES_MAX: BULLES_MAX,
     heure: heure, obscurite: obscurite, estNuit: estNuit, eclaire: eclaire, RAYON_FEU: RAYON_FEU,
     phase: phase, reveiller: reveiller, toutLeMondeDort: toutLeMondeDort, DUREES: DUREES,
-    amelioration: amelioration, ameliorer: ameliorer, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX,
+    amelioration: amelioration, ameliorer: ameliorer, ouvrirCadeau: ouvrirCadeau, depasse: depasse, quantite: quantite, NIVEAU_MAX: NIVEAU_MAX,
     REPAS: REPAS, reserveMax: reserveMax, RESERVE: RESERVE, qteDe: qteDe, besoinRepas: besoinRepas, assezAManger: assezAManger, places: places, merveilleFinie: merveilleFinie, inactif: inactif
   };
 })();

@@ -1594,6 +1594,161 @@ var Donnees = (function () {
   var femmes = ['cueilleuse', 'porteuse-jarre', 'e3-paysanne', 'e3-marchande', 'e4-paysanne', 'e4-boulangere', 'e5-ouvriere', 'e5-matelot', 'e5-inventrice', 'e6-standardiste', 'e6-aviatrice', 'e6-chercheuse', 'e6-citadine', 'e7-informaticienne', 'e7-astronaute', 'e7-astronome', 'e7-citadine'];
 
   // L'allure d'un habitant selon son métier et l'époque
+
+  // ---------- les bâtiments qui produisent évoluent avec leur temps (ADR-041, ADR-043) ----------
+  // Quatre bâtiments nouveaux, plus grands : la scierie, les champs labourés et l'étable du Moyen Âge, la ferme laitière.
+  batiments.scierie = {
+    resume: "Les scieurs coupent les troncs en planches.",
+    explication: "La scierie. Les bûcherons apportent les troncs, et les scieurs les coupent en planches avec une grande scie. Les planches servent à bâtir les maisons, les ponts et les bateaux.",
+    vignettes: [],
+    nom: 'La scierie', sprite: '04-moyen-age/scierie', epoque: 4, jusqua: 9, debloque: 'fer',
+    zone: 'pre', cout: 180, bois: 3, largeur: 240, taille: 2, grandit: { 2: 1.05, 3: 1.12 },
+    travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: 30, avec: { vapeur: 44 } }
+  };
+  batiments['champ-laboure'] = {
+    resume: "Le cheval tire la charrue : les champs sont bien plus grands.",
+    explication: "Les champs labourés. Un cheval tire une charrue en fer qui retourne la terre. On cultive de grands champs en longues bandes : du blé, des légumes, et une bande qu'on laisse se reposer.",
+    vignettes: [],
+    nom: 'Les champs labourés', sprite: '04-moyen-age/champ-laboure', epoque: 4, jusqua: 9, debloque: 'fer',
+    zone: 'pre', cout: 170, bois: 2, largeur: 330, taille: 3, grandit: { 2: 1.04, 3: 1.1 },
+    travail: { metier: 'paysan', aller: null, porte: 'ble', duree: 8, produit: 'nourriture', qte: 11 }
+  };
+  batiments.etable = {
+    resume: "Les vaches broutent dans le grand pré et dorment dans l'étable.",
+    explication: "L'étable. Les vaches broutent dans un grand pré clôturé et rentrent dormir dans l'étable. Elles donnent du lait, et le fumier rend les champs plus riches.",
+    vignettes: [],
+    nom: "L'étable", sprite: '04-moyen-age/etable', epoque: 4, jusqua: 9,
+    zone: 'pre', cout: 160, bois: 3, largeur: 330, taille: 3, grandit: { 2: 1.04, 3: 1.1 },
+    travail: { metier: 'berger', aller: null, livre: 'lait', duree: 9, produit: 'nourriture', qte: 10 }
+  };
+  batiments['ferme-laitiere'] = {
+    resume: "Beaucoup de vaches, de grands silos, et le lait part en camion.",
+    explication: "La ferme laitière. Des dizaines de vaches mangent sous un grand abri. Les silos gardent leur nourriture pour l'hiver, et un petit camion emporte le lait frais vers la ville.",
+    vignettes: [],
+    nom: 'La ferme laitière', sprite: '06-electricite/ferme-laitiere', epoque: 6, jusqua: 9, debloque: 'electricite',
+    zone: 'pre', cout: 440, bois: 4, largeur: 335, taille: 3, grandit: { 2: 1.04, 3: 1.1 },
+    travail: { metier: 'fermier', aller: null, livre: 'lait', duree: 6, produit: 'nourriture', qte: 18 }
+  };
+  // ADR-051 : au passage à la vapeur, les champs et les bêtes quittent la ville pour de grandes exploitations, à la campagne.
+  // Elles sont grandes (6 x 6 cases, ADR-053), se posent hors de la ville (zone « campagne »), et ont plus de place pour travailler.
+  batiments['grand-champ'] = {
+    resume: "Un très grand champ de blé, à la campagne, avec une machine à vapeur pour battre le grain.",
+    explication: "Les grands champs. Quand la ville a grandi, on a rassemblé tous les champs hors de la ville, en un seul très grand champ. Une machine à vapeur aide à battre le blé, et la grange garde le grain.",
+    vignettes: [],
+    nom: 'Les grands champs', sprite: '05-vapeur/grand-champ', epoque: 5, jusqua: 9,
+    zone: 'campagne', cout: 300, bois: 4, largeur: 560, taille: 4, postes: { 1: 4, 2: 6, 3: 8 }, prixNiveau: 240,
+    travail: { metier: 'paysan', aller: null, porte: 'ble', duree: 8, produit: 'nourriture', qte: 10 }
+  };
+  batiments['grand-elevage'] = {
+    resume: "Une grande ferme d'élevage, à la campagne : de grandes étables, de grands prés et des silos.",
+    explication: "La grande ferme d'élevage. Les moutons et les vaches ne vivent plus en ville : ils sont partis à la campagne, dans une grande ferme avec de longues étables, de grands prés clôturés et des silos pour leur nourriture.",
+    vignettes: [],
+    nom: "La grande ferme d'élevage", sprite: '05-vapeur/grand-elevage', epoque: 5, jusqua: 9,
+    zone: 'campagne', cout: 280, bois: 4, largeur: 560, taille: 4, postes: { 1: 4, 2: 6, 3: 8 }, prixNiveau: 220,
+    travail: { metier: 'berger', aller: null, livre: 'lait', duree: 9, produit: 'nourriture', qte: 10 }
+  };
+  // à l'électricité, ce sont elles qui prennent la forme de leur temps (la ferme au tracteur, la ferme laitière), aussi à la campagne
+  [batiments.ferme, batiments['ferme-laitiere']].forEach(function (d) {
+    d.zone = 'campagne'; d.taille = 4; d.largeur = 560; d.postes = { 1: 4, 2: 6, 3: 8 }; d.prixNiveau = 320; delete d.grandit;
+  });
+  batiments.ferme.sprite = '06-electricite/grande-ferme';
+  batiments['ferme-laitiere'].sprite = '06-electricite/grand-elevage';
+  // tour 54 : le Golden Gate part de la plage et sort de l'écran ; le jeu le dessine en pièces (jeu.js, piecesGoldenGate)
+  batiments['golden-gate'].sprite = 'deco/golden-gate-depart';
+  // ADR-053 : à l'échelle du jeu, une grande exploitation prend 6 x 6 cases. Elle n'est pas une seule image réduite : le jeu la
+  // compose sur ses cases (les sols des champs et des prés, les bâtiments, les machines qui roulent, les bêtes, les clôtures),
+  // avec les pièces de sa forme (« vapeur » ou « moderne »). Son image (sprite) ne sert plus que pour le bandeau, la fiche et le chantier.
+  var PLANS = { 'grand-champ': ['champ', 'vapeur'], 'grand-elevage': ['elevage', 'vapeur'], ferme: ['champ', 'moderne'], 'ferme-laitiere': ['elevage', 'moderne'] };
+  Object.keys(PLANS).forEach(function (k) {
+    var d = batiments[k];
+    d.plan = PLANS[k][0]; d.forme = PLANS[k][1]; d.taille = 6; d.largeur = 780; d.grandit = { 2: 1, 3: 1 };
+  });
+  // Les suites : chaque bâtiment garde ce qu'il produit, et devient la forme de son temps.
+  // On saute directement à la plus récente qu'on peut bâtir.
+  var suites = {
+    // les fermes de la ville ne changent de forme que dans la ville ; la suite se fait à la campagne (ADR-051)
+    'buisson-baies': ['champ-ble', 'champ-laboure'],
+    'ratelier-lances': ['enclos-moutons', 'etable'],
+    'champ-ble': ['champ-laboure'],
+    'enclos-moutons': ['etable'],
+    'grand-champ': ['ferme'], 'grand-elevage': ['ferme-laitiere'],
+    'tas-bois': ['scierie'],
+    'atelier-silex': ['forge', 'marechal', 'usine'], forge: ['marechal', 'usine'], marechal: ['usine'], 'atelier-potier': ['usine'],
+    'sechoir-poissons': ['port', 'port-vapeur'], pirogue: ['port', 'port-vapeur'], port: ['port-vapeur'],
+    meule: ['boulangerie', 'supermarche'], boulangerie: ['supermarche'],
+    'atelier-charron': ['garage'],
+    mine: ['centrale', 'parc-solaire'], centrale: ['parc-solaire'],
+    'central-telephone': ['bureau'],
+    'maison-scribes': ['imprimerie'],
+    'atelier-inventeur': ['laboratoire', 'centre-recherche'], laboratoire: ['centre-recherche']
+  };
+  Object.keys(suites).forEach(function (k) { batiments[k].evolue = suites[k].map(function (v) { return { vers: v }; }); });
+  // ADR-054 : au changement d'âge, les bâtiments dépassés ne se construisent plus, et le jeu dit pourquoi.
+  // « par » : ce qui le remplace (il disparaît à l'époque du premier d'entre eux) ; « epoque » : sinon, l'époque où il disparaît.
+  // Ceux déjà bâtis restent dans la ville (la flèche dorée les modernise) ; les monuments restent aussi (ADR-024).
+  var DISPARUS = {
+    tente: { par: ['maison-torchis'], pourquoi: "On ne suit plus les troupeaux : on reste au même endroit, alors on bâtit de vraies maisons en terre et en bois." },
+    'hutte-branches': { par: ['maison-torchis'], pourquoi: "On ne suit plus les troupeaux : on reste au même endroit, alors on bâtit de vraies maisons en terre et en bois." },
+    'hutte-peaux': { par: ['maison-torchis'], pourquoi: "On ne suit plus les troupeaux : on reste au même endroit, alors on bâtit de vraies maisons en terre et en bois." },
+    'buisson-baies': { par: ['champ-ble'], pourquoi: "On ne cherche plus les baies dans la nature : on sème des graines et on cultive des champs." },
+    'ratelier-lances': { epoque: 2, pourquoi: "Avec l'élevage, les bêtes vivent près du village : plus besoin de partir à la chasse." },
+    'atelier-silex': { par: ['forge'], pourquoi: "Avec le bronze, on fait des outils en métal, bien plus solides que la pierre taillée." },
+    'sechoir-poissons': { par: ['port'], pourquoi: "Au port, les bateaux à voile rapportent bien plus de poissons." },
+    pirogue: { par: ['port'], pourquoi: "Au port, de grands bateaux à voile remplacent les petites pirogues." },
+    'peintures-rupestres': { par: ['maison-scribes'], pourquoi: "On a inventé l'écriture : les scribes racontent les histoires sur des tablettes, plus seulement en peignant les murs des grottes." },
+    'maison-torchis': { par: ['maison-pierre'], pourquoi: "On sait maintenant bâtir en pierre : les maisons sont plus solides et durent bien plus longtemps." },
+    'maison-longue': { par: ['maison-pierre'], pourquoi: "On sait maintenant bâtir en pierre : les maisons sont plus solides et durent bien plus longtemps." },
+    'tas-bois': { par: ['scierie'], pourquoi: "À la scierie, une grande scie coupe les troncs en planches bien plus vite qu'à la hache." },
+    'champ-ble': { par: ['champ-laboure'], pourquoi: "Avec la charrue en fer tirée par un cheval, les champs deviennent beaucoup plus grands." },
+    'enclos-moutons': { par: ['etable'], pourquoi: "Les bêtes ont maintenant une grande étable pour dormir au chaud, à côté d'un grand pré." },
+    grenier: { par: ['moulin'], pourquoi: "Le grain se garde maintenant au moulin, où on le transforme en farine." },
+    meule: { par: ['boulangerie'], pourquoi: "Le moulin écrase le grain, et la boulangère cuit le pain pour tout le monde." },
+    'maison-pierre': { par: ['maison-colombages'], pourquoi: "Les maisons à colombages ont des étages : on loge plus de monde dans les rues de la ville." },
+    'maison-cour': { par: ['maison-colombages'], pourquoi: "Les maisons à colombages ont des étages : on loge plus de monde dans les rues de la ville." },
+    forge: { par: ['marechal'], pourquoi: "Le maréchal-ferrant travaille le fer, plus solide que le bronze." },
+    'maison-scribes': { par: ['imprimerie'], pourquoi: "L'imprimerie copie un livre en quelques heures, au lieu de tout écrire à la main." },
+    'atelier-potier': { par: ['usine'], pourquoi: "À l'usine, des machines fabriquent les pots et les assiettes par centaines." },
+    port: { par: ['port-vapeur'], pourquoi: "Les bateaux à vapeur n'ont plus besoin du vent pour avancer." },
+    'maison-colombages': { par: ['maison-briques'], pourquoi: "Les usines fabriquent des briques par milliers : on bâtit des maisons en briques et des immeubles." },
+    'maison-etages': { par: ['maison-briques'], pourquoi: "Les usines fabriquent des briques par milliers : on bâtit des maisons en briques et des immeubles." },
+    marechal: { par: ['usine'], pourquoi: "À l'usine, de grosses machines font le travail du forgeron." },
+    'champ-laboure': { par: ['grand-champ'], pourquoi: "La ville a grandi : les champs sont partis à la campagne, en un très grand champ." },
+    etable: { par: ['grand-elevage'], pourquoi: "La ville a grandi : les bêtes sont parties à la campagne, dans une grande ferme d'élevage." },
+    feu: { epoque: 6, pourquoi: "Les lampes électriques éclairent les rues la nuit : plus besoin de feu de camp pour voir clair." },
+    'atelier-charron': { par: ['garage'], pourquoi: "Les voitures à moteur remplacent les charrettes : c'est au garage qu'on les répare." },
+    'tour-horloge': { epoque: 6, pourquoi: "Chacun a maintenant une montre ou une horloge chez soi : plus besoin d'une grande tour pour lire l'heure." },
+    'maison-briques': { par: ['maison-ville'], pourquoi: "Avec l'électricité arrivent les ascenseurs : on bâtit des immeubles plus hauts." },
+    immeuble: { par: ['maison-ville'], pourquoi: "Avec l'électricité arrivent les ascenseurs : on bâtit des immeubles plus hauts." },
+    'atelier-inventeur': { par: ['laboratoire'], pourquoi: "Les inventeurs travaillent maintenant en équipe, dans de grands laboratoires." },
+    mine: { par: ['centrale'], pourquoi: "Le charbon sert maintenant à la centrale, qui envoie l'électricité dans toute la ville." },
+    'grand-champ': { par: ['ferme'], pourquoi: "Les tracteurs remplacent les machines à vapeur dans les champs." },
+    'grand-elevage': { par: ['ferme-laitiere'], pourquoi: "Les vaches sont traites à la machine, dans une grande ferme laitière." },
+    marche: { par: ['supermarche'], pourquoi: "Au supermarché, on trouve tout au même endroit." },
+    moulin: { par: ['supermarche'], pourquoi: "La farine est faite dans de grandes usines et arrive toute prête au supermarché." },
+    boulangerie: { par: ['supermarche'], pourquoi: "Au supermarché, on trouve le pain et tout le reste au même endroit." },
+    imprimerie: { par: ['bureau'], pourquoi: "Avec les ordinateurs, on écrit et on partage les textes sur un écran." },
+    'maison-ville': { par: ['immeuble-moderne'], pourquoi: "On bâtit des immeubles modernes en béton et en verre, encore plus hauts." },
+    'grand-immeuble': { par: ['immeuble-moderne'], pourquoi: "On bâtit des immeubles modernes en béton et en verre, encore plus hauts." },
+    laboratoire: { par: ['centre-recherche'], pourquoi: "Les chercheurs du monde entier travaillent ensemble dans de grands centres de recherche." },
+    centrale: { par: ['parc-solaire'], pourquoi: "Le soleil donne de l'électricité sans fumée : les panneaux solaires remplacent la centrale au charbon." },
+    'central-telephone': { par: ['bureau'], pourquoi: "Les appels passent tout seuls, sans standardiste : on travaille maintenant sur des ordinateurs." }
+  };
+  Object.keys(DISPARUS).forEach(function (k) {
+    var x = DISPARUS[k], e = x.epoque || Math.min.apply(null, x.par.map(function (v) { return batiments[v].epoque; }));
+    batiments[k].disparait = { epoque: e, pourquoi: x.pourquoi };
+  });
+  // les monuments, à partir de l'âge des métaux, sont nettement plus grands que les maisons (ADR-042)
+  Object.keys(batiments).forEach(function (k) {
+    var d = batiments[k];
+    // ADR-051 : maintenant que la carte a la place, ils prennent une case de plus de côté (2 x 2 -> 3 x 3, 1 x 1 -> 2 x 2),
+    // et sont dessinés d'autant plus grands. Ceux bâtis avant gardent leur place et leur taille (1,3 fois) s'ils n'ont pas la place de grandir.
+    if (d.merveille && d.epoque >= 3 && d.zone !== 'plage') {
+      d.tailleAvant = d.taille || 1; d.grandAvant = 1.3;
+      d.taille = d.tailleAvant + 1;
+      d.grand = 1.3 * Math.pow(d.taille / d.tailleAvant, 0.8);
+    }
+  });
+
   var allures = {
     1: {
       sage: 'sage', bucheron: 'porteur-bois', cueilleur: 'cueilleuse', tailleur: 'chasseur',
@@ -1778,6 +1933,10 @@ var Donnees = (function () {
       incendieEncore: "La maison brûle toujours, et personne ne peut y dormir. Découvre la machine à vapeur, puis construis la caserne des pompiers !",
       caserne: "La caserne est prête ! Les pompiers sortent la pompe à vapeur et courent vers la maison en feu !",
       eteint: "Bravo les pompiers ! Le feu est éteint, et la famille peut rentrer chez elle. Avec la caserne, la ville est protégée.",
+      demenagement1: "La ville est devenue grande : il n'y a plus de place pour les champs et les moutons au milieu des maisons. Ils partent à la campagne !",
+      demenagement2: "Voilà les grands champs et la grande ferme d'élevage, hors de la ville. Dans la ville, la place libérée accueillera de nouvelles maisons.",
+      disparusTitre: "Ce qui ne se construit plus",
+      disparusIntro: "Une nouvelle époque commence : ces bâtiments ne se construisent plus. Ceux qui sont déjà dans ta ville restent. Touche-les pour savoir pourquoi.",
       rails: "Le chemin de fer est posé ! Regarde : le train sort du tunnel et s'arrête à la gare.",
       moulinVapeur: "Avec la machine à vapeur, le moulin tourne même quand la rivière est basse : le meunier fait bien plus de farine !",
       faim5: "Il n'y avait pas assez à manger ce soir ! Construis un champ de blé, un moulin, une boulangerie ou un port à vapeur.",
@@ -1815,6 +1974,9 @@ var Donnees = (function () {
       maison: 'Une nouvelle maison ! Une famille va bientôt arriver.',
       bulle: 'Touche les bulles pour ramasser les pièces, la nourriture et les idées !',
       flecheVerte: 'Regarde la flèche verte : touche ce bâtiment et améliore-le pour gagner plus de pièces !',
+      flecheDoree: "La flèche dorée : ce bâtiment date d'une autre époque. Touche-le pour le moderniser, un cadeau t'attend !",
+      cadeau: "Un cadeau ! Touche-le pour l'ouvrir.",
+      modernise: 'Bravo, ton village se modernise !',
       arrivee: "Quelqu'un arrive dans la vallée !",
       nuitFeu: 'La nuit tombe. Autour du feu, on a chaud et on y voit clair : le travail continue !',
       nuitSansFeu: 'Il fait nuit et tout le monde dort… Construis un feu de camp près du village !',

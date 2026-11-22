@@ -126,17 +126,23 @@ def voix_enregistrees() -> dict:
     return res
 
 
+def bruitages() -> dict:
+    """Bruitages enregistrés (ElevenLabs) : assets/sons/<nom>.mp3 -> data URL, joués par son('<nom>')."""
+    return {f.stem: "data:audio/mpeg;base64," + base64.b64encode(f.read_bytes()).decode()
+            for f in sorted((RACINE / "assets" / "sons").glob("*.mp3"))}
+
+
 def construire(sortie: Path) -> None:
     gabarit = (RACINE / "src" / "index.html").read_text(encoding="utf-8")
     scripts = "".join(
         (RACINE / "src" / n).read_text(encoding="utf-8") + "\n"
-        for n in ["data.js", "terrain.js", "monde.js", "jeu.js"]
+        for n in ["data.js", "terrain.js", "monde.js", "routes.js", "jeu.js"]
     )
     a = assets()
     gabarit = gabarit.replace("<!--PWA-->\n", "")
     gabarit = gabarit.replace("/*LUDI*/", (RACINE / "src" / "ludi.js").read_text(encoding="utf-8"))
     voix = voix_enregistrees()
-    page = gabarit.replace("/*ASSETS*/", "window.CINE = {};\nvar ASSETS = " + json.dumps(a) + ";\nvar VOIX = " + json.dumps(voix, ensure_ascii=False) + ";").replace("/*SCRIPTS*/", scripts)
+    page = gabarit.replace("/*ASSETS*/", "window.CINE = {};\nvar ASSETS = " + json.dumps(a) + ";\nvar VOIX = " + json.dumps(voix, ensure_ascii=False) + ";\nvar SONS = " + json.dumps(bruitages()) + ";").replace("/*SCRIPTS*/", scripts)
     sortie.parent.mkdir(parents=True, exist_ok=True)
     sortie.write_text(page, encoding="utf-8")
     print(f"{sortie} : {len(page) / 1e6:.2f} Mo, {len(a)} images, {len(voix)} phrases en voix")

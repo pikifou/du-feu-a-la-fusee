@@ -46,7 +46,8 @@ test('une partie se termine : de l\'âge de pierre au monde moderne, jusqu\'au d
     assert.ok(m.fini, 'fin du jeu atteinte');
     assert.ok(m.fusees >= 1 && Monde.partieFinie(m), 'la fusée a décollé');
     const mo = (jalons.epoque7 - jalons.epoque6) / 60;
-    assert.ok(mo > 6 && mo < 16, 'le monde moderne dure à peu près comme les autres époques : ' + mo.toFixed(1) + ' min');
+    // depuis que les bâtiments dépassés ne se construisent plus (ADR-054), le joueur a moins à acheter : un peu plus rapide
+    assert.ok(mo > 5.5 && mo < 16, 'le monde moderne dure à peu près comme les autres époques : ' + mo.toFixed(1) + ' min');
     console.log(`graine ${graine} : monde moderne ${mo.toFixed(1)} min, partie entière ${(jalons.epoque7 / 60).toFixed(1)} min`);
     const ma = (jalons.epoque4 - jalons.epoque3) / 60, va = (jalons.epoque5 - jalons.epoque4) / 60, el = (jalons.epoque6 - jalons.epoque5) / 60;
     assert.ok(el > 6 && el < 16, 'l\'électricité dure à peu près comme les autres époques : ' + el.toFixed(1) + ' min');
@@ -560,9 +561,13 @@ function auMoyenAgeFini(graine) {
   return m;
 }
 
-test('vapeur : l\'île grandit vers le nord sans toucher aux anciennes cases ; nouveaux bâtiments ; les monuments du Moyen Âge ne se construisent plus', () => {
+test('vapeur : l\'île grandit (au nord, puis la campagne tout autour) sans toucher aux anciennes cases ; nouveaux bâtiments ; les monuments du Moyen Âge ne se construisent plus', () => {
   const m = auMoyenAgeFini(51);
-  const avant = JSON.stringify(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)));
+  // les cases des fermes de la ville changent (elles partent à la campagne, ADR-051) : on compare les autres
+  const fermes = new Set(m.batiments.filter(b => Monde.FERMES_VILLE[b.type]).map(b => b.id));
+  const garder = t => Terrain.surIle(m.terrain, t) && !fermes.has(t.bat);
+  const avant = JSON.stringify(m.terrain.tuiles.filter(garder));
+  const tuilesAvant = new Set(m.terrain.tuiles.filter(garder));
   const n0 = m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length;
   assert.ok(Monde.construisibles(m).indexOf('notre-dame') >= 0);
   assert.ok(Monde.passerEpoque(m));
@@ -571,11 +576,13 @@ test('vapeur : l\'île grandit vers le nord sans toucher aux anciennes cases ; n
   assert.ok(neuves.length > 150, 'un nouvel anneau : ' + neuves.length + ' cases');
   assert.strictEqual(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length, n0 + neuves.length);
   const moy = l => l.reduce((s, t) => s + t.i + t.j, 0) / l.length;
-  assert.ok(moy(neuves) < Terrain.CI + Terrain.CJ - 12, 'il est au nord, en haut de l\'écran');
+  const nord = neuves.filter(t => !t.campagne);
+  assert.ok(nord.length > 150 && moy(nord) < Terrain.CI + Terrain.CJ - 12, 'l\'anneau du nord, en haut de l\'écran');
+  assert.ok(neuves.filter(t => t.campagne).length > 500, 'la campagne tout autour (ADR-051)');
   assert.ok(neuves.every(t => Math.min(t.i, t.j, Terrain.N - 1 - t.i, Terrain.N - 1 - t.j) >= 2), 'à deux cases du bord de la grille');
   assert.ok(neuves.filter(t => t.sol === 'herbe' && !t.obj).length > 60, 'des clairières pour bâtir');
   // les cases déjà sur l'île n'ont pas bougé (les sauvegardes restent justes)
-  assert.strictEqual(JSON.stringify(m.terrain.tuiles.filter(t => t.ile && t.ile < 5)), avant);
+  assert.strictEqual(JSON.stringify(m.terrain.tuiles.filter(t => tuilesAvant.has(t))), avant);
   const c = Monde.construisibles(m);
   assert.ok(c.indexOf('maison-briques') >= 0 && c.indexOf('atelier-inventeur') >= 0, 'dès l\'arrivée');
   assert.ok(c.indexOf('usine') < 0 && c.indexOf('gare') < 0 && c.indexOf('mine') < 0, 'ils attendent leur découverte');
@@ -721,13 +728,13 @@ function aLaVapeurFinie(graine) {
   return m;
 }
 
-test('électricité : l\'île ne grandit plus, la ville se densifie ; nouveaux bâtiments ; les monuments de la vapeur ne se construisent plus', () => {
+test('électricité : la campagne grandit encore, la ville se densifie ; nouveaux bâtiments ; les monuments de la vapeur ne se construisent plus', () => {
   const m = aLaVapeurFinie(61);
   const avant = m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length;
   assert.ok(Monde.construisibles(m).indexOf('tour-eiffel') >= 0);
   assert.ok(Monde.passerEpoque(m));
   assert.strictEqual(m.epoque, 6);
-  assert.strictEqual(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length, avant, 'pas de nouvel anneau : la grille est pleine');
+  assert.ok(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length > avant + 150, 'la campagne grandit encore (ADR-051)');
   const c = Monde.construisibles(m);
   assert.ok(c.indexOf('maison-ville') >= 0 && c.indexOf('laboratoire') >= 0, 'dès l\'arrivée');
   assert.ok(c.indexOf('centrale') < 0 && c.indexOf('garage') < 0 && c.indexOf('aerodrome') < 0 && c.indexOf('grand-immeuble') < 0, 'ils attendent leur découverte');
@@ -763,7 +770,10 @@ test('électricité : il reste de la place pour toute l\'époque dans une grande
   assert.ok(m.terrain.tuiles.filter(t => t.obj === 'souche').length >= souches + 30, 'la lisière de la forêt recule un peu');
   Object.keys(D.decouvertes).forEach(k => { m.decouvertes[k] = m.decouvertes[k] || 1; });
   m.pieces = 99999;
-  const types = ['centrale', 'central-telephone', 'garage', 'ferme', 'aerodrome', 'laboratoire', 'grand-immeuble', 'maison-ville', 'grande-roue', 'neuschwanstein', 'sagrada', 'empire-state'];
+  const types = ['centrale', 'central-telephone', 'garage', 'aerodrome', 'laboratoire', 'grand-immeuble', 'maison-ville', 'grande-roue', 'neuschwanstein', 'sagrada', 'empire-state'];
+  // la ferme au tracteur vient du grand champ de la campagne, modernisé sur place (ADR-051, ADR-053)
+  const champ = m.batiments.find(b => b.type === 'grand-champ');
+  assert.ok(champ && Monde.amelioration(m, champ).vers === 'ferme' && Monde.amelioration(m, champ).place, 'le grand champ devient la ferme au tracteur (graine ' + graine + ')');
   types.forEach(k => { const b = Monde.construire(m, k, Monde.emplacementsLibres(m, k)[0]); assert.ok(b, 'construit : ' + k + ' (graine ' + graine + ')'); });
   }
 });
@@ -894,13 +904,13 @@ function alElectriciteFinie(graine) {
   return m;
 }
 
-test('monde moderne : l\'île ne grandit pas, un terrain est gardé pour la fusée ; nouveaux bâtiments ; les monuments de l\'électricité ne se construisent plus', () => {
+test('monde moderne : la campagne grandit encore, un terrain est gardé pour la fusée ; nouveaux bâtiments ; les monuments de l\'électricité ne se construisent plus', () => {
   const m = alElectriciteFinie(71);
   const avant = m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length;
   assert.ok(Monde.construisibles(m).indexOf('sagrada') >= 0);
   assert.ok(Monde.passerEpoque(m));
   assert.strictEqual(m.epoque, 7);
-  assert.strictEqual(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length, avant, 'pas de nouvel anneau');
+  assert.ok(m.terrain.tuiles.filter(t => Terrain.surIle(m.terrain, t)).length > avant + 100, 'la campagne grandit encore (ADR-051)');
   const c = Monde.construisibles(m);
   ['supermarche', 'centre-recherche', 'immeuble-moderne'].forEach(k => assert.ok(c.indexOf(k) >= 0, k + ' dès l\'arrivée'));
   ['bureau', 'tour', 'parc-solaire', 'observatoire', 'pas-de-tir'].forEach(k => assert.ok(c.indexOf(k) < 0, k + ' attend sa découverte (le pas de tir se construit tout seul)'));
@@ -938,7 +948,11 @@ test('monde moderne : il reste de la place pour toute l\'époque dans une grande
     Object.keys(D.decouvertes).forEach(k => { if (k !== 'fusee') m.decouvertes[k] = m.decouvertes[k] || 1; });
     m.pieces = 99999;
     const types = ['supermarche', 'centre-recherche', 'bureau', 'parc-solaire', 'observatoire', 'immeuble-moderne', 'tour', 'atomium', 'pyramide-louvre', 'burj-khalifa', 'opera-sydney', 'spoutnik'];
-    types.forEach(k => { const b = Monde.construire(m, k, Monde.emplacementsLibres(m, k)[0]); assert.ok(b, 'construit : ' + k + ' (graine ' + graine + ')'); });
+    // depuis que les fermes et les étables prennent plus de place (ADR-041), une ville pleine peut manquer de place pour un ou deux monuments ;
+    // les bâtiments utiles, eux, trouvent toujours leur place
+    let sansPlace = 0;
+    types.forEach(k => { const b = Monde.construire(m, k, Monde.emplacementsLibres(m, k)[0]); if (!b && D.batiments[k].deco) { sansPlace++; return; } assert.ok(b, 'construit : ' + k + ' (graine ' + graine + ')'); });
+    assert.ok(sansPlace <= 2, 'au plus deux monuments sans place (graine ' + graine + ') : ' + sansPlace);
     // le terrain de la fusée est resté libre : le pas de tir s'y pose
     m.idees = 999; m.decouvertes.fusee = 0; delete m.decouvertes.fusee;
     assert.ok(Monde.decouvrir(m, 'fusee'));
@@ -964,8 +978,10 @@ test('monde moderne : l\'air devient sale, plus personne ne vient ; l\'énergie 
   m.nourriture = Monde.reserveMax(m); m.faim = 0;
   m.batiments.forEach(b => { if (D.batiments[b.type].travail && D.batiments[b.type].travail.produit === 'nourriture') b.ouvriers = b.ouvriers.slice(0, Monde.places(b)); });
   const n0 = m.habitants.length;
+  // seuls viennent ceux qui manquent pour nourrir la ville (les postes libres des fermes)
+  const vides = m.batiments.reduce((s, b) => s + (b.etat === 'fini' && D.batiments[b.type].travail && D.batiments[b.type].travail.produit === 'nourriture' ? Math.max(0, Monde.places(b) - b.ouvriers.length) : 0), 0);
   avancer(90, () => { m.nourriture = Monde.reserveMax(m); m.faim = 0; return false; });
-  assert.ok(m.habitants.length <= n0 + 1, 'presque personne n\'arrive dans l\'air sale : ' + n0 + ' puis ' + m.habitants.length);
+  assert.ok(m.habitants.length <= n0 + 1 + vides, 'presque personne n\'arrive dans l\'air sale : ' + n0 + ' puis ' + m.habitants.length + ' (' + vides + ' postes pour nourrir)');
   avancer(400, () => encore > 0);
   assert.ok(encore >= 1, 'on le rappelle au matin');
   // l'énergie solaire
@@ -1079,3 +1095,230 @@ test('monde moderne : la place de la fusée existe dans chaque partie de l\'éle
     assert.ok(bord, 'au bord de l\'île (graine ' + g + ')');
   }
 });
+
+test('moderniser : le champ de blé du néolithique devient les champs labourés, plus grands, et laisse un cadeau (ADR-040, ADR-041)', () => {
+  const m = auNeolithiqueFini(31);
+  let champ = m.batiments.find(b => b.type === 'champ-ble' && b.etat === 'fini');
+  if (!champ) { m.pieces += 500; champ = Monde.construire(m, 'champ-ble', Monde.emplacementsLibres(m, 'champ-ble')[0]); laisser(m, 120); }
+  assert.ok(champ && champ.etat === 'fini', 'un champ de blé fini');
+  // au néolithique, rien à moderniser
+  assert.notStrictEqual((Monde.amelioration(m, champ) || {}).genre, 'moderne');
+  for (let e = 0; e < 2; e++) { Monde.passerEpoque(m); Monde.decouvertesEpoque(m).forEach(id => { if (id !== 'fer') m.decouvertes[id] = 1; }); } // le Moyen Âge, sans le fer
+  // ADR-054 : au Moyen Âge, le champ de blé ne se bâtit plus, même avant le fer ; celui qui est bâti reste
+  assert.ok(Monde.construisibles(m).indexOf('champ-ble') < 0, 'au Moyen Âge, le champ de blé ne se bâtit plus');
+  assert.ok(m.batiments.indexOf(champ) >= 0, 'celui qui est bâti reste');
+  assert.strictEqual(m.epoque, 4);
+  m.decouvertes.fer = m.decouvertes.fer || 1;
+  // le champ de blé ne se bâtit plus : sa forme du Moyen Âge le remplace dans le bandeau
+  assert.ok(Monde.construisibles(m).indexOf('champ-ble') < 0, 'le champ de blé est dépassé');
+  assert.ok(Monde.construisibles(m).indexOf('champ-laboure') >= 0, 'les champs labourés se bâtissent');
+  const a = Monde.amelioration(m, champ);
+  assert.strictEqual(a.genre, 'moderne'); assert.strictEqual(a.vers, 'champ-laboure'); assert.ok(a.place, 'il y a la place autour');
+  m.pieces += a.cout + 10;
+  const avant = m.pieces;
+  assert.ok(Monde.ameliorer(m, champ.id));
+  assert.strictEqual(champ.type, 'champ-laboure'); assert.strictEqual(champ.k, 3); assert.strictEqual(champ.etat, 'chantier');
+  assert.strictEqual(m.terrain.tuiles.filter(t => t.bat === champ.id).length, 9, 'il prend 3 x 3 cases');
+  for (let n = 0; n < 40 && champ.etat !== 'fini'; n++) laisser(m, 15);
+  assert.strictEqual(champ.etat, 'fini');
+  assert.ok(champ.cadeau && champ.cadeau.pieces > 0, 'un cadeau attend');
+  const p0 = m.pieces, c = Monde.ouvrirCadeau(m, champ.id);
+  assert.strictEqual(m.pieces, p0 + c.pieces); assert.ok(!champ.cadeau);
+  assert.ok(avant > 0);
+});
+
+test('les souches des arbres coupés s\'en vont au matin (on en garde une sur cinq) (ADR-041)', () => {
+  const m = Monde.nouveau(5);
+  const tuiles = m.terrain.tuiles.filter(t => t.sol === 'herbe' && !t.bat && !t.obj).slice(0, 50);
+  tuiles.forEach(t => { t.obj = 'souche'; });
+  jusquA(m, 'nuit'); jusquA(m, 'aube');
+  const restent = tuiles.filter(t => t.obj === 'souche').length;
+  assert.ok(restent > 0 && restent <= 15, 'il en reste quelques-unes : ' + restent);
+});
+
+test('les routes (bac à sable, ADR-044) : chaque façon donne un réseau, et chaque forme de case a sa pièce', () => {
+  const Routes = require('../src/routes.js');
+  const m = auMoyenAgeFini(41);
+  laisser(m, 60);
+  for (const mode of ['usure', 'plan', 'melange']) {
+    const r = Routes.calculer(m, mode);
+    Object.keys(r.cases).forEach(k => { const t = m.terrain.tuiles[+k]; assert.ok(Routes.praticable(m.terrain, t), mode + ' : une route sur une case praticable'); });
+  }
+  const plan = Routes.calculer(m, 'plan');
+  assert.ok(Object.keys(plan.cases).length > 5, 'le réseau tracé relie des bâtiments');
+  for (let mq = 0; mq < 16; mq++) {
+    const [n, r] = Routes.piece(mq);
+    const bases = { 1: 5, 2: 3, 3: 7, 4: 15, 5: 1, 6: 0 };
+    let b = bases[n]; for (let k = 0; k < r; k++) b = ((b << 1) | (b >> 3)) & 15;
+    assert.strictEqual(b, mq, 'masque ' + mq);
+  }
+});
+
+// ---------- ADR-050, ADR-051 : la carte plus grande, le grand déménagement des fermes, les monuments plus grands ----------
+const fs = require('fs'), path = require('path');
+const ancienne = f => JSON.parse(fs.readFileSync(path.join(__dirname, 'grille-44', f), 'utf8'));
+
+test('la carte passe de 44 à 64 cases de côté : l\'ancienne carte est au milieu, identique', () => {
+  assert.strictEqual(Terrain.N, 64);
+  const T = Terrain.generer(), P = Terrain.P;
+  // le village de départ, la grotte et le gué sont au même endroit de l'ancienne carte, décalés de P cases
+  assert.strictEqual(Terrain.CI, 22 + P);
+  assert.deepStrictEqual(T.grotte, [23 + P, 12 + P]);
+  assert.deepStrictEqual(T.gue, [27 + P, 15 + P]);
+  // les époques 1 à 4 n'ont rien de nouveau : la campagne n'arrive qu'à la vapeur
+  assert.ok(T.tuiles.every(t => !t.campagne || !t.ile || t.ile >= 5));
+});
+
+test('une sauvegarde faite sur l\'ancienne carte (44 x 44) reprend sur la nouvelle, au même endroit', () => {
+  for (const f of ['e2-encours-leger.json', 'e4-fini-leger.json', 'e6-fini-leger.json']) {
+    const vieux = ancienne(f);
+    const nb = vieux.batiments.length, ep = vieux.epoque, pieces = vieux.pieces, hab = vieux.habitants.length;
+    const m = Monde.importer(Monde.developper(vieux));
+    assert.ok(m, f);
+    assert.strictEqual(m.terrain.tuiles.length, 64 * 64, f);
+    assert.strictEqual(m.terrain.N, 64, f);
+    assert.strictEqual(m.epoque, ep, f);
+    assert.strictEqual(m.habitants.length, hab, f);
+    // chaque bâtiment est sur ses cases et dessiné au bon endroit
+    m.batiments.forEach(b => {
+      if (b.type === 'passerelle' || b.type === 'pont-pierre') return;
+      const c = Terrain.centreEmpreinte(b.i, b.j, b.k);
+      assert.ok(Math.abs(b.x - c[0]) < 1 && Math.abs(b.y - c[1]) < 1, f + ' ' + b.type);
+      Terrain.empreinte(m.terrain, b.i, b.j, b.k).forEach(t => assert.strictEqual(t.bat, b.id, f + ' ' + b.type));
+    });
+    // chaque habitant est sur l'île
+    m.habitants.forEach(h => { const c = Terrain.tuileDe(h.x, h.y), t = Terrain.tuile(m.terrain, c[0], c[1]); assert.ok(t && Terrain.surIle(m.terrain, t), f + ' habitant ' + h.id); });
+    assert.ok(Terrain.tuile(m.terrain, m.terrain.gue[0], m.terrain.gue[1]).gue, f + ' le gué');
+    if (m.rails) m.rails.tuiles.forEach(c => assert.ok(Terrain.tuile(m.terrain, c[0], c[1]).rail, f + ' les rails'));
+    (m.lampes || []).forEach(c => assert.ok(Terrain.tuile(m.terrain, c[0], c[1]).lampe, f + ' les lampadaires'));
+    if (ep < 5) {
+      assert.strictEqual(m.batiments.length, nb, f);
+      assert.strictEqual(m.pieces, pieces, f);
+    }
+    // on continue à jouer
+    laisser(m, 60);
+    // et la sauvegarde légère de la nouvelle carte se relit
+    const r = Monde.importer(Monde.developper(JSON.parse(JSON.stringify(Monde.exporterLeger(m)))));
+    assert.strictEqual(r.batiments.length, m.batiments.length, f);
+    assert.strictEqual(r.terrain.tuiles.length, 64 * 64, f);
+  }
+});
+
+test('au passage à la vapeur, les champs et les bêtes quittent la ville pour deux grandes exploitations de 6 x 6 cases à la campagne (ADR-050, ADR-051, ADR-053)', () => {
+  const m = auMoyenAgeFini(91);
+  // une étable en plus si le joueur n'avait pas d'élevage
+  m.pieces += 2000;
+  if (!m.batiments.some(b => /enclos|etable/.test(b.type))) Monde.construire(m, 'etable', Monde.emplacementsLibres(m, 'etable')[0]).etat = 'fini';
+  const fermes = m.batiments.filter(b => Monde.FERMES_VILLE[b.type] && b.etat === 'fini');
+  assert.ok(fermes.some(b => /champ|baies/.test(b.type)) && fermes.some(b => /enclos|etable/.test(b.type)), 'des champs et des enclos en ville');
+  const postes = fermes.reduce((s, b) => s + Monde.places(b), 0), travailleurs = fermes.reduce((s, b) => s + b.ouvriers.length, 0);
+  const cases = new Set(); fermes.forEach(b => Terrain.empreinte(m.terrain, b.i, b.j, b.k).forEach(t => cases.add(t)));
+  const reserve = Monde.reserveMax(m);
+  assert.ok(Monde.passerEpoque(m));
+  const ev = m.evenements.find(e => e.type === 'demenagement');
+  assert.ok(ev, 'la scène du déménagement');
+  assert.strictEqual(ev.anciens.length, fermes.length);
+  assert.ok(m.demenage);
+  // plus aucune ferme en ville
+  assert.strictEqual(m.batiments.filter(b => Monde.FERMES_VILLE[b.type] && D.batiments[b.type].zone !== 'campagne').length, 0);
+  ['buisson-baies', 'champ-ble', 'champ-laboure', 'enclos-moutons', 'etable'].forEach(k => assert.ok(Monde.construisibles(m).indexOf(k) < 0, k + ' ne se bâtit plus en ville'));
+  // les cases libérées sont libres
+  cases.forEach(t => assert.ok(!t.bat));
+  // un grand champ et une grande ferme d'élevage, de 4 x 4 cases, sur la campagne, loin de la ville
+  const champ = m.batiments.find(b => b.type === 'grand-champ'), elev = m.batiments.find(b => b.type === 'grand-elevage');
+  assert.ok(champ && elev);
+  [champ, elev].forEach(b => {
+    assert.strictEqual(b.k, 6);
+    assert.strictEqual(b.etat, 'fini');
+    Terrain.empreinte(m.terrain, b.i, b.j, 6).forEach(t => { assert.ok(t.ile >= 5 && Terrain.surIle(m.terrain, t)); assert.ok(!t.obj); });
+    for (let a = -3; a < 9; a++) for (let c = -3; c < 9; c++) {
+      const t = Terrain.tuile(m.terrain, b.i + a, b.j + c), o = t && t.bat && Monde.bat(m, t.bat);
+      assert.ok(!o || D.batiments[o.type].zone === 'campagne' || o.type === 'passerelle' || o.type === 'pont-pierre', 'loin de la ville : ' + (o && o.type));
+    }
+  });
+  // assez de postes pour tous ceux qui y travaillaient, et la réserve n'a pas rétréci
+  assert.ok(Monde.places(champ) + Monde.places(elev) >= Math.min(postes, 16));
+  assert.ok(Monde.reserveMax(m) >= reserve);
+  // les moutons partent à pied et arrivent
+  assert.ok(m.animaux.filter(a => a.espece === 'mouton').length >= 3);
+  laisser(m, 90);
+  assert.strictEqual(m.animaux.filter(a => a.espece === 'mouton').length, 0, 'les moutons sont arrivés');
+  assert.ok(champ.ouvriers.length + elev.ouvriers.length >= travailleurs, 'ceux qui y travaillaient y travaillent encore');
+  // une seule fois
+  assert.strictEqual(Monde.demenager(m), null);
+  // on peut encore bâtir une grande exploitation, à la campagne
+  m.pieces = 5000;
+  const l = Monde.emplacementsLibres(m, 'grand-champ');
+  assert.ok(l.length > 0, 'de la place à la campagne');
+  // à l'électricité, elles prennent la forme de leur temps, sur place
+  Monde.decouvertesEpoque(m).forEach(id => { m.decouvertes[id] = 1; }); m.feuPrevu = null;
+  assert.ok(Monde.passerEpoque(m));
+  m.decouvertes.voiture = 1; m.decouvertes.electricite = 1;
+  const a = Monde.amelioration(m, champ);
+  assert.strictEqual(a.vers, 'ferme');
+  assert.deepStrictEqual(a.ancre, [champ.i, champ.j]);
+  assert.strictEqual(Monde.amelioration(m, elev).vers, 'ferme-laitiere');
+});
+
+test('une partie déjà à la vapeur ou plus tard vit le déménagement des fermes à son retour', () => {
+  const vieux = ancienne('e6-fini-leger.json');
+  const avant = vieux.batiments.filter(b => Monde.FERMES_VILLE[b.type]).length;
+  assert.ok(avant > 0);
+  const m = Monde.importer(Monde.developper(vieux));
+  assert.ok(m.evenements.some(e => e.type === 'demenagement'));
+  assert.strictEqual(m.batiments.filter(b => Monde.FERMES_VILLE[b.type] && D.batiments[b.type].zone !== 'campagne').length, 0);
+  assert.ok(m.batiments.some(b => b.type === 'ferme' && b.k === 6) && m.batiments.some(b => b.type === 'ferme-laitiere' && b.k === 6), 'les formes de l\'électricité');
+  // le tunnel du train est resté au bord de l'île, qui a grandi
+  if (m.rails && m.rails.tuiles.length >= 2) {
+    const f = m.rails.tuiles[m.rails.tuiles.length - 1];
+    assert.ok([[1, 0], [-1, 0], [0, 1], [0, -1]].some(d => { const v = Terrain.tuile(m.terrain, f[0] + d[0], f[1] + d[1]); return !v || !Terrain.surIle(m.terrain, v); }), 'le tunnel au bord de l\'île');
+  }
+  // la fois suivante, rien ne recommence
+  const r = Monde.importer(Monde.developper(JSON.parse(JSON.stringify(Monde.exporterLeger(m)))));
+  assert.ok(!r.evenements.some(e => e.type === 'demenagement'));
+});
+
+test('les monuments sont plus grands : une case de plus de côté ; ceux d\'avant grandissent quand ils ont la place (ADR-051)', () => {
+  assert.strictEqual(D.batiments.parthenon.taille, 3);
+  assert.strictEqual(D.batiments['big-ben'].taille, 2);
+  assert.strictEqual(D.batiments.stonehenge.taille, 2, 'pas ceux du néolithique');
+  const m = auxMetauxFinis(93);
+  m.pieces = 9000;
+  const b = Monde.construire(m, 'parthenon', Monde.emplacementsLibres(m, 'parthenon')[0]);
+  assert.strictEqual(b.k, 3);
+  // un monument posé avant, sur 2 x 2 cases, au milieu d'un pré libre
+  b.k = 2; Terrain.empreinte(m.terrain, b.i, b.j, 3).forEach(t => { if (t.i >= b.i + 2 || t.j >= b.j + 2) t.bat = null; });
+  assert.strictEqual(Monde.agrandirMerveilles(m), 1);
+  assert.strictEqual(b.k, 3);
+  Terrain.empreinte(m.terrain, b.i, b.j, 3).forEach(t => assert.strictEqual(t.bat, b.id));
+});
+
+test("au changement d'âge, les bâtiments dépassés ne se construisent plus, et le jeu dit lesquels et pourquoi (ADR-054)", () => {
+  // chaque bâtiment qui disparaît a sa raison, et ce qui le remplace existe
+  Object.keys(D.batiments).forEach(k => {
+    const d = D.batiments[k];
+    if (!d.disparait) return;
+    assert.ok(d.disparait.pourquoi.length > 20, 'raison pour ' + k);
+    assert.ok(d.disparait.epoque > d.epoque, 'il disparaît après son époque : ' + k);
+    assert.ok(!d.merveille, 'les monuments restent : ' + k);
+  });
+  // à chaque époque, une maison et de quoi nourrir dès que les découvertes de l'époque sont faites
+  const m = Monde.nouveau(7);
+  for (let e = 1; e <= 7; e++) {
+    m.epoque = e; m.demenage = e >= 5;
+    Object.keys(D.decouvertes).forEach(k => { if (D.decouvertes[k].epoque <= e) m.decouvertes[k] = 1; });
+    const c = Monde.construisibles(m);
+    assert.ok(c.some(k => D.batiments[k].lits), "une maison à l'époque " + e);
+    assert.ok(c.some(k => D.batiments[k].travail && D.batiments[k].travail.produit === 'nourriture'), "de quoi nourrir à l'époque " + e);
+    c.forEach(k => { const d = D.batiments[k]; assert.ok(!d.disparait || d.disparait.epoque > e, k + " est dépassé à l'époque " + e); });
+  }
+  ['atelier-silex', 'ratelier-lances', 'tente', 'feu', 'grenier', 'maison-torchis'].forEach(k => assert.ok(Monde.construisibles(m).indexOf(k) < 0, k + ' ne se bâtit plus au monde moderne'));
+  // le passage d'âge annonce ce qui disparaît (seulement ce que le joueur pouvait bâtir)
+  const n = auNeolithiqueFini(95);
+  n.evenements.length = 0;
+  Monde.passerEpoque(n);
+  const ev = n.evenements.find(e => e.type === 'disparus');
+  assert.ok(ev && ev.liste.indexOf('atelier-silex') >= 0 && ev.liste.indexOf('maison-torchis') >= 0, "à l'âge des métaux : " + (ev && ev.liste));
+  assert.ok(ev.liste.every(k => D.batiments[k].disparait.epoque === 3));
+});
+

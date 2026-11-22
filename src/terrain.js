@@ -1,19 +1,33 @@
 // Terrain en tuiles isométriques (ADR-012) : génération de l'île, chemins, usure de l'herbe (ADR-013).
 // Pur, sans DOM : testable sous node.
 var Terrain = (function () {
-  var N = 44;              // la grille fait N x N tuiles
+  // ADR-051 : la grille est passée de 44 x 44 à 64 x 64 cases. L'ancienne carte est au milieu, décalée de P cases :
+  // la case (a, b) d'avant est maintenant (a + P, b + P), et la génération travaille toujours en coordonnées d'avant
+  // (a = i - P, b = j - P), pour que l'ancienne carte reste exactement la même. Une sauvegarde d'avant est remise
+  // sur la nouvelle grille par Monde.elargir (numéros de cases et pixels décalés).
+  var ANCIEN_N = 44, P = 10;
+  var N = ANCIEN_N + 2 * P; // la grille fait N x N tuiles
   var TW = 64, TH = 32;    // demi-largeur et demi-hauteur d'une tuile (losange 128 x 64)
   var OX = N * TW, OY = 120;
-  var CI = 22, CJ = 22;    // tuile du centre du village
+  var CI = 22 + P, CJ = 22 + P; // tuile du centre du village
   var RAYONS = { 1: 12.5, 2: 16.5, 3: 19.5, 4: 20.5 }; // rayon de l'île par époque
-  // À la vapeur, la grille ne laisse plus de place sur les côtés : l'île grandit vers le nord (le haut de l'écran),
-  // autour d'un centre décalé, en restant à deux cases du bord de la grille. Ces cases étaient hors de l'île avant :
-  // les changer ne touche à aucune sauvegarde (cf. kb/domains/tech/tech.md).
+  // À la vapeur, l'ancienne grille ne laissait plus de place sur les côtés : l'île grandit vers le nord (le haut de l'écran),
+  // autour d'un centre décalé, en restant à deux cases du bord de l'ancienne grille.
   var NORD = { decale: 3, rayon: 23.5, marge: 2 };
-  function anneauNord(i, j, bruitIle) {
-    var d = Math.hypot(i - (CI - NORD.decale), j - (CJ - NORD.decale)) + bruitIle;
-    return d < NORD.rayon && Math.min(i, j, N - 1 - i, N - 1 - j) >= NORD.marge;
+  function anneauNord(a, b, bruitIle) {
+    var d = Math.hypot(a - (22 - NORD.decale), b - (22 - NORD.decale)) + bruitIle;
+    return d < NORD.rayon && Math.min(a, b, ANCIEN_N - 1 - a, ANCIEN_N - 1 - b) >= NORD.marge;
   }
+  // ADR-051 : la campagne. Sur la nouvelle grille, l'île grandit encore tout autour à la vapeur (là où partent les grandes
+  // fermes), puis à l'électricité et au monde moderne. On garde la mer du sud telle qu'elle était.
+  var CAMPAGNE = { 5: 29, 6: 31.5, 7: 34 };
+  function anneauCampagne(a, b, bruitIle) {
+    var i = a + P, j = b + P;
+    if (Math.min(i, j, N - 1 - i, N - 1 - j) < 2 || a + b > 64) return 0;
+    var d = Math.hypot(a - 20, b - 20) + bruitIle;
+    return d < CAMPAGNE[5] ? 5 : d < CAMPAGNE[6] ? 6 : d < CAMPAGNE[7] ? 7 : 0;
+  }
+  function dansAncienne(a, b) { return a >= 0 && b >= 0 && a < ANCIEN_N && b < ANCIEN_N; }
 
   // ---------- coordonnées ----------
   function centre(i, j) { return [(i - j) * TW + OX, (i + j + 1) * TH + OY]; }
@@ -42,14 +56,18 @@ var Terrain = (function () {
   function generer() {
     var T = { N: N, tuiles: [], gue: null, grotte: null, epoque: 1 };
     for (var i = 0; i < N; i++) for (var j = 0; j < N; j++) {
-      var u = i - j, v = i + j;
-      var bi = (bruit(i / 3, j / 3, 7) - 0.5) * 3;
-      var d = Math.hypot(i - CI, j - CJ) + bi;
+      var a = i - P, b = j - P; // coordonnées de l'ancienne grille
+      var u = a - b, v = a + b;
+      var bi = (bruit(a / 3, b / 3, 7) - 0.5) * 3;
+      var d = Math.hypot(a - 22, b - 22) + bi;
+      var ileAncienne = dansAncienne(a, b) ? (d < RAYONS[1] ? 1 : d < RAYONS[2] ? 2 : d < RAYONS[3] ? 3 : d < RAYONS[4] ? 4 : anneauNord(a, b, bi) ? 5 : 0) : 0;
       var t = {
-        i: i, j: j, sol: 'herbe', obj: null, vari: Math.floor(h2(i, j, 3) * 1000),
-        usure: 0, bat: null, ile: d < RAYONS[1] ? 1 : d < RAYONS[2] ? 2 : d < RAYONS[3] ? 3 : d < RAYONS[4] ? 4 : anneauNord(i, j, bi) ? 5 : 0,
+        i: i, j: j, sol: 'herbe', obj: null, vari: Math.floor(h2(a, b, 3) * 1000),
+        usure: 0, bat: null, ile: ileAncienne || anneauCampagne(a, b, bi),
         sauvage: false
       };
+      // la campagne : tout ce qui n'était pas sur l'ancienne île (hors de l'ancienne grille, ou sur ses bords restés hors de l'île)
+      if (!ileAncienne) t.campagne = true;
       var ru = riviereU(v);
       if (Math.abs(u - ru) < 1.15 && v < 60) t.sol = 'eau';
       if (v >= 57) t.sol = 'sable';
@@ -60,12 +78,13 @@ var Terrain = (function () {
     // collines de roche au nord-est, avec la grotte
     var gr = null;
     tous(T).forEach(function (t) {
-      var u = t.i - t.j, v = t.i + t.j;
-      var dg = Math.hypot(t.i - 24, t.j - 11);
-      if (t.sauvage && t.sol === 'herbe' && v < 36 && u > riviereU(v) + 2.5 && (dg < 2.6 || bruit(t.i / 2.5, t.j / 2.5, 11) > 0.38)) t.sol = 'roche';
+      var a = t.i - P, b = t.j - P, u = a - b, v = a + b;
+      var dg = Math.hypot(a - 24, b - 11);
+      if (!dansAncienne(a, b)) return; // la campagne neuve n'a pas de collines de roche
+      if (t.sauvage && t.sol === 'herbe' && v < 36 && u > riviereU(v) + 2.5 && (dg < 2.6 || bruit(a / 2.5, b / 2.5, 11) > 0.38)) t.sol = 'roche';
     });
     // la grotte : tuile de roche la plus proche d'un point choisi
-    var cible = [24, 12];
+    var cible = [24 + P, 12 + P];
     var best = null, bd = 1e9;
     tous(T).forEach(function (t) {
       if (t.sol !== 'roche' || t.ile !== 1) return;
@@ -76,7 +95,7 @@ var Terrain = (function () {
     // le gué : tuile d'eau de la rivière la plus proche du village, côté nord
     bd = 1e9;
     tous(T).forEach(function (t) {
-      var v = t.i + t.j;
+      var v = t.i + t.j - 2 * P;
       if (t.sol !== 'eau' || v > 50 || t.ile !== 1) return;
       var dd = Math.hypot(t.i - (CI + 4), t.j - (CJ - 4));
       if (dd < bd) { bd = dd; gr = t; }
@@ -101,15 +120,17 @@ var Terrain = (function () {
     // forêt, rochers, fleurs, roseaux
     tous(T).forEach(function (t) {
       if (t.obj) return;
+      var a = t.i - P, b = t.j - P;
       var dc = Math.hypot(t.i - CI, t.j - CJ);
-      var f = bruit(t.i / 4, t.j / 4, 21);
-      var r = h2(t.i, t.j, 5);
+      var f = bruit(a / 4, b / 4, 21);
+      var r = h2(a, b, 5);
       if (t.sol === 'herbe') {
         var foret = f > 0.52 && dc > 6.5;
-        if ((t.i - t.j) < -5 && dc > 6) foret = foret || f > 0.35;   // grande forêt à l'ouest
-        if (t.ile === 5) foret = f > 0.6 || ((t.i - t.j) < -9 && f > 0.45); // au nord, des clairières pour bâtir
+        if ((a - b) < -5 && dc > 6) foret = foret || f > 0.35;   // grande forêt à l'ouest
+        if (t.ile === 5 && !t.campagne) foret = f > 0.6 || ((a - b) < -9 && f > 0.45); // au nord, des clairières pour bâtir
+        if (t.campagne) foret = f > 0.64 || (t.ile === 0 && f > 0.5); // la campagne : des prés, quelques bois
         if (foret && r < 0.82) { t.obj = 'arbre'; t.bois = 3; return; }
-        if (!foret && dc > 5.5 && r < (t.ile === 5 ? 0.02 : 0.04)) { t.obj = 'arbre'; t.bois = 3; return; }
+        if (!foret && dc > 5.5 && r < (t.ile >= 5 ? 0.02 : 0.04)) { t.obj = 'arbre'; t.bois = 3; return; }
         if (r > 0.965 && dc > 3) { t.obj = 'rocher'; return; }
         if (r > 0.86) t.deco = r > 0.92 ? 'fleurs' : 'touffe';
         if (pres(T, t, 'eau') && r > 0.55) t.deco = 'roseaux';
@@ -226,7 +247,7 @@ var Terrain = (function () {
   function centreEmpreinte(i, j, k) { return centre(i + (k - 1) / 2, j + (k - 1) / 2); }
 
   return {
-    N: N, TW: TW, TH: TH, OX: OX, OY: OY, CI: CI, CJ: CJ, RAYONS: RAYONS,
+    N: N, TW: TW, TH: TH, OX: OX, OY: OY, CI: CI, CJ: CJ, RAYONS: RAYONS, P: P, ANCIEN_N: ANCIEN_N,
     generer: generer, tuile: tuile, tuileDe: tuileDe, centre: centre, centreEmpreinte: centreEmpreinte,
     empreinte: empreinte, pres: pres, surIle: surIle, bloque: bloque, chemin: chemin,
     user: user, repousser: repousser, etatHerbe: etatHerbe, riviereU: riviereU, h2: h2

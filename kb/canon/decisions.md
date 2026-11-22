@@ -249,3 +249,130 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : acceptée. Précise ADR-021 et ADR-031.
 - **Décision** : (1) ce qu'on améliore a un visuel nettement différent. (2) Le jeu encourage à améliorer les bâtiments qui produisent, pour que Joshua sache quoi faire pour gagner plus de pièces.
 - **Contexte** : Julien : « avoir des visuels différents pour les trucs qu'on améliore » ; « encourage à améliorer les éléments qui produisent pour que mon fils sache quoi faire pour gagner plus d'argent ».
+
+## ADR-039 : pas de voix ElevenLabs, quelques bruitages
+- **Date** : 2026-11-18
+- **Statut** : acceptée.
+- **Décision** : les phrases ajoutées depuis l'âge des métaux ne sont pas enregistrées avec ElevenLabs ; elles restent lues par la voix du navigateur. Quelques bruitages enregistrés pour les moments forts (`assets/sons/`, joués par `son('<nom>')`, sinon les petites notes) : le décollage de la fusée, un bâtiment fini, une découverte.
+- **Contexte** : Julien : « j'ai pas envie que tu l'utilises pour générer les voix, parce que ça va me coûter cher, surtout si on veut faire du multilingue. Tu peux faire un peu de bruitage avec, mais t'enflamme pas plus que ça. »
+
+## ADR-040 : une flèche et un petit cadeau pour moderniser la ville
+- **Date** : 2026-11-21
+- **Statut** : décidée par Julien
+- **Décision** : le jeu pousse à moderniser les bâtiments d'une époque passée par une flèche à part (dorée, pas la flèche verte des niveaux) et par un petit cadeau quand la modernisation est finie. Rien ne se modernise tout seul (ADR-028 tient toujours).
+- **Contexte** : Julien, après une partie de Joshua : « Dans sa sauvegarde actuelle, on trouve des bâtiments du néolithique et des bâtiments de maintenant. Du coup, il faudrait réussir à homogénéiser un peu la mise à jour des villes. » Entre trois façons proposées (les vieux bâtiments rapportent moins, une flèche et un cadeau, une part de la ville à moderniser pour changer d'époque) : « Oui, une flèche et un petit cadeau, c'est important, je pense. »
+- **Écarté** : faire baisser ce que rapportent les vieux bâtiments ; exiger une part de ville modernisée pour changer d'époque.
+
+## ADR-041 : les bâtiments qui produisent évoluent avec leur temps, et certains prennent plus de place
+- **Date** : 2026-11-21
+- **Statut** : décidée par Julien
+- **Décision** : comme les maisons, les bâtiments qui produisent ont une suite d'une époque à l'autre, qu'on voit changer (on ne cueille plus le blé à la main, on ne garde plus trois moutons : on passe à l'industrie). Certains bâtiments modernes demandent plus de place. Les souches des arbres coupés ne doivent plus gâcher la place.
+- **Contexte** : Julien : « certains éléments devraient s'améliorer avec le temps, l'agriculture et l'élevage » ; « pas juste avec des étoiles, mais qu'on voie aussi la différence à travers le temps » ; « les outils, il faut que ça devienne des usines » ; « si on veut améliorer l'élevage, il faut qu'on remplace par un grand endroit » ; « quand on coupe les arbres, ça laisse les troncs, ce qui fait que c'est quand même pas fou en termes d'usage de l'espace ». Les suites précises sont une proposition de Claude : ADR-043.
+
+## ADR-042 : des monuments plus grands, des véhicules dans la perspective, les images avec Arcads
+- **Date** : 2026-11-21
+- **Statut** : décidée par Julien
+- **Décision** : (1) certains bâtiments, d'abord les monuments, sont nettement plus grands que les autres. (2) Les véhicules ont une vue pour chaque direction de la perspective (le train ne roule plus en travers de ses rails). (3) Les nouvelles images se font avec Arcads.
+- **Contexte** : Julien : « en termes d'échelle, on peut se permettre d'avoir certains bâtiments qui soient un peu plus grands par rapport aux autres, par exemple les monuments » ; « il faudrait rendre [les véhicules] avec les différentes vues pour qu'ils puissent aller à 90° […] le train qui est perpendiculaire à la direction qu'il prend » ; « Tu peux générer tout ça avec Arcads. »
+
+## ADR-043 : les suites des bâtiments, la flèche dorée et le cadeau, tels que Claude les a réglés
+- **Date** : 2026-11-21
+- **Statut** : à confirmer
+- **Décision** : (1) Chaque bâtiment qui produit garde ce qu'il produit et prend la forme la plus récente qu'on peut bâtir : buisson de baies, champ de blé, champs labourés (nouveau, Moyen Âge, 3 x 3 cases), ferme au tracteur ; râtelier des chasseurs, enclos à moutons, étable (nouvelle, Moyen Âge, 3 x 3), ferme laitière (nouvelle, électricité, 3 x 3) ; tas de bois, scierie (nouvelle, Moyen Âge, 2 x 2) ; atelier de silex, forge, maréchal-ferrant, usine ; atelier du potier, usine ; séchoir à poissons et pirogue, port, port à vapeur ; meule, boulangerie, supermarché ; atelier du charron, garage ; mine, centrale, parc solaire ; central téléphonique, bureau ; maison des scribes, imprimerie ; atelier de l'inventrice, laboratoire, centre de recherche. Le niveau (les étoiles) est gardé. (2) Moderniser coûte 60 % du prix du nouveau bâtiment ; quand c'est fini, un cadeau rouge saute au-dessus : il rend la moitié du prix et donne 2 idées. Les maisons qui passent à une époque plus récente ont aussi la flèche dorée et le cadeau. (3) La flèche dorée est ronde avec deux chevrons ; on en montre 4 au plus à la fois, d'abord sur ce qui produit et le plus ancien. (4) Un bâtiment qui produit ne se bâtit plus quand sa forme d'une époque plus récente peut se bâtir (le tas de bois disparaît du bandeau quand la scierie arrive). (5) Si la forme moderne n'a pas la place, on peut encore monter de niveau, et la fiche dit qu'il faut plus de place autour. (6) Chaque matin, les souches s'en vont (une sur cinq reste). (7) Les monuments de l'âge des métaux au monde moderne sont 30 % plus grands à l'image, sur la même place ; la ferme au tracteur 25 %. Les passer sur plus de cases les empêchait de tenir dans une grande ville.
+- **Contexte** : ADR-040 à 042. Proposition de Claude faite pendant que Julien était occupé (« avance en autonomie »).
+- **Écarté** : des monuments sur 3 x 3 cases (une grande ville de l'électricité ne pouvait plus bâtir les monuments du monde moderne).
+
+## ADR-044 : de vraies routes, qui naissent toutes seules dès les Romains et changent avec le temps
+- **Date** : 2026-11-21
+- **Statut** : décidée par Julien
+- **Décision** : à partir de l'âge des métaux (l'époque romaine), une découverte fait apparaître de vraies routes dans la ville. Elles naissent toutes seules (l'enfant ne les trace pas) et changent d'aspect d'une époque à l'autre. Le jeu peut les ajuster lui-même.
+- **Contexte** : Julien : « je me demandais si on ne pouvait pas faire évoluer les sols de la ville également […] quelques routes qui commencent dès l'époque romaine (ça pourrait être une recherche qu'on fait) et qui évoluent également avec le temps. Ça demanderait pas mal de boulot pour être propre mais ça ne me dérange pas. » Entre des routes qui naissent seules, tracées par l'enfant, ou les deux : « A, elles naissent toutes seules. En plus ça permet de faire des ajustements automatiques s'il le faut. »
+- **Écarté** : un outil pour tracer les routes au doigt ; le mélange des deux.
+
+## ADR-045 : agrandir la ville, et la réarranger un peu au passage d'une époque si ça aide
+- **Date** : 2026-11-21
+- **Statut** : décidée par Julien
+- **Décision** : la carte s'agrandit encore après la vapeur (elle touche aujourd'hui les bords de sa grille). Au passage d'une époque, le jeu peut légèrement modifier la grille : mieux aligner quelques bâtiments, faire un peu de place, réajuster un peu la grille, si ça aide beaucoup le code. Les parties en cours doivent garder leur ville.
+- **Contexte** : Julien : « on ne peut pas agrandir la ville ? » ; « ça ne me choquerait pas s'il faut légèrement modifier la grille quand on passe d'un âge à l'autre. Par exemple, s'il faut un peu mieux aligner quelques bâtiments, ou faire un peu de place, ou réajuster un tout petit peu la grille, ça peut être fait si jamais ça aide beaucoup le code. »
+
+## ADR-046 : les routes naissent des sentiers et sont redressées ; matière générée, routes larges
+- **Date** : 2026-11-21
+- **Statut** : décidée par Julien
+- **Décision** : dans le bac à sable (tour 47), Julien choisit le réseau « mélange » (le jeu trace les routes en passant de préférence là où les habitants marchent), le dessin « matière » (des matières générées, découpées à la forme des routes par le code) et des routes larges. Précise ADR-044.
+- **Contexte** : Julien, après avoir essayé le bac à sable sur la ville de Joshua : « ce que je préfère, c'est mélange, matière, large ».
+- **Écarté** : les sentiers usés seuls ; le réseau tracé sans tenir compte des sentiers ; les pièces de route générées ; les routes étroites.
+
+## ADR-047 : le sol autour des bâtiments change aussi avec les époques
+- **Date** : 2026-11-21
+- **Statut** : décidée par Julien
+- **Décision** : les bâtiments ne sont plus posés sur de l'herbe à toutes les époques. Chez les Romains, encore de l'herbe presque partout ; au Moyen Âge, de la boue autour des bâtiments, de même à la vapeur ; à partir de l'électricité, des trottoirs et des sols de ville autour des bâtiments.
+- **Contexte** : Julien : « il faut changer un petit peu les sols aussi. C'est-à-dire que les bâtiments n'ont pas forcément de l'herbe partout. Autant, je pense que, sur la période romaine, on en avait encore un peu partout. J'ai l'impression que, vers le Moyen Âge, il devrait y avoir un peu plus de boue. Pareil pour la vapeur. Après l'électricité, on commence à avoir des routes et des trottoirs […] Je trouve ça sympa, les routes, mais du coup, je pense qu'il faut aussi mettre le reste à jour. »
+
+## ADR-048 : une ville vivante par son mobilier et ses lieux
+- **Date** : 2026-11-21
+- **Statut** : décidée par Julien ; corrigée le 2026-11-22 (ADR-049)
+- **Décision** : ce qui fait « ville », c'est aussi le détail : des réverbères, des bancs, des places, de petits lieux qui apparaissent et montrent la structure de la ville qui s'améliore, des pâtés de maisons. Les villes doivent avoir l'air vivantes. Le sol de la zone d'un seul tenant (tour 47 v2) est rejeté tel qu'il était dessiné : gris, plat, de gros carrés, des bâtiments qui ne s'y posent pas.
+- **Correction** : la première rédaction disait que Julien rejetait les sols de ville eux-mêmes, et le tour 48 les a retirés. C'était une erreur de lecture : Julien demandait de les améliorer, pas de les enlever (ADR-049).
+- **Contexte** : Julien, devant le bac à sable (tour 47, zone de ville d'un seul tenant) : « là, c'est du gloubiboulga dégueulasse. Les sols et les bâtiments ne sont pas intégrés les uns avec les autres. Et quand je te parlais d'avoir des choses qui fassent un peu plus ville, c'était d'avoir des réverbères […] pour que ça ait l'air d'être des pâtés de maison. Je pense, par exemple, dans les villes, que tu puisses avoir des places, des bancs, des petits lieux comme ça qui émergent et qui permettent de voir vraiment la structure de la ville s'améliorer. […] à part des grosses textures dégueulasses au sol, t'as pas fait grand-chose d'autre. Je m'attendais à avoir un peu plus de détails dans les villes qui donnent l'impression qu'elles sont vivantes. »
+- **Écarté** : la boue et le gravier en taches douces ; la zone de ville pavée d'un seul tenant, grise et plate.
+
+## ADR-049 : dans les villes, chaque maison est posée sur un vrai sol de ville
+- **Date** : 2026-11-22
+- **Statut** : décidée par Julien
+- **Décision** : dans une ville, le sol n'est pas de l'herbe. On doit comprendre sur quoi chaque maison est posée : elle est sur une parcelle, dans un pâté de maisons, avec des trottoirs le long des rues. La référence est un vieux SimCity (SimCity 2000) : en vue isométrique, un sol de ville qui ressemble à quelque chose. Le sol change avec l'époque ; au Moyen Âge il peut être en terre, mais une terre soignée, pas une terre plate et moche. Les huttes gardent leur sol transparent sur l'herbe. Le mobilier et les places du tour 48 restent. Pousser la qualité, ne jamais retirer la fonction.
+- **Contexte** : Julien, devant le tour 48 (sols retirés) : « je t'ai pas dit que le problème, c'était les textures. Je t'ai dit qu'il fallait habiller les villes pour que ce soit plus mignon. Genre, pour moi, quand t'es dans une ville moderne, au sol, c'est du pavement. C'est pas de l'herbe. […] le système était un peu too much et te faisait un truc qui était vraiment gris, plat […] le pavement au sol, ça fait des espèces de gros carrés. C'est pas comme ça, le sol. Il y a des trottoirs […] Quand tu foules une maison, elle est sur un paté de maison. Elle est pas sur rien. Donc, autant quand t'es sur une hutte, tu fais ça avec de la transparence au sol, je comprends, mais là, ce qu'il faut, c'est qu'on comprenne sur quoi elle est posée, la maison. Pour moi, on est capable de faire comme un SimCity 2000 […] Là, tu m'as fait un gros roll back, en fait. Je te demande de pousser la qualité. T'as décidé d'enlever la feature. »
+- **Écarté** : l'herbe sous les maisons de ville (tour 48) ; les grandes dalles qui font de gros carrés ; un sol gris et plat d'un seul tenant.
+
+## ADR-050 : quand la ville grandit, les champs et l'élevage partent hors de la ville et deviennent de grandes exploitations
+- **Date** : 2026-11-22
+- **Statut** : décidée par Julien ; précisée le 2026-11-22 (ADR-051)
+- **Décision** : l'agriculture et l'élevage ne restent pas tels quels dans la ville. Au début, les champs grandissent. Puis, quand la ville prend de la taille, il y a un bouleversement : le blé est déplacé hors de la ville, en un seul endroit, un vrai grand champ ; les moutons ne sont plus parqués dans la ville, ils partent un peu à l'extérieur, dans quelque chose de plus industriel (avec des abattoirs). On doit voir les espaces changer avec le temps. Prolonge ADR-041 : la suite des bâtiments ne suffit pas, c'est leur place qui change.
+- **Contexte** : Julien, devant la ville de Joshua au monde moderne (tour 49) : « Quand je t'avais parlé d'évoluer à travers le temps, c'est que, typiquement, pour moi, l'élevage, il faut que ça devienne autre chose en évoluant. Tu peux pas avoir trois moutons qui sont parqués dans un endroit comme ça. Maintenant, ça marche plus comme ça. Idem pour l'agriculture. Peut-être qu'en fait, ce qu'il faudrait, c'est qu'au début, tu aies des champs qui deviennent de plus en plus grands, et qu'après, on les fasse sortir de la ville. Ou, je sais pas, quand la ville augmente de taille, qu'il y ait des bouleversements qui se fassent. C'est-à-dire, par exemple, que tout le blé est automatiquement bougé à l'extérieur de la ville, à un endroit, et c'est un vrai champ, un grand champ. Pareil pour les moutons : ils ne sont plus à l'intérieur de la ville. Ils sont emmenés un petit peu à l'extérieur, avec des abattoirs, quelque chose d'un peu plus industriel, en fait. Comme ça, on verrait vraiment la façon dont les espaces changent avec le temps. »
+- **À préciser** : le moment du bouleversement (un changement d'époque, une taille de ville), ce que voit et fait l'enfant pendant ce moment, où est « l'extérieur » sur la carte actuelle (ADR-045, agrandir la carte), ce que deviennent les cases libérées dans la ville.
+
+## ADR-051 : le grand déménagement des fermes au passage à la vapeur, sur une carte plus grande, avec des bâtiments plus grands
+- **Date** : 2026-11-22
+- **Statut** : décidée par Julien
+- **Décision** : (1) Le bouleversement d'ADR-050 a lieu au passage à l'âge de la vapeur. Une petite scène montre les champs et les enclos de la ville partir vers un grand champ et une grande ferme d'élevage hors de la ville. Les cases libérées dans la ville redeviennent de la place pour la ville. (2) Il se fait avec l'agrandissement de la carte (ADR-045) : une campagne autour de la ville, où vont les grandes exploitations. (3) Pas d'abattoir visible : une grande exploitation d'élevage (grands bâtiments, silos, camions). (4) Les bâtiments deviennent plus grands, maintenant que la carte a la place.
+- **Contexte** : Claude proposait ces trois réponses aux questions d'ADR-050 (le moment, l'endroit, les abattoirs). Julien : « OK pour ces 3 là. Fais tout ce qu'il faut, dont l'augmentation de la taille de la map et l'augmentation de la taille des bâtiments. »
+- **Écarté** : un déclencheur à un nombre d'habitants ; des abattoirs visibles dans un jeu pour les 6 à 10 ans.
+
+## ADR-052 : la campagne, les grandes exploitations et les monuments, tels que Claude les a réglés
+- **Date** : 2026-11-22
+- **Statut** : à confirmer ; points 2 et 3 corrigés par ADR-053 (6 x 6 cases, composées à l'échelle du jeu)
+- **Décision** : ce que Claude a réglé seul pour faire ADR-051. (1) La grille passe de 44 x 44 à 64 x 64 cases ; l'ancienne carte est au milieu, identique. À la vapeur, une campagne (des prés et quelques bois, sans collines de roche) s'ouvre tout autour de l'île ; elle grandit encore à l'électricité et au monde moderne. La mer du sud ne grandit pas. (2) Au passage à la vapeur, tous les buissons de baies, champs de blé, champs labourés, enclos et étables de la ville partent : un seul « grand champ » et une seule « grande ferme d'élevage », de 4 x 4 cases chacun, posés sur la campagne, à au moins trois cases de tout bâtiment de la ville, au plus près de la ville mais dans un pré dégagé plutôt qu'une clairière. Ils ont assez de postes pour tous ceux qui travaillaient dans les anciennes fermes (4, 6 ou 8 selon le niveau) et gardent leur réserve. Un chantier pas fini est remboursé. Les fermes de la ville ne se bâtissent plus ; on peut bâtir d'autres grandes exploitations, seulement à la campagne. (3) À l'électricité, le grand champ devient la ferme au tracteur et la grande ferme d'élevage devient la ferme laitière, aussi en 4 x 4, sur place (flèche dorée et cadeau). (4) La scène : la caméra glisse vers les anciennes fermes, un nuage sur chacune, les moutons partent à pied vers la nouvelle ferme, puis la caméra glisse jusqu'aux grandes exploitations, avec deux phrases lues. Une partie déjà à la vapeur ou plus tard la vit à son retour. (5) Les monuments de l'âge des métaux au monde moderne (sauf ceux de la plage) prennent une case de plus de côté et sont dessinés d'autant plus grands ; ceux déjà bâtis grandissent sur place quand ils ont la place autour d'eux. (6) Quand l'île grandit, le chemin de fer est prolongé jusqu'au nouveau bord, pour que le tunnel ne reste pas au milieu des prés.
+- **Contexte** : ADR-050, ADR-051. Julien : « Fais tout ce qu'il faut, dont l'augmentation de la taille de la map et l'augmentation de la taille des bâtiments. » Claude a compris « la taille des bâtiments » comme : les grandes exploitations et les monuments prennent plus de place, ce que la petite carte empêchait (ADR-043, point 7). Les maisons gardent leur taille.
+- **Écarté** : déplacer les fermes une par une ; laisser des fermes en ville après la vapeur.
+
+## ADR-053 : des ombres qui suivent la forme des bâtiments, un sol qui garde ses nuances, des exploitations à l'échelle du jeu
+- **Date** : 2026-11-22
+- **Statut** : décidée par Julien
+- **Décision** : (1) L'ombre douce et ronde posée sous chaque bâtiment (tour 50) ne marche pas pour les gros bâtiments ni pour le Golden Gate : une ombre doit correspondre à ce qu'il y a au-dessus. (2) Le sol garde son minimum de matière : les taches d'herbe plus ou moins verte et de terre, qui viennent de façon douce, font la différence entre les endroits très verts et ceux qui le sont moins. Ne pas les remplacer par un système de cases tout ou rien, sans transition. (3) Les grandes exploitations restent à l'échelle du jeu : les vaches ne deviennent pas des miniatures. Une exploitation n'est pas une case vue de plus loin (« un zoom out de la case ») : elle prend beaucoup plus de cases, c'est l'intérêt d'agrandir le monde. Elle doit aussi mieux s'intégrer au sol.
+- **Contexte** : Julien, devant le tour 51 : « je suis pas forcément hyper fan des ombres. T'as juste fait une espèce de gros truc en dessous, flou, ce qui va pour certains bâtiments, mais pas du tout pour d'autres. Dès qu'il s'agit d'un gros bâtiment, tu vas avoir une espèce d'ombre ronde qui ne correspond pas du tout à ce qu'il y a dessus […] le Golden Gate ne fonctionne pas du tout. » ; « les taches qui étaient au sol amenaient un petit peu de variété. Ce qu'il faudrait, c'est garder cette espèce de minimum de matière pour pouvoir faire la différence entre les endroits qui sont verts, très verts, et ceux qui le sont un peu moins. Parce que là, en te limitant juste au système de cases, il n'y a aucune transition entre les deux […] C'est ce que j'aimais dans la terre : c'est que c'est quelque chose qui venait de manière un peu smooth. Là, t'as complètement enlevé cette partie-là et remplacé par un système binaire. » ; « L'élevage ne s'intègre pas bien et, en plus, t'as complètement changé l'échelle. […] les vaches, elles sont devenues miniatures. L'idée, c'est qu'en fait, on fait pas juste un zoom out de la case. On fait quelque chose qui prend beaucoup plus de cases. C'est l'intérêt d'agrandir le monde. »
+- **Corrige** : ADR-052, points 2 et 3 (les exploitations sur 4 x 4 cases, en une seule image) ; le tour 48, qui enlevait les taches d'usure quand la ville est aménagée.
+- **Écarté** : l'ombre ronde et floue sous tous les bâtiments ; une exploitation en une seule image réduite.
+
+## ADR-054 : au changement d'âge, les bâtiments dépassés ne se construisent plus, et le jeu dit pourquoi ils ont disparu
+- **Date** : 2026-11-22
+- **Statut** : décidée par Julien
+- **Décision** : quand on change d'âge, on ne garde pas toute la palette des bâtiments devenus obsolètes : l'atelier de silex, l'atelier des chasseurs et les autres bâtiments dépassés ne se posent plus. Les monuments, eux, restent (ADR-024). Au changement d'âge, le jeu montre les bâtiments qui n'existent plus et explique pourquoi ils ont disparu.
+- **Contexte** : Julien : « là, je peux mettre plein de bâtiments différents qui vont de la hutte à la version moderne. Normalement, quand on change d'âge, on n'est pas censé garder toute la palette des bâtiments qui sont devenus obsolètes. Je prends le cas de l'atelier de silex ou des choses comme ça. On ne va pas continuer à les poser. Idem pour l'atelier des chasseurs, qui devrait disparaître. Pour moi, autant les monuments, on les garde. Autant qu'on passe un changement d'âge, on pourrait montrer qu'il y a des bâtiments qui n'existent plus et expliquer pourquoi ils ont disparu. »
+
+## ADR-055 : quels bâtiments disparaissent, à quel âge, et comment le jeu le dit, tels que Claude les a réglés
+- **Date** : 2026-11-22
+- **Statut** : à confirmer
+- **Décision** : pour faire ADR-054. (1) Un bâtiment dépassé ne se construit plus dès l'époque de ce qui le remplace, même avant la découverte qui débloque ce remplaçant (ainsi, au Moyen Âge, le champ de blé ne se bâtit plus, même avant le fer). La liste, avec la phrase qui dit pourquoi, est `DISPARUS` dans `src/data.js` : par exemple l'atelier de silex disparaît à l'âge des métaux (le bronze), le râtelier des chasseurs au néolithique (l'élevage), les huttes au néolithique, le feu de camp et la tour de l'horloge à l'électricité, le marché, le moulin et la boulangerie au monde moderne (le supermarché). (2) Restent jusqu'au bout : la scierie, l'usine, la caserne, la gare, le port à vapeur, le garage, l'aérodrome, les fermes de la campagne. (3) Ceux déjà bâtis restent dans la ville ; la flèche dorée les modernise. Les monuments restent (ADR-024). (4) Au passage d'âge, après la scène de la nouvelle époque (et après le déménagement des fermes à la vapeur), une fenêtre « Ce qui ne se construit plus » montre chaque bâtiment qui disparaît, avec son image barrée d'une croix et sa raison ; toucher une carte lit sa raison à voix haute. Elle ne montre que ce que le joueur pouvait déjà bâtir. (5) À chaque époque, il reste toujours une maison et de quoi nourrir le village une fois les découvertes faites (vérifié par un test). Au début du néolithique, comme avant, il faut découvrir l'agriculture pour bâtir une maison.
+- **Contexte** : ADR-054. Avant, au monde moderne, une trentaine de bâtiments dépassés se construisaient encore, et le râtelier des chasseurs revenait après la vapeur (un défaut corrigé au passage).
+
+## ADR-056 : le Golden Gate part de la plage et sort de l'écran ; publier pour que Joshua y joue
+- **Date** : 2026-11-22
+- **Statut** : décidée par Julien
+- **Décision** : (1) Le Golden Gate n'est pas un pont posé au milieu de nulle part : on en voit le début, et le pont sort de l'écran ; on comprend que c'est un ouvrage géant qui relie l'île à autre chose. (2) Le travail de la branche `villes-qui-evoluent` (tours 46 à 54) est publié pour que Joshua puisse y jouer.
+- **Contexte** : Julien, après le tour 53 : « Grosso modo, ça va. Après, je veux bien que tu me refasses le Golden Gate. C'est un peu particulier, un pont : toi, tu le mets au milieu de nulle part. Mais en fait, pour moi, il faudrait le début du pont. Il y a un bout du pont qui sort de l'écran, et c'est tout. Faut qu'on comprenne que c'est un truc géantiste qui les relie à autre chose. Sinon, je veux bien que tu pousses tout ça pour que Joshua puisse y jouer. »
+
+## ADR-057 : ce que Claude a réglé seul pour publier
+- **Date** : 2026-11-22
+- **Statut** : à confirmer
+- **Décision** : (1) Dans le vrai jeu, les routes, les sols de ville (parcelles, trottoirs), le mobilier et les places arrivent avec la découverte de la roue (l'âge des métaux, ADR-044), réglés comme dans le bac à sable (mélange, matière, larges ; parcelles ; ombres projetées). Avant, ils n'existaient que dans le bac à sable. (2) Le Golden Gate part du côté où il passe le plus au-dessus de la mer. (3) Avant de remettre une partie de l'ancienne carte sur la nouvelle, le jeu en garde une copie intacte dans le navigateur (clé `feu-fusee-v2-carte-44`), pour pouvoir la retrouver en cas de souci.
+- **Contexte** : ADR-056. Sans le point 1, Joshua n'aurait vu ni les routes ni les parcelles que Julien a validées.
+

@@ -3,7 +3,7 @@ title: État courant
 domain: canon
 type: doc
 status: active
-updated: 2026-11-18
+updated: 2026-11-22
 ---
 
 # Où on en est (25/10/2026)
@@ -34,6 +34,10 @@ updated: 2026-11-18
 - **Prototype jouable v0.1** (époques 1 et 2) publié en artefact : habitants qui travaillent et construisent, chantiers, bulles à récolter, 10 découvertes avec voix, changement d'époque avec rénovation automatique des huttes et passerelle (cf. `domains/tech/tech.md`).
 
 ## En cours
+- **Publié le 22/11/2026** : la branche `villes-qui-evoluent` (tours 46 à 54) poussée sur `main` : la ville qui se modernise, les routes et les sols de ville (dans le vrai jeu dès la roue), la carte de 64 x 64 et sa campagne, le déménagement des fermes à la vapeur, les exploitations à l'échelle du jeu, les ombres projetées, les bâtiments dépassés qui disparaissent, le Golden Gate. Ce que Claude a réglé seul et qui attend Julien : ADR-043, ADR-052, ADR-055, ADR-057.
+- Branche `villes-qui-evoluent`, tour 51 (22/11/2026, pas commité) : la carte passe à 64 x 64 avec une campagne qui s'ouvre à la vapeur ; au passage à la vapeur, les champs et les bêtes quittent la ville pour deux grandes exploitations (ADR-050, ADR-051) ; monuments plus grands ; les parties d'avant sont recalées. Ce que Claude a réglé seul : ADR-052, à confirmer.
+- **Publié le 21/11/2026** : le monde moderne (`monde-moderne` poussée sur `main`), la septième époque et le décollage de la fusée.
+- Branche `villes-qui-evoluent` (pas commitée, à essayer par Julien) : la ville qui se modernise (flèche dorée, cadeau, ADR-040), les bâtiments qui produisent évoluent avec leur temps et certains prennent plus de place (ADR-041), monuments plus grands, véhicules vus de face et de dos (ADR-042) ; ce que Claude a réglé seul : ADR-043, à confirmer. Les bruitages d'ADR-039 y sont aussi. Cf. `journal/2026-11-session-08.md`.
 - Branches à jouer par Julien, pas encore validées : `age-des-metaux` (la troisième époque, publiée le 16/11/2026, cf. `journal/2026-11-session-03.md`) puis `moyen-age` (la quatrième époque, le Moyen Âge, avec la crue qui emporte la passerelle et le pont de pierre ; la vraie fin passe à la fin du Moyen Âge ; cf. `journal/2026-11-session-04.md`), puis `vapeur` (la cinquième époque, l'âge de la vapeur, avec l'incendie et les pompiers, le chemin de fer et son train ; l'île grandit vers le nord ; cf. `journal/2026-11-session-05.md`), puis `electricite` (la sixième époque, l'électricité, avec la nuit noire et les lampadaires, les poteaux et les fils, les voitures et le petit avion ; cf. `journal/2026-11-session-06.md`), puis `monde-moderne` (la septième et dernière époque, le monde moderne : l'air sale et l'énergie solaire, les éoliennes, le satellite, le pas de tir ; la vraie fin est le décollage de la fusée, que l'enfant lance avec un gros bouton ; cf. `journal/2026-11-session-07.md`). Pas poussées.
 - Game design en brouillon : proposition de Claude, pas encore validée par Julien (`domains/game-design/gd.md`).
 
