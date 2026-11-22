@@ -514,6 +514,14 @@
   // vers où part le pont : le long de j (en bas à gauche) ou le long de i (en bas à droite, l'image retournée),
   // du côté où il passe le plus au-dessus de la mer (et le moins au-dessus de la terre) avant de sortir de l'île
   function sensGG(b) {
+    // d'abord la route : si une route arrive au pont par l'arrière, le pont la prolonge dans le même sens (retour de Julien)
+    if (routesActives()) {
+      var R = reseauRoutes().cases, N0 = monde.terrain.N;
+      for (var q = 1; q <= 2; q++) {
+        if (R[b.i * N0 + (b.j - q)] != null) return 'j';
+        if (R[(b.i - q) * N0 + b.j] != null) return 'i';
+      }
+    }
     if (b.__sens) return b.__sens;
     var T0 = monde.terrain, note = function (di, dj) {
       var n = 0;
