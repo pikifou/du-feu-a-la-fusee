@@ -73,6 +73,42 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #btn-merveilles { width: 52px; height: 52px; font-size: 26px; }
 #btn-merveilles.pret { background: #fff1b8; }
 #merveilles .fenetre { max-width: 860px; }
+/* ---- le Musée (ADR-058) : l'album des cartes, par âge ---- */
+#btn-musee { width: 52px; height: 52px; font-size: 25px; }
+#musee .fenetre { max-width: 980px; width: 100%; display: flex; flex-direction: column; max-height: 92vh; }
+#musee h2 { display: flex; align-items: baseline; gap: 12px; }
+#musee-compte { font-size: 17px; color: var(--encre-douce); font-variant-numeric: tabular-nums; }
+#musee-frise { align-self: flex-start; margin: 0 0 10px; font-size: 18px; padding: 10px 18px; }
+#musee-albums { overflow-y: auto; padding-right: 4px; flex: 1 1 auto; min-height: 0; }
+.album h3 { margin: 14px 0 8px; font-size: 19px; }
+.album .cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+.carte-musee { border: 0; padding: 0; background: var(--carte-2); border-radius: 16px 16px 6px 16px; overflow: hidden; display: flex; flex-direction: column;
+  font: inherit; color: var(--encre); cursor: pointer; box-shadow: 0 3px 0 rgba(91,60,36,.16); }
+.carte-musee img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #efe2c8; }
+.carte-musee.monument { border-radius: 6px 16px 16px 16px; background: #fbe9c2; }
+.carte-musee.monument img { object-fit: contain; padding: 6px; }
+.carte-musee .nom { font-size: 14px; font-weight: 700; line-height: 1.1; padding: 6px 6px 8px; min-height: 36px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.carte-musee.manque { cursor: default; background: repeating-linear-gradient(135deg, #efe2c8 0 10px, #e9dabd 10px 20px); box-shadow: none; }
+.carte-musee .point { aspect-ratio: 4 / 3; display: grid; place-items: center; font-size: 40px; font-weight: 700; color: #c9b38e; font-family: 'Lilita One', 'Fredoka', sans-serif; }
+/* ---- la frise du temps : la ville en photos, un curseur en bas ---- */
+#frise { z-index: 45; background: #2a1d10; padding: 0; }
+#frise-haut { position: absolute; z-index: 2; top: max(10px, env(safe-area-inset-top, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+#frise-haut > * { pointer-events: auto; }
+#frise-titre { background: var(--carte); color: var(--encre); border-radius: 999px; padding: 6px 18px; font-size: 18px; font-weight: 700; box-shadow: var(--ombre); }
+#frise-scene { position: absolute; inset: 0; }
+#frise-img { width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; }
+#frise-bulle { position: absolute; width: 280px; background: #fff; color: #3b2516; border: 3px solid #3b2516; border-radius: 16px; padding: 10px 12px;
+  font-size: 16px; line-height: 1.25; transform: translateY(-100%); box-shadow: 0 6px 18px rgba(0,0,0,.3); pointer-events: none; }
+#frise-bulle.dessous { transform: none; }
+#frise-vide { color: #f6ead2; font-size: 20px; margin: auto; }
+#frise-bas { position: absolute; z-index: 2; left: 50%; transform: translateX(-50%); bottom: max(8px, env(safe-area-inset-bottom, 0px)); width: min(980px, calc(100% - 28px)); display: flex; align-items: center; gap: 14px;
+  background: rgba(42, 29, 16, .72); border-radius: 20px; padding: 6px 14px 0 8px; }
+#frise-lire { flex: 0 0 auto; width: 54px; height: 54px; font-size: 24px; }
+#frise-rail { position: relative; flex: 1 1 auto; padding-bottom: 30px; }
+#frise-curseur { width: 100%; accent-color: var(--orange); height: 30px; }
+#frise-ages { position: absolute; left: 0; right: 0; bottom: 0; height: 28px; margin: 0 9px; }
+#frise-scene[hidden], #frise-bas[hidden], #frise-bulle[hidden] { display: none; }
+#frise-ages .age { position: absolute; transform: translateX(-50%); border: 0; background: var(--carte); border-radius: 50%; width: 28px; height: 28px; font-size: 15px; padding: 0; box-shadow: 0 2px 0 rgba(0,0,0,.3); }
 #disparus .fenetre { max-width: 900px; }
 #grille-disparus { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0 14px; max-height: 56vh; overflow-y: auto; }
 .disparu { background: var(--carte-2); border-radius: 18px; padding: 8px 10px 10px; text-align: center; border: 3px solid transparent; cursor: pointer; }
@@ -368,6 +404,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   <button id="marque-fini" hidden aria-label="Fini : revoir la fin"><span class="drapeau">🏁</span><span id="marque-fini-mot">Fini</span></button>
   <button class="bouton-rond" id="btn-plein" aria-label="Plein écran">⛶</button>
   <button class="bouton-rond" id="btn-menu" aria-label="Menu">⚙️</button>
+  <button class="bouton-rond" id="btn-musee" aria-label="Le Musée">🖼️</button>
   <button class="bouton-rond" id="btn-merveilles" aria-label="Merveilles">🏛</button>
   <button class="bouton-rond" id="btn-decouvertes" aria-label="Découvertes">💡<span class="pastille">!</span></button>
 </div>
@@ -446,6 +483,23 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
     </div>
   </div>
 </div></div>
+
+<div class="voile" id="musee"><div class="fenetre">
+  <button class="bouton-rond fermer" data-ferme="musee" aria-label="Fermer">✕</button>
+  <h2>🖼️ Le Musée <span id="musee-compte"></span></h2>
+  <button class="gros-bouton" id="musee-frise">⏳ Ma ville au fil du temps</button>
+  <div id="musee-albums"></div>
+</div></div>
+
+<div id="frise" class="voile">
+  <div id="frise-haut"><div id="frise-titre"></div><button class="bouton-rond" id="frise-fermer" aria-label="Fermer">✕</button></div>
+  <div id="frise-scene"><img id="frise-img" alt=""><div id="frise-bulle" hidden></div></div>
+  <p id="frise-vide" hidden>Demain matin, le village prendra sa première photo.</p>
+  <div id="frise-bas">
+    <button class="bouton-rond" id="frise-lire" aria-label="Revoir en accéléré">▶</button>
+    <div id="frise-rail"><input type="range" id="frise-curseur" min="0" max="0" value="0" aria-label="Le temps"><div id="frise-ages"></div></div>
+  </div>
+</div>
 
 <div class="voile" id="menu"><div class="fenetre">
   <button class="bouton-rond fermer" data-ferme="menu" aria-label="Fermer">✕</button>

@@ -175,7 +175,7 @@ Vue rapprochée par défaut sur le village (on doit lire les habitants et leurs 
 ## Questions ouvertes
 - [x] Rôle de Joshua dans la construction : B, il pose et la ville fait le reste (ADR-008)
 - [x] Support principal : tablette en paysage (ADR-009)
-- [ ] Titre : *Du Feu à la Fusée* (proposition) ?
+- [ ] Titre : *Du Feu à la Fusée* est trop long, Julien l'oublie lui-même ; chercher plus court, autour de l'histoire, des technologies, de la civilisation (ADR-058).
 - [ ] Nombre d'époques : 7 proposées, à valider.
 - [x] Les voix off : voix de narratrice générée avec Arcads (ADR-022)
 - [ ] La guerre : pas de politique (ADR-002), mais faut-il évoquer murs et défense, ou rien du tout ?

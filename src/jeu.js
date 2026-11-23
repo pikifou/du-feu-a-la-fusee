@@ -1755,6 +1755,7 @@
   function dessinerParts(dt) {
     parts = parts.filter(function (p) { return (p.vie += dt) < p.max; });
     parts.forEach(function (p) {
+      if (enPhoto && p.type === 'gain') return; // pas de « +18 » sur les photos de la frise
       p.x += p.vx * dt; p.y += p.vy * dt;
       var k = p.vie / p.max, s = E(p.x, p.y);
       if (p.type === 'gain') {
@@ -1911,6 +1912,7 @@
       }
       var q = p.route[0], dx = q[0] - p.x, dy = q[1] - p.y, d = Math.hypot(dx, dy), v = (p.filet ? 16 : 30) * dt;
       if (Math.abs(dx) > 1) p.dir = dx > 0 ? 1 : -1;
+      if (Math.abs(dy) > 0.5) p.monte = dy < 0; // tour 59 : de dos quand il s'éloigne vers le haut de l'écran
       p.marche = true;
       if (d <= v) { p.x = q[0]; p.y = q[1]; p.route.shift(); } else { p.x += dx / d * v; p.y += dy / d * v; }
     });
@@ -1921,12 +1923,13 @@
     if (voile) nom = 'bateau-voile';
     var vapeur = p.id === 0 && monde.decouvertes.bateau && IMG['eau/bateau-vapeur']; // le bateau à vapeur, même sans vent
     if (vapeur) { nom = 'bateau-vapeur'; voile = true; if (p.marche && Math.random() < 0.08) particule({ type: 'fumee', x: p.x + (p.dir > 0 ? -1 : 1) * 4, y: p.y - 70, vx: 6, vy: -26, max: 2.4, r: 9, c: '252,250,248' }); }
-    var im = IMG['eau/' + nom]; if (!im) return;
+    var dos = p.monte && IMG['eau/' + nom + '-dos'], im = dos || IMG['eau/' + nom]; if (!im) return;
     var w = (vapeur ? 120 : voile ? 105 : 92) * V.s, h = w * im.height / im.width, e = E(p.x, p.y), bob = Math.sin(T * 2 + p.id * 2) * 1.5 * V.s;
     // remous sur l'eau
     ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = Math.max(1, 2 * V.s);
     if (p.marche) { ctx.beginPath(); ctx.ellipse(e[0] - p.dir * w * 0.45, e[1] + 2 * V.s, w * 0.18, 3 * V.s, 0, 0, 7); ctx.stroke(); }
-    ctx.save(); ctx.translate(e[0], e[1] + bob); ctx.scale(p.dir > 0 ? -1 : 1, 1);
+    // de face, l'image descend vers la gauche ; de dos, elle monte vers la droite : on la retourne pour l'autre côté
+    ctx.save(); ctx.translate(e[0], e[1] + bob); ctx.scale((dos ? p.dir < 0 : p.dir > 0) ? -1 : 1, 1);
     ctx.drawImage(im, -w / 2, -h * 0.8, w, h); ctx.restore();
   }
 
@@ -2256,6 +2259,7 @@
     dessinerAirSale(Math.min(dt || 0, 0.1));
     dessinerNuit();
     dessinerSatellite(Math.min(dt || 0, 0.1));
+    if (enPhoto) return; // la photo de la frise : la ville seule, sans flèches, cadeaux ni bulles
     dessinerFleches();
     dessinerCadeaux();
     dessinerBulles();
@@ -2553,6 +2557,7 @@
       bouton: 'En avant !', non: 'Pas encore',
       ensuite: function () {
         M.passerEpoque(monde);
+        FRISE.photoA = T + 8; // la ville au début du nouvel âge, dans la frise
         ui.nouveaux = ui.nouveaux.filter(function (k) { return D.batiments[k].epoque >= monde.epoque; });
         choisir(null);
         montrerEpoque();
@@ -2808,6 +2813,224 @@
     paroles.push({ hab: h.id, texte: texte, debut: T, fin: T + 2.8 });
     dire(texte);
   }
+
+  // ---------- le Musée du village (ADR-058, GD « Le Musée du village ») ----------
+  // L'album des cartes : chaque découverte faite, et chaque monument bâti, par âge. On touche une carte : sa grande page.
+  // Les découvertes pas encore faites des âges atteints sont des cartes « ? » ; les âges pas encore atteints n'apparaissent pas.
+  function ouvrirMusee() {
+    var zone = $('musee-albums'); zone.innerHTML = '';
+    var faites = 0, total = 0;
+    D.epoques.filter(function (e) { return e.id <= monde.epoque; }).forEach(function (e) {
+      var ids = Object.keys(D.decouvertes).filter(function (id) { return D.decouvertes[id].epoque === e.id; });
+      var vus = {}, monuments = [];
+      monde.batiments.forEach(function (b) {
+        var d = D.batiments[b.type];
+        if (b.etat !== 'fini' || !d.page || !D.pages[d.page] || vus[d.page] || !(d.merveille || D.pages[d.page].deco) || (D.pages[d.page].epoque || d.epoque) !== e.id) return;
+        if (d.merveille && (b.etape == null ? 3 : b.etape) < 3) return;
+        vus[d.page] = true; monuments.push(d.page);
+      });
+      var bloc = document.createElement('section'); bloc.className = 'album';
+      var h = document.createElement('h3'); h.textContent = (ICONE_EPOQUE[e.id] || '🔥') + ' ' + e.nom; bloc.appendChild(h);
+      var g = document.createElement('div'); g.className = 'cartes';
+      ids.concat(monuments).forEach(function (id) {
+        var d = D.decouvertes[id] || D.pages[id], fait = !!monde.decouvertes[id] || !D.decouvertes[id];
+        if (D.decouvertes[id]) { total++; if (fait) faites++; }
+        var c = document.createElement('button'); c.className = 'carte-musee' + (fait ? '' : ' manque') + (D.decouvertes[id] ? '' : ' monument');
+        var src = fait ? (ASSETS[d.scene] || ASSETS[d.image] || ASSETS[d.icone] || '') : '';
+        c.innerHTML = (src ? '<img alt="" src="' + src + '">' : '<span class="point">?</span>') + '<span class="nom"></span>';
+        c.querySelector('.nom').textContent = fait ? d.nom : '';
+        if (fait) c.addEventListener('click', function () { son('clic'); fermer('musee'); ouvrirPage(id, { ensuite: function () { ouvrirMusee(); } }); });
+        g.appendChild(c);
+      });
+      bloc.appendChild(g); zone.appendChild(bloc);
+    });
+    $('musee-compte').textContent = faites + ' / ' + total;
+    ouvrir('musee');
+    var z = $('musee-albums'); requestAnimationFrame(function () { z.scrollTop = z.scrollHeight; }); // l'âge en cours d'abord en vue
+  }
+  $('btn-musee').addEventListener('click', function (e) { e.stopPropagation(); son('clic'); ouvrirMusee(); });
+  $('musee-frise').addEventListener('click', function () { son('clic'); fermer('musee'); ouvrirFrise(); });
+
+  // ---------- la frise du temps (ADR-058, GD « La frise du temps ») ----------
+  // Chaque matin (et une fois au début de chaque âge), le jeu prend une photo de la ville, vue d'assez haut pour la voir
+  // en entier. Les photos restent sur l'appareil (IndexedDB), rangées par partie. La frise les fait défiler : on glisse
+  // le curseur, ou on la regarde en accéléré. Sur une photo, on touche un habitant : il raconte sa journée à cette époque.
+  var FRISE = { db: null, photoA: null, phase: null, n: 0, photos: [], urls: [], i: 0, lecture: null };
+  var PHOTO_W = 1280, PHOTO_H = 800, PHOTOS_MAX = 360, enPhoto = false;
+  function partieId() { if (!monde.partie) monde.partie = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); return monde.partie; }
+  function ouvrirBaseFrise() {
+    try {
+      var ouv = indexedDB.open('feu-fusee-frise', 1);
+      ouv.onupgradeneeded = function () { var s = ouv.result.createObjectStore('photos', { keyPath: 'id', autoIncrement: true }); s.createIndex('partie', 'partie'); };
+      ouv.onsuccess = function () { FRISE.db = ouv.result; nettoyerFrise(); };
+    } catch (e) {}
+  }
+  function photosDeLaPartie(fin) {
+    if (!FRISE.db) return fin([]);
+    try {
+      var r = FRISE.db.transaction('photos').objectStore('photos').index('partie').getAll(partieId());
+      r.onsuccess = function () { fin(r.result || []); }; r.onerror = function () { fin([]); };
+    } catch (e) { fin([]); }
+  }
+  // les photos d'une partie abandonnée (« Recommencer ») s'en vont ; une partie trop longue garde la dernière photo de chaque âge
+  function nettoyerFrise() {
+    var id = partieId();
+    try {
+      var st = FRISE.db.transaction('photos', 'readwrite').objectStore('photos');
+      st.openCursor().onsuccess = function (ev) { var c = ev.target.result; if (!c) return; if (c.value.partie !== id) c.delete(); c.continue(); };
+    } catch (e) {}
+    photosDeLaPartie(function (l) {
+      FRISE.n = l.length;
+      if (!l.some(function (p) { return p.epoque === monde.epoque; })) FRISE.photoA = T + 6; // une première photo de l'âge en cours
+      if (l.length <= PHOTOS_MAX) return;
+      var derniere = {}; l.forEach(function (p) { derniere[p.epoque] = p.id; });
+      var trop = l.filter(function (p) { return derniere[p.epoque] !== p.id; }).filter(function (p, k) { return k % 2 === 0; }).slice(0, l.length - PHOTOS_MAX);
+      try { var s2 = FRISE.db.transaction('photos', 'readwrite').objectStore('photos'); trop.forEach(function (p) { s2.delete(p.id); }); } catch (e) {}
+    });
+  }
+  // le cadre de la photo : tous les bâtiments, avec de la marge, au format de la photo
+  function cadrePhoto() {
+    var bs = monde.batiments.filter(function (b) { return !goldenGate(b); });
+    if (!bs.length) { var c = TR.centre(TR.CI + 1, TR.CJ + 1); return { cx: c[0], cy: c[1] - 40, s: 0.7 }; }
+    var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    bs.forEach(function (b) { var r = (D.batiments[b.type].largeur || 160) * 0.6; x0 = Math.min(x0, b.x - r); x1 = Math.max(x1, b.x + r); y0 = Math.min(y0, b.y - r * 1.3 - 40); y1 = Math.max(y1, b.y + 60); });
+    var s = Math.max(0.16, Math.min(0.75, Math.min(PHOTO_W / (x1 - x0 + 160), PHOTO_H / (y1 - y0 + 120))));
+    return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, s: s };
+  }
+  function photographier() {
+    if (!FRISE.db || enScene || M.obscurite(monde) > 0.25 || typeof cv.toBlob !== 'function') return;
+    var pcv = document.createElement('canvas'); pcv.width = PHOTO_W; pcv.height = PHOTO_H;
+    var ctx0 = ctx, V0 = V, f = cadrePhoto(), habs = [];
+    V = Object.assign({}, V0, { W: PHOTO_W, H: PHOTO_H, dpr: 1, s: f.s, cx: f.cx, cy: f.cy });
+    V.ox = PHOTO_W / 2 - f.cx * f.s; V.oy = PHOTO_H / 2 - f.cy * f.s;
+    ctx = pcv.getContext('2d'); enPhoto = true;
+    try {
+      dessiner(0);
+      monde.habitants.forEach(function (h) {
+        if (h.dort || h.cache) return;
+        var p = E(h.x, h.y - 26); if (p[0] < 0 || p[1] < 0 || p[0] > PHOTO_W || p[1] > PHOTO_H) return;
+        var bt = h.travail && M.bat(monde, h.travail), bm = h.maison && M.bat(monde, h.maison);
+        habs.push({ x: Math.round(p[0]), y: Math.round(p[1]), e: h.enfant ? 1 : 0, s: h.allure === 'sage' ? 1 : 0, m: h.metier || null, t: bt ? bt.type : null, d: bm ? bm.type : null });
+      });
+    } catch (e) { habs = null; }
+    enPhoto = false; ctx = ctx0; V = V0;
+    if (!habs) return;
+    var ep = monde.epoque, partie = partieId(), s = f.s;
+    pcv.toBlob(function (blob) {
+      if (!blob) return;
+      try {
+        FRISE.db.transaction('photos', 'readwrite').objectStore('photos').add({ partie: partie, epoque: ep, t: Math.round(monde.t), s: s, habs: habs, img: blob });
+        FRISE.n++;
+        if (FRISE.n > PHOTOS_MAX + 20) nettoyerFrise();
+      } catch (e) {}
+    }, 'image/jpeg', 0.72);
+  }
+  // chaque matin, quand le village est sorti
+  function majPhotos() {
+    var ph = M.phase(monde);
+    if (ph === 'jour' && FRISE.phase && FRISE.phase !== 'jour') FRISE.photoA = T + 5;
+    FRISE.phase = ph;
+    if (FRISE.photoA != null && T >= FRISE.photoA && !enScene) { FRISE.photoA = null; photographier(); }
+  }
+
+  // la journée d'un habitant, à l'époque de la photo, avec ce que le jeu sait de lui (son travail, sa maison)
+  var SOIR = {
+    1: "Le soir, on se retrouve autour du feu pour manger et se raconter des histoires.",
+    2: "Le soir, on mange la soupe et le pain, puis on rentre les bêtes.",
+    3: "Le soir, on va au marché, puis on dîne à la lumière d'une lampe à huile.",
+    4: "Le soir, quand les cloches sonnent, on rentre souper près de la cheminée.",
+    5: "Le soir, les rues s'allument de lampes à gaz, et on rentre en écoutant siffler le train.",
+    6: "Le soir, on allume la lumière d'un seul geste, et on écoute la radio en famille.",
+    7: "Le soir, on rentre à vélo, en bus ou en voiture électrique, et on regarde les étoiles."
+  };
+  var JEU_ENFANT = {
+    1: "Moi, je suis un enfant. Je ramasse des baies et j'apprends à reconnaître les traces des animaux.",
+    2: "Moi, je suis un enfant. Je garde les moutons et j'aide à semer les graines.",
+    3: "Moi, je suis un enfant. Je joue aux osselets et je regarde le forgeron taper le métal.",
+    4: "Moi, je suis un enfant. Je joue à la toupie et je regarde passer les charrettes.",
+    5: "Moi, je suis un enfant. Je vais à l'école et je fais signe au train qui passe.",
+    6: "Moi, je suis un enfant. Je vais à l'école à vélo et je regarde passer les avions.",
+    7: "Moi, je suis un enfant. Je vais à l'école et je rêve d'aller dans l'espace."
+  };
+  function aLe(nom) { return String(nom).replace(/^Le /, 'au ').replace(/^Les /, 'aux ').replace(/^La /, 'à la ').replace(/^L'/, "à l'"); }
+  function dansLe(nom) { return 'dans ' + String(nom).charAt(0).toLowerCase() + String(nom).slice(1); }
+  function journee(h, ep) {
+    var l = [];
+    if (h.s) l.push("Je suis le sage. Toute la journée, je réfléchis et je trouve des idées pour le village.");
+    else if (h.e) l.push(JEU_ENFANT[ep] || JEU_ENFANT[1]);
+    else if (h.t && D.batiments[h.t]) {
+      var d = D.batiments[h.t];
+      l.push('Bonjour ! Je suis ' + (METIERS[h.m] || 'du village') + '. Le matin, je vais ' + aLe(d.nom) + '.');
+      if (d.resume) l.push(cleVoix(d.resume));
+    } else l.push("Bonjour ! Aujourd'hui, je me promène et je regarde le village grandir.");
+    l.push(SOIR[ep] || SOIR[1]);
+    if (h.d && D.batiments[h.d]) l.push('Puis je rentre dormir ' + dansLe(D.batiments[h.d].nom) + '.');
+    return l;
+  }
+
+  function ouvrirFrise() {
+    photosDeLaPartie(function (l) {
+      FRISE.urls.forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) {} });
+      FRISE.photos = l; FRISE.urls = l.map(function (p) { return URL.createObjectURL(p.img); });
+      var r = $('frise-curseur'); r.max = Math.max(0, l.length - 1); r.value = r.max;
+      // les repères des âges sous le curseur
+      var rep = $('frise-ages'); rep.innerHTML = '';
+      l.forEach(function (p, k) {
+        if (k && l[k - 1].epoque === p.epoque) return;
+        var e = D.epoques.filter(function (x) { return x.id === p.epoque; })[0], s = document.createElement('button');
+        s.className = 'age'; s.style.left = (l.length > 1 ? k / (l.length - 1) * 100 : 50) + '%';
+        s.textContent = ICONE_EPOQUE[p.epoque] || '🔥'; s.setAttribute('aria-label', e ? e.nom : '');
+        s.addEventListener('click', function () { arreterFrise(); montrerPhoto(k); });
+        rep.appendChild(s);
+      });
+      $('frise-vide').hidden = !!l.length;
+      $('frise-scene').hidden = !l.length;
+      $('frise-bas').hidden = l.length < 2;
+      enScene = true;
+      ouvrir('frise');
+      if (l.length) montrerPhoto(l.length - 1);
+      if (l.length > 1) lireFrise(true);
+    });
+  }
+  function montrerPhoto(k) {
+    var p = FRISE.photos[k]; if (!p) return;
+    FRISE.i = k; $('frise-curseur').value = k;
+    $('frise-img').src = FRISE.urls[k];
+    var e = D.epoques.filter(function (x) { return x.id === p.epoque; })[0];
+    $('frise-titre').textContent = (ICONE_EPOQUE[p.epoque] || '🔥') + ' ' + (e ? e.nom : '');
+    $('frise-bulle').hidden = true;
+  }
+  function arreterFrise() { if (FRISE.lecture) clearInterval(FRISE.lecture); FRISE.lecture = null; $('frise-lire').textContent = '▶'; }
+  // en accéléré : toute l'histoire de la ville en une dizaine de secondes, ou plus si elle est longue
+  function lireFrise(depuisDebut) {
+    arreterFrise();
+    var n = FRISE.photos.length; if (n < 2) return;
+    var k = depuisDebut || FRISE.i >= n - 1 ? 0 : FRISE.i, pas = Math.max(90, Math.min(400, 10000 / n));
+    montrerPhoto(k);
+    $('frise-lire').textContent = '⏸';
+    FRISE.lecture = setInterval(function () { if (++k >= n) { arreterFrise(); return; } montrerPhoto(k); }, pas);
+  }
+  $('frise-lire').addEventListener('click', function () { son('clic'); if (FRISE.lecture) arreterFrise(); else lireFrise(false); });
+  $('frise-curseur').addEventListener('input', function () { arreterFrise(); montrerPhoto(+this.value); });
+  $('frise-fermer').addEventListener('click', function () { arreterFrise(); fermer('frise'); enScene = false; $('frise-bulle').hidden = true; });
+  // toucher un habitant sur la photo
+  $('frise-img').addEventListener('click', function (ev) {
+    var p = FRISE.photos[FRISE.i]; if (!p || !p.habs) return;
+    arreterFrise();
+    var r = this.getBoundingClientRect(), k = Math.min(r.width / PHOTO_W, r.height / PHOTO_H);
+    var ox = r.left + (r.width - PHOTO_W * k) / 2, oy = r.top + (r.height - PHOTO_H * k) / 2;
+    var x = (ev.clientX - ox) / k, y = (ev.clientY - oy) / k, best = null, bd = 1e9;
+    p.habs.forEach(function (h) { var d = Math.hypot(h.x - x, h.y - y); if (d < bd) { bd = d; best = h; } });
+    if (!best || bd > Math.max(34, 80 * p.s)) return;
+    var t = journee(best, p.epoque), b = $('frise-bulle');
+    b.textContent = t.join(' ');
+    var bx = ox - r.left + best.x * k, by = oy - r.top + best.y * k;
+    b.style.left = Math.max(8, Math.min(r.width - 288, bx - 140)) + 'px';
+    b.classList.toggle('dessous', by < r.height * 0.45);
+    b.style.top = (by < r.height * 0.45 ? by + 30 : by - 30) + 'px';
+    b.hidden = false;
+    dire(t);
+  });
 
   // ---------- toucher : taper, glisser, pincer ----------
   var premierToucher = true;
@@ -3302,6 +3525,7 @@
     while (simu > 0) { var d = Math.min(0.1, simu); M.pas(monde, d); simu -= d; }
     traiterEvenements();
     dessiner(dt);
+    majPhotos();
     majCompteurs();
     majBarre();
     if ((sauveA += dt) > 3) { sauveA = 0; sauver(); }
@@ -3313,8 +3537,9 @@
 
   // pour les tests automatiques
   setTimeout(panneauBac, 500);
-  window.__jeu = { musique: function () { return { piste: MUS.piste, lecteurs: MUS.lecteurs.length, joue: MUS.actif ? !MUS.actif.paused : false, vol: MUS.actif ? MUS.actif.volume : 0 }; }, montrerDisparus: function (l) { montrerDisparus(l); }, ombreDe: function (k) { try { return ombreDe(IMG[k]); } catch (e) { return String(e); } }, IMG: IMG, routesCfg: routesCfg, monde: function () { return monde; }, fleches: function () { return fleches; }, cadeaux: function () { return cadeaux; }, voitures: function () { return voitures; }, train: function () { var pts = cheminTrain(); return Object.assign({ pos: pts ? pointTrain(pts, train.s) : null }, train); }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; }, centrerSur: centrerSur, padTir: padTir };
+  window.__jeu = { musique: function () { return { piste: MUS.piste, lecteurs: MUS.lecteurs.length, joue: MUS.actif ? !MUS.actif.paused : false, vol: MUS.actif ? MUS.actif.volume : 0 }; }, photo: function () { photographier(); }, frise: FRISE, pirogues: function () { return pirogues; }, journee: journee, montrerDisparus: function (l) { montrerDisparus(l); }, ombreDe: function (k) { try { return ombreDe(IMG[k]); } catch (e) { return String(e); } }, IMG: IMG, routesCfg: routesCfg, monde: function () { return monde; }, fleches: function () { return fleches; }, cadeaux: function () { return cadeaux; }, voitures: function () { return voitures; }, train: function () { var pts = cheminTrain(); return Object.assign({ pos: pts ? pointTrain(pts, train.s) : null }, train); }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; }, centrerSur: centrerSur, padTir: padTir };
 
+  ouvrirBaseFrise();
   chargerImages(function () {
     redim();
     $('epoque-nom').textContent = D.epoques.filter(function (x) { return x.id === monde.epoque; })[0].nom;

@@ -53,7 +53,7 @@ var Donnees = (function () {
       texte: "Avant, il faisait froid et tout noir la nuit. Maintenant, grâce au feu, on a chaud, on y voit, et on cuit la viande !"
     },
     chasse: {
-      scene: 'scenes/chasse', faits: ["Les chasseurs partaient en groupe : à plusieurs, on est plus forts et plus malins.", "Avec un propulseur, un bâton spécial, on lance la sagaie bien plus loin.", "On ne gaspillait rien : la viande pour manger, la peau pour s'habiller, les os pour faire des outils."],
+      scene: 'scenes/chasse', faits: ["Les chasseurs partaient en groupe : à plusieurs, on est plus forts et plus malins.", "Avec un propulseur, un bâton spécial, on envoie la lance bien plus loin.", "On ne gaspillait rien : la viande pour manger, la peau pour s'habiller, les os pour faire des outils."],
       nom: 'La chasse et la pêche', epoque: 1, idees: 10, prerequis: ['outils'], icone: '01-pierre/ratelier-lances',
       texte: "Avant, on avait souvent faim. Maintenant, avec des lances, on chasse dans la forêt et on pêche dans la rivière !"
     },
@@ -114,7 +114,7 @@ var Donnees = (function () {
       texte: "Avant, pour avoir des fruits, il fallait échanger un mouton ou un sac de blé. Maintenant, on paie avec des pièces de métal !"
     },
     voile: {
-      scene: 'scenes/voile', faits: ["Les Égyptiens naviguaient à la voile sur le Nil il y a plus de 5 000 ans.", "Les voiles étaient tissées en laine ou en lin, souvent à bandes de couleurs.", "Avec les bateaux à voile, on a pu commercer avec des pays lointains."],
+      scene: 'scenes/voile', faits: ["Les Égyptiens naviguaient à la voile sur le Nil il y a plus de 5 000 ans.", "Les premières voiles étaient tissées en lin.", "Avec les bateaux à voile, on a pu commercer avec des pays lointains."],
       nom: 'La voile', epoque: 3, idees: 20, prerequis: ['elevage'], icone: '03-metaux/port',
       texte: "Avant, en pirogue, on ne pouvait pas aller bien loin. Maintenant, on tisse la laine des moutons pour faire une voile : le vent pousse le bateau !"
     },
@@ -130,7 +130,7 @@ var Donnees = (function () {
       texte: "Avant, le bronze était rare et cher. Maintenant, on fait du fer, un métal qu'on trouve presque partout : des fers à cheval, des clous, des charrues pour labourer !"
     },
     pont: {
-      scene: 'scenes/pont', faits: ["Pour bâtir un pont en arche, on posait les pierres sur un gabarit en bois en forme d'arc, qu'on retirait à la fin.", "Les pierres de l'arche se poussent les unes contre les autres : c'est ce qui la fait tenir, sans colle.", "Certains ponts de pierre du Moyen Âge sont encore debout aujourd'hui, après 800 ans !"],
+      scene: 'scenes/pont', faits: ["Pour bâtir un pont en arche, on posait les pierres sur un support en bois en forme d'arc, qu'on retirait à la fin.", "Les pierres de l'arche se poussent les unes contre les autres : c'est ce qui la fait tenir, sans colle.", "Certains ponts de pierre du Moyen Âge sont encore debout aujourd'hui, après 800 ans !"],
       nom: 'Le pont de pierre', epoque: 4, idees: 30, prerequis: ['outils', 'roue'], icone: 'eau/pont-pierre',
       texte: "Avant, la rivière en crue emportait le pont de bois. Maintenant, on construit un pont en arches de pierre : il est solide, et les charrettes passent dessus !"
     },
@@ -140,7 +140,7 @@ var Donnees = (function () {
       texte: "Avant, on ne savait l'heure qu'en regardant le soleil. Maintenant, une horloge en fer sonne les heures pour toute la ville !"
     },
     imprimerie: {
-      scene: 'scenes/imprimerie', faits: ["Vers 1450, en Allemagne, Gutenberg a eu l'idée de petites lettres en métal qu'on range pour faire des pages.", "Avant, il fallait des mois pour copier un seul livre à la main.", "Avec une presse, on pouvait imprimer des centaines de pages par jour !"],
+      scene: 'scenes/imprimerie', faits: ["Vers 1450, en Allemagne, Gutenberg a fabriqué de petites lettres en métal qu'on range pour faire des pages.", "Avant, il fallait des mois pour copier un seul livre à la main.", "Avec une presse, on pouvait imprimer des centaines de pages par jour !"],
       nom: "L'imprimerie", epoque: 4, idees: 36, prerequis: ['ecriture', 'fer'], icone: '04-moyen-age/imprimerie',
       texte: "Avant, on copiait chaque livre à la main, lettre par lettre. Maintenant, on range des petites lettres en métal, on met de l'encre, et la presse imprime la page d'un coup !"
     },
@@ -151,12 +151,12 @@ var Donnees = (function () {
       texte: "Avant, on brûlait du bois, et la forêt reculait. Maintenant, on creuse la terre pour trouver le charbon, une pierre noire qui chauffe très fort et très longtemps !"
     },
     vapeur: {
-      scene: 'scenes/vapeur', faits: ["Quand l'eau bout, elle devient de la vapeur, et la vapeur pousse très fort : regarde le couvercle d'une casserole qui se soulève !", "Vers 1770, l'Écossais James Watt a beaucoup amélioré la machine à vapeur : elle pouvait faire tourner des roues toute la journée.", "Une seule machine faisait le travail de dizaines de chevaux."],
+      scene: 'scenes/vapeur', faits: ["Quand l'eau bout, elle devient de la vapeur, et la vapeur pousse très fort : regarde le couvercle d'une casserole qui se soulève !", "Vers 1780, l'Écossais James Watt a beaucoup amélioré la machine à vapeur : elle pouvait faire tourner des roues toute la journée.", "Une seule machine faisait le travail de dizaines de chevaux."],
       nom: 'La machine à vapeur', epoque: 5, idees: 92, prerequis: ['fer', 'charbon'], icone: '05-vapeur/usine',
       texte: "Avant, tout se faisait avec les bras ou avec les chevaux. Maintenant, le charbon fait bouillir l'eau, la vapeur pousse, et la machine fait tourner les roues toute seule !"
     },
     train: {
-      scene: 'scenes/train', faits: ["En 1829, en Angleterre, la locomotive de George Stephenson a gagné une course : elle s'appelait « la Fusée » !", "Les premiers trains roulaient à peu près à la vitesse d'un cheval au galop, et tout le monde trouvait ça incroyablement rapide.", "Les rails en fer permettent aux roues de rouler sans s'enfoncer, même avec des wagons très lourds."],
+      scene: 'scenes/train', faits: ["En 1829, en Angleterre, la locomotive de George Stephenson et de son fils Robert a gagné une course : elle s'appelait « la Fusée » !", "Les premiers trains roulaient à peu près à la vitesse d'un cheval au galop, et tout le monde trouvait ça incroyablement rapide.", "Les rails en fer permettent aux roues de rouler sans s'enfoncer, même avec des wagons très lourds."],
       nom: 'Le train', epoque: 5, idees: 108, prerequis: ['vapeur', 'roue'], icone: '05-vapeur/gare',
       texte: "Avant, pour aller dans la ville voisine, il fallait marcher des jours. Maintenant, la locomotive à vapeur tire les wagons sur des rails de fer : on y est en quelques heures !"
     },
@@ -167,12 +167,12 @@ var Donnees = (function () {
     },
     // 6. L'électricité (kb/domains/contenu-historique/epoques.md, section 6)
     electricite: {
-      scene: 'scenes/electricite', faits: ["Quand on fait tourner un aimant tout près de fils de cuivre, l'électricité se met à courir dans les fils : c'est ce que fait la grande roue de la centrale.", "En 1882, à New York, Thomas Edison a ouvert une des toutes premières centrales, pour éclairer tout un quartier.", "L'électricité, c'est très fort : on ne touche jamais une prise ni un fil électrique !"],
+      scene: 'scenes/electricite', faits: ["Quand on fait tourner un aimant tout près de fils de cuivre, l'électricité se met à courir dans les fils : c'est ce que fait la grande roue de la centrale.", "En 1882, à New York, Thomas Edison a ouvert une des toutes premières centrales, pour éclairer tout un quartier.", "L'électricité, c'est dangereux : on ne met jamais les doigts dans une prise, et on ne touche pas aux fils électriques !"],
       nom: "L'électricité", epoque: 6, idees: 112, prerequis: ['vapeur'], icone: '06-electricite/centrale',
       texte: "Avant, pour faire tourner une machine, il fallait du feu et de la vapeur à côté. Maintenant, la centrale fabrique l'électricité, et elle court dans des fils jusqu'aux maisons !"
     },
     ampoule: {
-      scene: 'scenes/ampoule', faits: ["Vers 1879, Thomas Edison en Amérique et Joseph Swan en Angleterre ont fabriqué des ampoules qui brillent longtemps.", "Edison a essayé des milliers de petits fils avant de trouver le bon : il a même essayé un fil de bambou !", "Dans les premières ampoules, on avait enlevé l'air : sinon, le petit fil aurait brûlé tout de suite."],
+      scene: 'scenes/ampoule', faits: ["Vers 1879, Thomas Edison en Amérique et Joseph Swan en Angleterre ont fabriqué des ampoules qui brillent longtemps.", "Edison a essayé des milliers de petits fils avant de trouver le bon : un fil de bambou, cuit jusqu'à devenir du charbon !", "Dans les premières ampoules, on avait enlevé l'air : sinon, le petit fil aurait brûlé tout de suite."],
       nom: "L'ampoule", epoque: 6, idees: 122, prerequis: ['electricite'], icone: '06-electricite/lampadaire',
       texte: "Avant, on s'éclairait avec des bougies et des lampes à gaz, et le soir, les rues restaient sombres. Maintenant, un petit fil brille dans une bulle de verre : l'ampoule éclaire toute la rue !"
     },
@@ -203,7 +203,7 @@ var Donnees = (function () {
       texte: "Avant, on brûlait du charbon pour faire l'électricité, et la fumée salissait l'air. Maintenant, des panneaux attrapent la lumière du soleil et des éoliennes tournent avec le vent : l'électricité arrive sans fumée !"
     },
     satellite: {
-      scene: 'scenes/satellite', faits: ["En 1957, le tout premier satellite, Spoutnik, faisait bip, bip en tournant autour de la Terre.", "Un satellite fait le tour de la Terre en à peu près une heure et demie.", "Le soir, on peut parfois voir un satellite passer dans le ciel : on dirait une petite étoile qui avance."],
+      scene: 'scenes/satellite', faits: ["En 1957, le tout premier satellite, Spoutnik, faisait bip, bip en tournant autour de la Terre.", "Spoutnik faisait le tour de la Terre en à peu près une heure et demie.", "Le soir, on peut parfois voir un satellite passer dans le ciel : on dirait une petite étoile qui avance."],
       nom: 'Le satellite', epoque: 7, idees: 190, prerequis: ['ordinateur', 'avion'], icone: '07-moderne/satellite',
       texte: "Avant, personne ne pouvait voir la Terre d'en haut. Maintenant, des satellites tournent tout autour : ils photographient les nuages, aident à prévoir la pluie et montrent le chemin !"
     },
@@ -219,7 +219,7 @@ var Donnees = (function () {
     'deco-peinture-chauvet': {
       nom: "Les chevaux de Chauvet", epoque: 1, image: 'deco/peinture-chauvet', deco: true,
       texte: "Dans la grotte Chauvet, en Ardèche, des artistes ont peint des chevaux, des lions et des rhinocéros il y a plus de 30 000 ans.",
-      faits: ["La grotte a été découverte en 1994 par trois spéléologues.", "Ce sont parmi les plus anciennes peintures connues au monde."]
+      faits: ["La grotte a été découverte en 1994 par trois spéléologues, des explorateurs de grottes.", "Ce sont parmi les plus anciennes peintures connues au monde."]
     },
     'deco-peinture-lascaux': {
       nom: "Le taureau de Lascaux", epoque: 1, image: 'deco/peinture-lascaux', deco: true,
@@ -239,7 +239,7 @@ var Donnees = (function () {
     'deco-hutte-mammouth': {
       nom: "La hutte en os de mammouth", epoque: 1, image: 'deco/hutte-mammouth', deco: true,
       texte: "À Mejyritch, en Ukraine, il y a environ 15 000 ans, on a construit des huttes avec des os et des défenses de mammouth.",
-      faits: ["Là-bas, il n'y avait presque pas d'arbres : les os remplaçaient le bois.", "Il fallait des dizaines d'os de mammouth pour une seule hutte !"]
+      faits: ["Là-bas, il n'y avait presque pas d'arbres : les os remplaçaient le bois.", "Il fallait plus d'une centaine d'os de mammouth pour une seule hutte !"]
     },
     'deco-menhir': {
       nom: "Un menhir", epoque: 2, image: 'deco/menhir', deco: true,
@@ -249,7 +249,7 @@ var Donnees = (function () {
     'deco-statue-menhir': {
       nom: "La Dame de Saint-Sernin", epoque: 2, image: 'deco/statue-menhir', deco: true,
       texte: "Une statue-menhir est une pierre dressée sculptée comme une personne : un visage, des bras, une ceinture.",
-      faits: ["La Dame de Saint-Sernin, dans l'Aveyron, a été sculptée il y a environ 5 000 ans.", "C'est l'une des plus anciennes statues de personne en France."]
+      faits: ["La Dame de Saint-Sernin, dans l'Aveyron, a été sculptée il y a environ 5 000 ans.", "C'est l'une des plus anciennes grandes statues de personne en France."]
     },
     'deco-dolmen': {
       nom: "Un dolmen", epoque: 2, image: 'deco/dolmen', deco: true,
@@ -309,7 +309,7 @@ var Donnees = (function () {
     'deco-gavrinis': {
       nom: "La pierre gravée de Gavrinis", epoque: 2, image: 'deco/gavrinis', deco: true,
       texte: "Sur l'île de Gavrinis, en Bretagne, un couloir de pierre est couvert de gravures : des spirales, des vagues et des lignes qui tournent comme des empreintes de doigts.",
-      faits: ["Ces gravures ont environ 5 500 ans.", "Les sculpteurs n'avaient pas de métal : ils gravaient avec des outils en pierre très dure, comme le quartz."]
+      faits: ["Ces gravures ont environ 6 000 ans.", "Les sculpteurs n'avaient pas de métal : ils gravaient avec des outils en pierre très dure, comme le quartz."]
     },
     'deco-cromlech': {
       nom: "Un cromlech", epoque: 2, image: 'deco/cromlech', deco: true,
@@ -380,7 +380,7 @@ var Donnees = (function () {
     'deco-porte-ishtar': {
       nom: "La porte d'Ishtar", epoque: 3, image: 'deco/porte-ishtar', deco: true,
       texte: "À Babylone, il y a environ 2 600 ans, on entrait dans la ville par la porte d'Ishtar, couverte de briques bleues brillantes et d'animaux en relief.",
-      faits: ["On y voit des lions, des taureaux et des dragons.", "On l'a remontée dans un musée de Berlin, en Allemagne."]
+      faits: ["Sur la porte, on voit des taureaux et des dragons. Le long de la grande rue qui y mène, il y a aussi des lions !", "On l'a remontée dans un musée de Berlin, en Allemagne."]
     },
     'deco-fontaine': {
       nom: "Une fontaine", epoque: 3, image: 'deco/fontaine', deco: true,
@@ -421,7 +421,7 @@ var Donnees = (function () {
     'deco-gargouille': {
       nom: 'Une gargouille', epoque: 4, image: 'deco/gargouille', deco: true,
       texte: "Une gargouille est une gouttière sculptée en forme de monstre. Quand il pleut, l'eau du toit sort par sa bouche, loin des murs.",
-      faits: ["Le mot vient de « gargouiller », le bruit de l'eau dans la gorge.", "Sur les cathédrales, il y en a des dizaines : des dragons, des chiens, des lions, et même des singes !"]
+      faits: ["Son nom ressemble à « gargouiller », le bruit de l'eau dans la gorge : les deux mots viennent d'un vieux mot qui veut dire « gorge ».", "Sur les cathédrales, il y en a des dizaines : des dragons, des chiens, des lions, et même des singes !"]
     },
     'deco-astrolabe': {
       nom: "L'astrolabe", epoque: 4, image: 'deco/astrolabe', deco: true,
@@ -441,7 +441,7 @@ var Donnees = (function () {
     'deco-moai': {
       nom: 'Un moaï', epoque: 4, image: 'deco/moai', deco: true,
       texte: "Sur l'île de Pâques, au milieu de l'océan Pacifique, on a sculpté près de 1 000 grandes statues de pierre, les moaïs, il y a 500 à 800 ans.",
-      faits: ["Ils sont taillés dans la pierre d'un ancien volcan.", "Pour les déplacer, on les faisait « marcher » debout en les balançant avec des cordes."]
+      faits: ["Ils sont taillés dans la pierre d'un ancien volcan.", "Pour les déplacer, on pense qu'on les faisait « marcher » debout en les balançant avec des cordes."]
     },
     'deco-pont-avignon': {
       nom: "Le pont d'Avignon", epoque: 4, image: 'deco/pont-avignon', deco: true,
@@ -482,7 +482,7 @@ var Donnees = (function () {
     'deco-rocket': {
       nom: 'La Fusée de Stephenson', epoque: 5, image: 'deco/rocket', deco: true,
       texte: "En 1829, en Angleterre, une course de locomotives a été gagnée par celle de George et Robert Stephenson. Son nom ? « Rocket », c'est-à-dire « la Fusée » !",
-      faits: ["Elle allait presque à 50 kilomètres à l'heure, plus vite qu'un cheval au galop.", "Elle était jaune et noire, avec une grande cheminée blanche."]
+      faits: ["Elle allait presque à 50 kilomètres à l'heure, aussi vite qu'un cheval au galop.", "Elle était jaune et noire, avec une grande cheminée blanche."]
     },
     'deco-kiosque': {
       nom: 'Le kiosque à musique', epoque: 5, image: 'deco/kiosque', deco: true,
@@ -513,12 +513,12 @@ var Donnees = (function () {
     'deco-neuschwanstein': {
       nom: 'Le château de Neuschwanstein', epoque: 6, image: 'deco/neuschwanstein', deco: true,
       texte: "En Allemagne, le roi Louis II a fait construire, à partir de 1869, un château de conte de fées, perché sur un rocher dans la montagne.",
-      faits: ["Il avait déjà l'électricité et même un téléphone : c'était tout nouveau !", "Il a inspiré le château de la Belle au bois dormant des dessins animés."]
+      faits: ["Il avait déjà des sonnettes électriques et même un téléphone : c'était tout nouveau !", "Il a inspiré le château de la Belle au bois dormant des dessins animés."]
     },
     'deco-empire-state': {
       nom: "L'Empire State Building", epoque: 6, image: 'deco/empire-state', deco: true,
       texte: "À New York, en 1931, on a construit un gratte-ciel de 102 étages en un peu plus d'un an seulement !",
-      faits: ["Grâce aux ascenseurs électriques, on monte tout en haut en moins d'une minute.", "Pendant 40 ans, ce fut le plus haut immeuble du monde."]
+      faits: ["Grâce aux ascenseurs électriques, on monte très haut en moins d'une minute.", "Pendant 40 ans, ce fut le plus haut immeuble du monde."]
     },
     'deco-golden-gate': {
       nom: 'Le pont du Golden Gate', epoque: 6, image: 'deco/golden-gate', deco: true,
@@ -538,7 +538,7 @@ var Donnees = (function () {
     'deco-bleriot': {
       nom: "L'avion de Blériot", epoque: 6, image: 'deco/bleriot', deco: true,
       texte: "En 1909, Louis Blériot a traversé la mer entre la France et l'Angleterre avec ce petit avion en bois et en toile.",
-      faits: ["Il n'avait même pas de boussole : il a suivi un bateau sur la mer.", "Le voyage a duré un peu plus d'une demi-heure."]
+      faits: ["Il n'avait même pas de boussole : au début, il a suivi un bateau sur la mer.", "Le voyage a duré un peu plus d'une demi-heure."]
     },
     'deco-ford-t': {
       nom: 'La Ford T', epoque: 6, image: 'deco/ford-t', deco: true,
@@ -548,7 +548,7 @@ var Donnees = (function () {
     'deco-cinematographe': {
       nom: 'Le cinématographe', epoque: 6, image: 'deco/cinematographe', deco: true,
       texte: "En 1895, à Paris, les frères Lumière ont montré pour la première fois des images qui bougent sur un grand écran : c'est le début du cinéma !",
-      faits: ["On tournait une manivelle pour faire défiler le film.", "Dans un de leurs premiers films, un train arrive en gare : certains spectateurs ont eu peur qu'il sorte de l'écran !"]
+      faits: ["On tournait une manivelle pour faire défiler le film.", "Dans un de leurs premiers films, un train arrive en gare : on raconte que certains spectateurs ont eu peur qu'il sorte de l'écran !"]
     },
     'deco-metro': {
       nom: 'Une entrée de métro', epoque: 6, image: 'deco/metro', deco: true,
@@ -558,7 +558,7 @@ var Donnees = (function () {
     'deco-zeppelin': {
       nom: 'Le dirigeable', epoque: 6, image: 'deco/zeppelin', deco: true,
       texte: "Vers 1900, en Allemagne, le comte Zeppelin a construit d'immenses ballons en forme de cigare, avec des moteurs, qu'on pouvait diriger dans le ciel.",
-      faits: ["On les attachait à un grand mât pour les faire descendre.", "Certains emmenaient des voyageurs d'un continent à l'autre."]
+      faits: ["Quand ils se posaient, on les attachait par le nez à un grand mât.", "Certains emmenaient des voyageurs d'un continent à l'autre."]
     },
     'deco-cabine': {
       nom: 'Une cabine téléphonique', epoque: 6, image: 'deco/cabine', deco: true,
@@ -1600,7 +1600,7 @@ var Donnees = (function () {
   batiments.scierie = {
     resume: "Les scieurs coupent les troncs en planches.",
     explication: "La scierie. Les bûcherons apportent les troncs, et les scieurs les coupent en planches avec une grande scie. Les planches servent à bâtir les maisons, les ponts et les bateaux.",
-    vignettes: [],
+    vignettes: [{ img: 'scierie', texte: "Le scieur pousse le tronc vers la grande scie : il en sort des planches bien droites." }],
     nom: 'La scierie', sprite: '04-moyen-age/scierie', epoque: 4, jusqua: 9, debloque: 'fer',
     zone: 'pre', cout: 180, bois: 3, largeur: 240, taille: 2, grandit: { 2: 1.05, 3: 1.12 },
     travail: { metier: 'bucheron', aller: 'foret', porte: 'bois', duree: 4, produit: 'pieces', qte: 30, avec: { vapeur: 44 } }
@@ -1608,7 +1608,7 @@ var Donnees = (function () {
   batiments['champ-laboure'] = {
     resume: "Le cheval tire la charrue : les champs sont bien plus grands.",
     explication: "Les champs labourés. Un cheval tire une charrue en fer qui retourne la terre. On cultive de grands champs en longues bandes : du blé, des légumes, et une bande qu'on laisse se reposer.",
-    vignettes: [],
+    vignettes: [{ img: 'champ-laboure', texte: "La paysanne suit le cheval qui tire la charrue : la terre est retournée en longues bandes." }],
     nom: 'Les champs labourés', sprite: '04-moyen-age/champ-laboure', epoque: 4, jusqua: 9, debloque: 'fer',
     zone: 'pre', cout: 170, bois: 2, largeur: 330, taille: 3, grandit: { 2: 1.04, 3: 1.1 },
     travail: { metier: 'paysan', aller: null, porte: 'ble', duree: 8, produit: 'nourriture', qte: 11 }
@@ -1616,7 +1616,7 @@ var Donnees = (function () {
   batiments.etable = {
     resume: "Les vaches broutent dans le grand pré et dorment dans l'étable.",
     explication: "L'étable. Les vaches broutent dans un grand pré clôturé et rentrent dormir dans l'étable. Elles donnent du lait, et le fumier rend les champs plus riches.",
-    vignettes: [],
+    vignettes: [{ img: 'etable', texte: "Assis sur son petit tabouret, le vacher trait la vache dans l'étable." }],
     nom: "L'étable", sprite: '04-moyen-age/etable', epoque: 4, jusqua: 9,
     zone: 'pre', cout: 160, bois: 3, largeur: 330, taille: 3, grandit: { 2: 1.04, 3: 1.1 },
     travail: { metier: 'berger', aller: null, livre: 'lait', duree: 9, produit: 'nourriture', qte: 10 }
@@ -1624,7 +1624,7 @@ var Donnees = (function () {
   batiments['ferme-laitiere'] = {
     resume: "Beaucoup de vaches, de grands silos, et le lait part en camion.",
     explication: "La ferme laitière. Des dizaines de vaches mangent sous un grand abri. Les silos gardent leur nourriture pour l'hiver, et un petit camion emporte le lait frais vers la ville.",
-    vignettes: [],
+    vignettes: [{ img: 'ferme-laitiere', texte: "La fermière branche la machine à traire. Le camion emportera le lait frais en ville." }],
     nom: 'La ferme laitière', sprite: '06-electricite/ferme-laitiere', epoque: 6, jusqua: 9, debloque: 'electricite',
     zone: 'pre', cout: 440, bois: 4, largeur: 335, taille: 3, grandit: { 2: 1.04, 3: 1.1 },
     travail: { metier: 'fermier', aller: null, livre: 'lait', duree: 6, produit: 'nourriture', qte: 18 }
@@ -1634,7 +1634,7 @@ var Donnees = (function () {
   batiments['grand-champ'] = {
     resume: "Un très grand champ de blé, à la campagne, avec une machine à vapeur pour battre le grain.",
     explication: "Les grands champs. Quand la ville a grandi, on a rassemblé tous les champs hors de la ville, en un seul très grand champ. Une machine à vapeur aide à battre le blé, et la grange garde le grain.",
-    vignettes: [],
+    vignettes: [{ img: 'grand-champ', texte: "Le paysan met les gerbes de blé dans la batteuse, que la machine à vapeur fait tourner." }],
     nom: 'Les grands champs', sprite: '05-vapeur/grand-champ', epoque: 5, jusqua: 9,
     zone: 'campagne', cout: 300, bois: 4, largeur: 560, taille: 4, postes: { 1: 4, 2: 6, 3: 8 }, prixNiveau: 240,
     travail: { metier: 'paysan', aller: null, porte: 'ble', duree: 8, produit: 'nourriture', qte: 10 }
@@ -1642,7 +1642,7 @@ var Donnees = (function () {
   batiments['grand-elevage'] = {
     resume: "Une grande ferme d'élevage, à la campagne : de grandes étables, de grands prés et des silos.",
     explication: "La grande ferme d'élevage. Les moutons et les vaches ne vivent plus en ville : ils sont partis à la campagne, dans une grande ferme avec de longues étables, de grands prés clôturés et des silos pour leur nourriture.",
-    vignettes: [],
+    vignettes: [{ img: 'grand-elevage', texte: "La fermière ramène une vache vers la grande étable rouge et son silo." }],
     nom: "La grande ferme d'élevage", sprite: '05-vapeur/grand-elevage', epoque: 5, jusqua: 9,
     zone: 'campagne', cout: 280, bois: 4, largeur: 560, taille: 4, postes: { 1: 4, 2: 6, 3: 8 }, prixNiveau: 220,
     travail: { metier: 'berger', aller: null, livre: 'lait', duree: 9, produit: 'nourriture', qte: 10 }
