@@ -1,11 +1,11 @@
 // service worker versionné : une nouvelle version du jeu remplace l'ancienne
-const CACHE = 'feu-fusee-21a024928b';
+const CACHE = 'feu-fusee-36016340db';
 const FICHIERS = ["./", "index.html", "manifest.webmanifest", "icone-192.png", "icone-512.png"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FICHIERS))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
-  if (new URL(e.request.url).pathname.includes('/cine/')) return; // les vidéos : directement au réseau (lecture par morceaux)
+  if (/\/(cine|musique)\//.test(new URL(e.request.url).pathname)) return; // vidéos et musiques : directement au réseau (lecture par morceaux)
   // réseau d'abord (pour avoir la dernière version), cache si hors ligne
   e.respondWith(fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(k => k.put(e.request, c)); return r; }).catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));
 });

@@ -77,7 +77,7 @@
       var m = M.developper(d.monde);
       if (!m) return;
       figee = true;
-      localStorage.setItem(CLE, JSON.stringify({ v: 2, monde: m, ui: Object.assign({}, d.ui || {}, { voix: ui.voix }) }));
+      localStorage.setItem(CLE, JSON.stringify({ v: 2, monde: m, ui: Object.assign({}, d.ui || {}, { voix: ui.voix, musique: ui.musique }) }));
       location.reload();
     } catch (e) { figee = false; }
   });
@@ -904,6 +904,53 @@
       });
     } catch (e) {}
   }
+  // ---------- musique (ADR-058) : une par âge, ElevenLabs, en boucle ----------
+  // Les fichiers sont à côté de la page dans la version installée (window.MUSIQUE, rempli par build.py --pwa) ;
+  // le fichier unique n'en a pas et reste sans musique. Deux lecteurs : le suivant entre en fondu pendant que l'autre sort,
+  // pour boucler sans couture et pour passer d'un âge à l'autre.
+  var MUS = { lecteurs: [], actif: null, piste: null, vol: 0.32, pret: false, pause: false };
+  function musiqueVoulue() {
+    var l = window.MUSIQUE || {};
+    if (ui.musique === false || MUS.pause || ludiPause || document.hidden || !MUS.pret) return null;
+    return l[monde.epoque] ? String(monde.epoque) : null;
+  }
+  function fondu(a, de, vers, duree, fin) {
+    var t0 = performance.now();
+    if (a._fondu) clearInterval(a._fondu);
+    a._fondu = setInterval(function () {
+      var k = Math.min(1, (performance.now() - t0) / (duree * 1000));
+      try { a.volume = Math.max(0, Math.min(1, de + (vers - de) * k)); } catch (e) {}
+      if (k >= 1) { clearInterval(a._fondu); a._fondu = null; if (fin) fin(); }
+    }, 50);
+  }
+  function lancerPiste(piste, depuis) {
+    var a = new Audio(window.MUSIQUE[piste]);
+    a.preload = 'auto'; a.volume = 0; a._piste = piste;
+    try { a.currentTime = depuis || 0; } catch (e) {}
+    var p = a.play(); if (p && p.catch) p.catch(function () {});
+    fondu(a, 0, MUS.vol, 2.5);
+    MUS.lecteurs.push(a); MUS.actif = a; MUS.piste = piste;
+  }
+  function couperLecteur(a, duree) {
+    fondu(a, a.volume, 0, duree, function () { try { a.pause(); a.removeAttribute('src'); a.load(); } catch (e) {} MUS.lecteurs = MUS.lecteurs.filter(function (x) { return x !== a; }); });
+  }
+  function majMusique() {
+    var voulue = musiqueVoulue();
+    if (voulue !== MUS.piste) {
+      if (MUS.actif) couperLecteur(MUS.actif, voulue ? 2.5 : 0.8);
+      MUS.actif = null; MUS.piste = null;
+      if (voulue) lancerPiste(voulue);
+      return;
+    }
+    // la boucle : 4 s avant la fin, la même piste repart du début en fondu
+    var a = MUS.actif;
+    if (a && a.duration && a.currentTime > a.duration - 4 && !a._relaye) { a._relaye = true; couperLecteur(a, 3.5); lancerPiste(a._piste, 0); }
+  }
+  // les navigateurs ne jouent un son qu'après un premier geste
+  addEventListener('pointerdown', function () { MUS.pret = true; }, { capture: true, once: true });
+  setInterval(majMusique, 400);
+  document.addEventListener('visibilitychange', majMusique);
+
   // la voix : phrases enregistrées (Arcads, voix de narratrice), sinon synthèse du navigateur
   function cleVoix(t) { return String(t || '').replace(/<[^>]+>/g, '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').replace(/\s+/g, ' ').replace(/ ([.,])/g, '$1').trim(); }
   var lecteur = new Audio(), fileVoix = [], jeton = 0;
@@ -2406,6 +2453,7 @@
     function texte() {
       if (montre) return;
       montre = true;
+      MUS.pause = false;
       try { vid.pause(); } catch (e) {}
       box.classList.add('texte');
       setTimeout(function () { dire(lu); }, 400);
@@ -2413,7 +2461,7 @@
     vid.onended = texte; vid.onerror = texte;
     var video = (window.CINE || {})[nom];
     if (video && !MOUVEMENT_REDUIT) {
-      vid.hidden = false; vid.src = video;
+      vid.hidden = false; vid.src = video; MUS.pause = true; majMusique();
       var p = vid.play(); if (p && p.catch) p.catch(texte);
     } else { vid.hidden = true; vid.removeAttribute('src'); texte(); }
     box.querySelector('.voix').onclick = function () { dire(lu); };
@@ -2686,6 +2734,9 @@
   // menu
   $('btn-menu').addEventListener('click', function () { $('menu-voix').textContent = '🔊 Voix : ' + (ui.voix ? 'oui' : 'non'); ouvrir('menu'); });
   $('menu-voix').addEventListener('click', function () { ui.voix = !ui.voix; this.textContent = '🔊 Voix : ' + (ui.voix ? 'oui' : 'non'); sauver(); });
+  function texteMusique() { return '🎵 Musique : ' + (ui.musique === false ? 'non' : 'oui'); }
+  $('btn-menu').addEventListener('click', function () { $('menu-musique').textContent = texteMusique(); });
+  $('menu-musique').addEventListener('click', function () { ui.musique = ui.musique === false; this.textContent = texteMusique(); sauver(); majMusique(); });
   $('menu-plein').addEventListener('click', function () { basculerPleinEcran(); fermer('menu'); });
   var confirmeA = 0;
   $('menu-recommencer').addEventListener('click', function () {
@@ -3262,7 +3313,7 @@
 
   // pour les tests automatiques
   setTimeout(panneauBac, 500);
-  window.__jeu = { montrerDisparus: function (l) { montrerDisparus(l); }, ombreDe: function (k) { try { return ombreDe(IMG[k]); } catch (e) { return String(e); } }, IMG: IMG, routesCfg: routesCfg, monde: function () { return monde; }, fleches: function () { return fleches; }, cadeaux: function () { return cadeaux; }, voitures: function () { return voitures; }, train: function () { var pts = cheminTrain(); return Object.assign({ pos: pts ? pointTrain(pts, train.s) : null }, train); }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; }, centrerSur: centrerSur, padTir: padTir };
+  window.__jeu = { musique: function () { return { piste: MUS.piste, lecteurs: MUS.lecteurs.length, joue: MUS.actif ? !MUS.actif.paused : false, vol: MUS.actif ? MUS.actif.volume : 0 }; }, montrerDisparus: function (l) { montrerDisparus(l); }, ombreDe: function (k) { try { return ombreDe(IMG[k]); } catch (e) { return String(e); } }, IMG: IMG, routesCfg: routesCfg, monde: function () { return monde; }, fleches: function () { return fleches; }, cadeaux: function () { return cadeaux; }, voitures: function () { return voitures; }, train: function () { var pts = cheminTrain(); return Object.assign({ pos: pts ? pointTrain(pts, train.s) : null }, train); }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; }, centrerSur: centrerSur, padTir: padTir };
 
   chargerImages(function () {
     redim();

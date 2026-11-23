@@ -144,7 +144,7 @@ def construire(sortie: Path) -> None:
     gabarit = gabarit.replace("<!--PWA-->\n", "")
     gabarit = gabarit.replace("/*LUDI*/", (RACINE / "src" / "ludi.js").read_text(encoding="utf-8"))
     voix = voix_enregistrees()
-    page = gabarit.replace("/*ASSETS*/", "window.CINE = {};\nvar ASSETS = " + json.dumps(a) + ";\nvar VOIX = " + json.dumps(voix, ensure_ascii=False) + ";\nvar SONS = " + json.dumps(bruitages()) + ";").replace("/*SCRIPTS*/", scripts)
+    page = gabarit.replace("/*ASSETS*/", "window.CINE = {};\nwindow.MUSIQUE = {};\nvar ASSETS = " + json.dumps(a) + ";\nvar VOIX = " + json.dumps(voix, ensure_ascii=False) + ";\nvar SONS = " + json.dumps(bruitages()) + ";").replace("/*SCRIPTS*/", scripts)
     sortie.parent.mkdir(parents=True, exist_ok=True)
     sortie.write_text(page, encoding="utf-8")
     print(f"{sortie} : {len(page) / 1e6:.2f} Mo, {len(a)} images, {len(voix)} phrases en voix")
@@ -189,6 +189,12 @@ def pwa(dossier: Path) -> None:
     page = page.replace("<title>Du Feu à la Fusée</title>\n", "<title>Du Feu à la Fusée</title>\n" + tags)
     # les petites vidéos de l'histoire : seulement dans la version installée (le fichier unique montre l'image)
     page = page.replace("window.CINE = {};", "window.CINE = " + json.dumps({n: f"cine/{n}.mp4" for n in CINES}) + ";", 1)
+    # une musique par âge (ADR-058) : à côté de la page, comme les vidéos
+    pistes = sorted((RACINE / "assets" / "musique").glob("*.mp3"))
+    page = page.replace("window.MUSIQUE = {};", "window.MUSIQUE = " + json.dumps({f.stem: f"musique/{f.name}" for f in pistes}) + ";", 1)
+    (dossier / "musique").mkdir(parents=True, exist_ok=True)
+    for f in pistes:
+        shutil.copy(f, dossier / "musique" / f.name)
     dossier.mkdir(parents=True, exist_ok=True)
     (dossier / "cine").mkdir(exist_ok=True)
     for n in CINES:
@@ -211,7 +217,7 @@ self.addEventListener('install', e => {{ e.waitUntil(caches.open(CACHE).then(c =
 self.addEventListener('activate', e => {{ e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); }});
 self.addEventListener('fetch', e => {{
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
-  if (new URL(e.request.url).pathname.includes('/cine/')) return; // les vidéos : directement au réseau (lecture par morceaux)
+  if (/\/(cine|musique)\//.test(new URL(e.request.url).pathname)) return; // vidéos et musiques : directement au réseau (lecture par morceaux)
   // réseau d'abord (pour avoir la dernière version), cache si hors ligne
   e.respondWith(fetch(e.request).then(r => {{ const c = r.clone(); caches.open(CACHE).then(k => k.put(e.request, c)); return r; }}).catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));
 }});
