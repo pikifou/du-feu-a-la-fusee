@@ -22,6 +22,8 @@
 
   // ---------- sauvegarde ----------
   var ui = { voix: true, aide: {}, nouveaux: [] };
+  // le son se règle pour toute la maison dans Ludiworld (kit 0.5) ; ouvert seul, sur l'appareil. Jamais muet au départ.
+  var SON = { musique: true, bruitages: true, voix: true };
   function charger() {
     try {
       var brut = localStorage.getItem(CLE) || 'null', o = JSON.parse(brut);
@@ -34,19 +36,116 @@
     return null;
   }
   var figee = false; // une sauvegarde venue d'un autre appareil vient d'être rangée : on ne l'écrase pas avant de recharger
-  var dernierLudi = 0;
+  var dernierLudi = Date.now(); // au lancement, Ludiworld peut avoir une copie plus récente : on ne lui envoie pas tout de suite la nôtre
   function sauver(maintenant) {
     if (figee) return;
+    var ville = villeEnCours();
+    if (!ville) return; // le monde derrière l'accueil, avant qu'on ait choisi une ville : il n'est à personne
     try { localStorage.setItem(CLE, JSON.stringify({ v: 2, monde: M.exporter(monde), ui: ui })); } catch (e) {}
+    ville.epoque = monde.epoque; ville.partie = partieId(); ville.maj = Date.now();
+    ecrireVilles();
     // Ludiworld en garde une copie légère (dans le compte du parent), au plus toutes les 20 s, et à chaque arrêt possible.
     if (window.Ludi && (maintenant || Date.now() - dernierLudi > 20000)) {
       dernierLudi = Date.now();
-      try { window.Ludi.save({ v: 2, monde: M.exporterLeger(monde), ui: ui }); } catch (e) {}
+      try { window.Ludi.save(paquetLudi()); } catch (e) {}
     }
   }
   var monde = params.has('neuf') ? null : charger();
   var nouvellePartie = !monde;
   if (!monde) monde = M.nouveau((Date.now() % 100000) + 1);
+
+  // ---------- les villes (ADR-063) : cinq au plus ----------
+  // Une ville se joue à la fois, dans CLE comme avant. Les autres dorment compressées (Villes.compresser) dans
+  // « feu-fusee-ville-<id> » ; « feu-fusee-villes » dit lesquelles existent, leur âge et le temps passé dessus.
+  // Changer de ville : ranger celle en cours, poser l'autre dans CLE, recharger la page.
+  var CLE_VILLES = 'feu-fusee-villes', CLE_VILLE = 'feu-fusee-ville-';
+  var VL = null, changeEnCours = false, accueilOuvert = false, restauree = false;
+  function lireLS(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function ecrireLS(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function ecrireVilles() { ecrireLS(CLE_VILLES, JSON.stringify(VL)); }
+  function listeVilles() {
+    if (VL) return VL;
+    try { VL = JSON.parse(lireLS(CLE_VILLES) || 'null'); } catch (e) { VL = null; }
+    if (!VL || !Array.isArray(VL.liste)) {
+      VL = { active: null, liste: [] };
+      // une partie d'avant les villes (celle de Joshua) devient la Ville A, avec le temps de jeu qu'elle a déjà compté
+      if (!nouvellePartie) {
+        var a = Villes.nouvelle([], Date.now());
+        a.epoque = monde.epoque; a.ms = Math.round((monde.t || 0) * 1000); a.partie = partieId();
+        VL.liste.push(a); VL.active = a.id;
+      }
+      ecrireVilles();
+    }
+    return VL;
+  }
+  function villeEnCours() { var l = listeVilles(); return l.liste.filter(function (v) { return v.id === l.active; })[0] || null; }
+  // ce que Ludiworld garde : la ville en cours, la liste, et les autres villes si toutes sont compressées et que ça tient
+  function paquetLudi() {
+    var l = listeVilles(), autres = {}, toutes = true;
+    l.liste.forEach(function (v) {
+      if (v.id === l.active) return;
+      var z = lireLS(CLE_VILLE + v.id);
+      if (z && z.charAt(0) !== '{') autres[v.id] = z; else toutes = false;
+    });
+    return Villes.paquet({ active: l.active, liste: l.liste, monde: M.exporterLeger(monde), ui: ui, autres: toutes ? autres : undefined });
+  }
+  function rangerVilleEnCours() {
+    var v = villeEnCours();
+    if (!v || figee) return Promise.resolve();
+    sauver(true);
+    var s = JSON.stringify({ v: 2, monde: M.exporterLeger(monde), ui: ui });
+    return Villes.compresser(s).then(function (z) {
+      if (!ecrireLS(CLE_VILLE + v.id, z || s)) throw new Error('plus de place pour ranger la ville');
+    });
+  }
+  function rechargerDirect() {
+    try { sessionStorage.setItem('feu-direct', '1'); } catch (e) {}
+    location.reload();
+  }
+  function ouvrirVille(id) {
+    var l = listeVilles();
+    if (changeEnCours || !l.liste.some(function (v) { return v.id === id; })) return Promise.resolve();
+    changeEnCours = true;
+    return rangerVilleEnCours().then(function () {
+      var z = lireLS(CLE_VILLE + id);
+      if (!z) throw new Error('ville ' + id + ' introuvable');
+      return z.charAt(0) === '{' ? z : Villes.decompresser(z);
+    }).then(function (s) {
+      if (restauree) return;
+      var o = JSON.parse(s), m = M.developper(o.monde);
+      if (!m) throw new Error('ville ' + id + ' illisible');
+      var avant = JSON.stringify(l);
+      if (!ecrireLS(CLE_VILLES, JSON.stringify({ active: id, liste: l.liste }))) throw new Error('la liste ne s\'écrit pas');
+      figee = true;
+      if (!ecrireLS(CLE, JSON.stringify({ v: 2, monde: m, ui: o.ui || {} }))) { ecrireLS(CLE_VILLES, avant); throw new Error('plus de place'); }
+      l.active = id;
+      rechargerDirect();
+    }).catch(function (e) { if (!restauree) { figee = false; changeEnCours = false; } console.warn(e); });
+  }
+  function nouvelleVille() {
+    var l = listeVilles();
+    if (changeEnCours || !Villes.peutCreer(l.liste)) return Promise.resolve();
+    changeEnCours = true;
+    return rangerVilleEnCours().then(function () {
+      if (restauree) return;
+      var n = Villes.nouvelle(l.liste, Date.now()), liste = l.liste.concat([n]);
+      if (!ecrireLS(CLE_VILLES, JSON.stringify({ active: n.id, liste: liste }))) throw new Error('la liste ne s\'écrit pas');
+      l.liste = liste; l.active = n.id;
+      figee = true; ecrireLS(CLE, null);
+      rechargerDirect(); // la page repart sur une partie neuve, avec l'arrivée de la tribu
+    }).catch(function (e) { if (!restauree) { figee = false; changeEnCours = false; } console.warn(e); });
+  }
+  function jeterVille(id) {
+    var l = listeVilles(), v = l.liste.filter(function (x) { return x.id === id; })[0];
+    if (!v || changeEnCours) return;
+    l.liste = Villes.retirer(l.liste, id);
+    ecrireLS(CLE_VILLE + id, null);
+    if (v.partie) supprimerPhotos(v.partie);
+    if (l.active === id) l.active = null;
+    ecrireVilles();
+    if (!l.active) { figee = true; ecrireLS(CLE, null); } // l'accueil reste ouvert sur les autres
+    if (LUDI && l.active) { try { LUDI.save(paquetLudi()); } catch (e) {} }
+  }
 
   // ---------- Ludiworld (kit ludi.js) ----------
   // Ouvert seul, le kit garde tout dans le navigateur et le jeu ne change pas.
@@ -73,16 +172,34 @@
   // Une partie plus récente venue d'un autre appareil : on la range comme la nôtre (sauf la voix, propre à l'appareil) et on recharge.
   if (LUDI) LUDI.onRestore(function (d) {
     try {
-      if (!d || d.v !== 2 || !d.monde) return;
-      var m = M.developper(d.monde);
+      if (changeEnCours || restauree) return; // un changement de ville est en route : il recharge la page lui-même
+      var r = Villes.lire(d);
+      if (!r) return;
+      var m = M.developper(r.monde);
       if (!m) return;
-      figee = true;
-      localStorage.setItem(CLE, JSON.stringify({ v: 2, monde: m, ui: Object.assign({}, d.ui || {}, { voix: ui.voix, musique: ui.musique }) }));
+      var locale = listeVilles(), anciennes = {}, cles = {};
+      // la ville en cours d'abord rangée, en clair (tout de suite) : rien de ce qui a été joué ici ne se perd
+      if (villeEnCours() && !figee) ecrireLS(CLE_VILLE + locale.active, JSON.stringify({ v: 2, monde: M.exporterLeger(monde), ui: ui }));
+      locale.liste.forEach(function (v) { anciennes[v.id] = lireLS(CLE_VILLE + v.id); });
+      var f = Villes.fusionner(locale, r);
+      restauree = true; figee = true;
+      // la même ville des deux côtés : la copie de Ludiworld si elle l'a, sinon celle de l'appareil ;
+      // une ville que Ludiworld ne connaît pas : celle de l'appareil, sous sa nouvelle lettre
+      f.memes.forEach(function (x) { if (anciennes[x.local]) cles[x.distant] = anciennes[x.local]; });
+      f.places.forEach(function (x) { if (anciennes[x.de]) cles[x.vers] = anciennes[x.de]; });
+      Object.keys(r.autres).forEach(function (k) { cles[k] = r.autres[k]; });
+      delete cles[r.active];
+      f.restes.forEach(function (v) { if (anciennes[v.id]) ecrireLS('feu-fusee-ville-reste-' + (v.partie || v.id), anciennes[v.id]); });
+      Object.keys(cles).forEach(function (k) { ecrireLS(CLE_VILLE + k, cles[k]); });
+      VL = { active: r.active, liste: f.liste.filter(function (v) { return v.id === r.active || cles[v.id]; }) };
+      if (!ecrireLS(CLE, JSON.stringify({ v: 2, monde: m, ui: r.ui }))) throw new Error('plus de place');
+      ecrireVilles();
+      ['A', 'B', 'C', 'D', 'E'].forEach(function (k) { if (!cles[k]) ecrireLS(CLE_VILLE + k, null); });
       location.reload();
-    } catch (e) { figee = false; }
+    } catch (e) { console.warn(e); if (!restauree) figee = false; }
   });
   // Une partie commencée avant ce changement : on la confie aussi à Ludiworld (sans écraser une plus récente venue d'ailleurs).
-  if (LUDI && !nouvellePartie) { try { LUDI.save({ v: 2, monde: M.exporterLeger(monde), ui: ui }, { existante: true }); } catch (e) {} }
+  if (LUDI && !nouvellePartie && villeEnCours()) { try { LUDI.save(paquetLudi(), { existante: true }); } catch (e) {} }
   addEventListener('pointerdown', function () { ludiPause = false; }, true);
 
   // ---------- vue (caméra rapprochée, glisser pour se déplacer, pincer pour zoomer) ----------
@@ -877,6 +994,7 @@
   var audio = null, bruitages = {};
   // quelques bruitages enregistrés (ElevenLabs, assets/sons) ; sinon les petites notes ci-dessous
   function son(type) {
+    if (!SON.bruitages) return;
     var src = typeof SONS !== 'undefined' && SONS[type];
     if (src) {
       try {
@@ -911,7 +1029,7 @@
   var MUS = { lecteurs: [], actif: null, piste: null, vol: 0.32, pret: false, pause: false };
   function musiqueVoulue() {
     var l = window.MUSIQUE || {};
-    if (ui.musique === false || MUS.pause || ludiPause || document.hidden || !MUS.pret) return null;
+    if (!SON.musique || MUS.pause || ludiPause || document.hidden || !MUS.pret) return null;
     return l[monde.epoque] ? String(monde.epoque) : null;
   }
   function fondu(a, de, vers, duree, fin) {
@@ -949,6 +1067,21 @@
   // les navigateurs ne jouent un son qu'après un premier geste
   addEventListener('pointerdown', function () { MUS.pret = true; }, { capture: true, once: true });
   setInterval(majMusique, 400);
+  function majBoutonsSon() {
+    $('menu-voix').textContent = '🔊 Voix : ' + (SON.voix ? 'oui' : 'non');
+    $('menu-musique').textContent = '🎵 Musique : ' + (SON.musique ? 'oui' : 'non');
+    $('menu-bruitages').textContent = '🔔 Bruitages : ' + (SON.bruitages ? 'oui' : 'non');
+  }
+  if (LUDI && LUDI.onSon) LUDI.onSon(function (s) {
+    SON = { musique: s.musique !== false, bruitages: s.bruitages !== false, voix: s.voix !== false };
+    if (!SON.voix) { try { lecteur.pause(); speechSynthesis.cancel(); } catch (e) {} }
+    majBoutonsSon(); majMusique();
+  });
+  function reglerSon(cle) {
+    var o = {}; o[cle] = !SON[cle];
+    if (LUDI && LUDI.reglerSon) LUDI.reglerSon(o); // onSon applique le changement
+    else { SON[cle] = o[cle]; majBoutonsSon(); majMusique(); }
+  }
   document.addEventListener('visibilitychange', majMusique);
 
   // la voix : phrases enregistrées (Arcads, voix de narratrice), sinon synthèse du navigateur
@@ -956,7 +1089,7 @@
   var lecteur = new Audio(), fileVoix = [], jeton = 0;
   lecteur.addEventListener('ended', function () { var j = jeton; setTimeout(function () { if (j === jeton) suivante(); }, 220); });
   function dire(texte) {
-    if (!ui.voix) return;
+    if (!SON.voix) return;
     jeton++;
     fileVoix = (Array.isArray(texte) ? texte : [texte]).map(cleVoix).filter(Boolean);
     try { lecteur.pause(); } catch (e) {}
@@ -2391,7 +2524,7 @@
     el.textContent = nb(texte); el.style.display = 'block';
     clearTimeout(minuteurAide);
     minuteurAide = setTimeout(function () { el.style.display = 'none'; }, 5000);
-    if (!forcer || ui.voix) dire(texte);
+    if (!forcer || SON.voix) dire(texte);
   }
   function aideUneFois(cle, texte) {
     if (ui.aide[cle]) return;
@@ -2737,33 +2870,12 @@
   }
 
   // menu
-  $('btn-menu').addEventListener('click', function () { $('menu-voix').textContent = '🔊 Voix : ' + (ui.voix ? 'oui' : 'non'); ouvrir('menu'); });
-  $('menu-voix').addEventListener('click', function () { ui.voix = !ui.voix; this.textContent = '🔊 Voix : ' + (ui.voix ? 'oui' : 'non'); sauver(); });
-  function texteMusique() { return '🎵 Musique : ' + (ui.musique === false ? 'non' : 'oui'); }
-  $('btn-menu').addEventListener('click', function () { $('menu-musique').textContent = texteMusique(); });
-  $('menu-musique').addEventListener('click', function () { ui.musique = ui.musique === false; this.textContent = texteMusique(); sauver(); majMusique(); });
+  $('btn-menu').addEventListener('click', function () { majBoutonsSon(); ouvrir('menu'); });
+  $('menu-voix').addEventListener('click', function () { reglerSon('voix'); });
+  $('menu-musique').addEventListener('click', function () { reglerSon('musique'); });
+  $('menu-bruitages').addEventListener('click', function () { reglerSon('bruitages'); });
   $('menu-plein').addEventListener('click', function () { basculerPleinEcran(); fermer('menu'); });
-  var confirmeA = 0;
-  $('menu-recommencer').addEventListener('click', function () {
-    var b = this;
-    if (Date.now() - confirmeA > 4000) {
-      confirmeA = Date.now();
-      b.textContent = '↺ Sûr ? Touche encore pour tout effacer';
-      setTimeout(function () { b.textContent = '↺ Recommencer la partie'; }, 4000);
-      return;
-    }
-    confirmeA = 0;
-    b.textContent = '↺ Recommencer la partie';
-    try { localStorage.removeItem(CLE); } catch (e) {}
-    monde = M.nouveau((Date.now() % 100000) + 1);
-    ui.aide = {}; ui.nouveaux = [];
-    choisir(null);
-    fermer('menu');
-    montrerEpoque();
-    sauver();
-    ludiNuit = null;
-    ludiProgression();
-  });
+  $('menu-accueil').addEventListener('click', function () { son('clic'); fermer('menu'); ouvrirAccueil(); });
   function estPleinEcran() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function verrouiller() {
     try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {}
@@ -2812,6 +2924,84 @@
     paroles = paroles.filter(function (p) { return p.hab !== h.id; });
     paroles.push({ hab: h.id, texte: texte, debut: T, fin: T + 2.8 });
     dire(texte);
+  }
+
+  // ---------- l'accueil (ADR-063) : le titre et les villes ----------
+  // S'ouvre à chaque lancement (sauf ?test, ?neuf, ou juste après avoir choisi une ville). Le monde attend derrière.
+  function tempsPasse(ms) {
+    var min = Math.floor((ms || 0) / 60000);
+    if (min < 1) return 'moins d\'une minute';
+    if (min < 60) return min + ' min';
+    var h = Math.floor(min / 60), r = min % 60;
+    return h + ' h' + (r ? ' ' + (r < 10 ? '0' : '') + r : '');
+  }
+  // la dernière photo de la frise d'une ville ; sinon la grande image de son âge
+  function imageDeVille(v, img) {
+    var repli = ASSETS[ILLU_EPOQUE[v.epoque]] || ASSETS['histoire/debut'] || '';
+    img.src = repli;
+    if (!FRISE.db || !v.partie) return;
+    try {
+      var r = FRISE.db.transaction('photos').objectStore('photos').index('partie').getAll(v.partie);
+      r.onsuccess = function () {
+        var l = r.result || [];
+        if (!l.length) return;
+        var u = URL.createObjectURL(l[l.length - 1].img);
+        img.onload = function () { URL.revokeObjectURL(u); };
+        img.src = u;
+      };
+    } catch (e) {}
+  }
+  function ouvrirAccueil() {
+    var l = listeVilles(), zone = $('accueil-villes'), plein = !Villes.peutCreer(l.liste);
+    if (villeEnCours()) sauver();
+    accueilOuvert = true;
+    var fond = ASSETS['histoire/accueil'] || ASSETS['histoire/debut'];
+    $('accueil').style.backgroundImage = fond ? 'url("' + fond + '")' : '';
+    if (ASSETS['logo/fr'] && !$('accueil-logo').src) $('accueil-logo').src = ASSETS['logo/fr'];
+    zone.innerHTML = '';
+    l.liste.forEach(function (v) {
+      var cas = document.createElement('div'); cas.className = 'ville-case';
+      var b = document.createElement('button');
+      b.className = 'ville' + (v.id === l.active && !figee ? ' en-cours' : ''); b.dataset.id = v.id;
+      var ep = D.epoques.filter(function (x) { return x.id === v.epoque; })[0];
+      var im = document.createElement('img'); im.alt = ''; imageDeVille(v, im);
+      b.appendChild(im);
+      [['nom', v.nom], ['age', ep ? ep.nom : ''], ['temps', '⏱ ' + tempsPasse(v.ms)]].forEach(function (x) {
+        var s = document.createElement('span'); s.className = x[0]; s.textContent = x[1]; b.appendChild(s);
+      });
+      b.addEventListener('click', function () {
+        son('clic');
+        if (v.id === l.active && !figee) fermerAccueil(); else ouvrirVille(v.id);
+      });
+      cas.appendChild(b);
+      if (plein) {
+        var j = document.createElement('button'); j.className = 'ville-jeter'; j.dataset.id = v.id; j.textContent = '🗑️';
+        j.setAttribute('aria-label', 'Jeter la ' + v.nom);
+        var sur = 0;
+        j.addEventListener('click', function (e) {
+          e.stopPropagation(); son('clic');
+          if (Date.now() - sur > 4000) {
+            sur = Date.now(); j.textContent = '🗑️ Sûr ?'; j.classList.add('sur');
+            setTimeout(function () { if (j.isConnected) { j.textContent = '🗑️'; j.classList.remove('sur'); } }, 4000);
+            return;
+          }
+          jeterVille(v.id);
+          ouvrirAccueil();
+        });
+        cas.appendChild(j);
+      }
+      zone.appendChild(cas);
+    });
+    var n = document.createElement('button'); n.id = 'accueil-nouvelle'; n.disabled = plein;
+    n.innerHTML = '<span class="plus">✚</span><span>Nouvelle ville</span>';
+    n.addEventListener('click', function () { son('clic'); nouvelleVille(); });
+    zone.appendChild(n);
+    $('accueil-plein').hidden = !plein;
+    $('accueil').hidden = false;
+  }
+  function fermerAccueil() {
+    accueilOuvert = false;
+    $('accueil').hidden = true;
   }
 
   // ---------- le Musée du village (ADR-058, GD « Le Musée du village ») ----------
@@ -2872,12 +3062,21 @@
       r.onsuccess = function () { fin(r.result || []); }; r.onerror = function () { fin([]); };
     } catch (e) { fin([]); }
   }
-  // les photos d'une partie abandonnée (« Recommencer ») s'en vont ; une partie trop longue garde la dernière photo de chaque âge
-  function nettoyerFrise() {
-    var id = partieId();
+  function supprimerPhotos(partie) {
+    if (!FRISE.db) return;
     try {
       var st = FRISE.db.transaction('photos', 'readwrite').objectStore('photos');
-      st.openCursor().onsuccess = function (ev) { var c = ev.target.result; if (!c) return; if (c.value.partie !== id) c.delete(); c.continue(); };
+      st.index('partie').openCursor(IDBKeyRange.only(partie)).onsuccess = function (ev) { var c = ev.target.result; if (c) { c.delete(); c.continue(); } };
+    } catch (e) {}
+  }
+  // les photos d'une partie qui n'est plus une ville s'en vont ; une partie trop longue garde la dernière photo de chaque âge
+  function nettoyerFrise() {
+    var id = partieId(), gardees = {};
+    gardees[id] = true;
+    listeVilles().liste.forEach(function (v) { if (v.partie) gardees[v.partie] = true; });
+    try {
+      var st = FRISE.db.transaction('photos', 'readwrite').objectStore('photos');
+      st.openCursor().onsuccess = function (ev) { var c = ev.target.result; if (!c) return; if (!gardees[c.value.partie]) c.delete(); c.continue(); };
     } catch (e) {}
     photosDeLaPartie(function (l) {
       FRISE.n = l.length;
@@ -2930,7 +3129,7 @@
     var ph = M.phase(monde);
     if (ph === 'jour' && FRISE.phase && FRISE.phase !== 'jour') FRISE.photoA = T + 5;
     FRISE.phase = ph;
-    if (FRISE.photoA != null && T >= FRISE.photoA && !enScene) { FRISE.photoA = null; photographier(); }
+    if (FRISE.photoA != null && T >= FRISE.photoA && !enScene && !accueilOuvert && villeEnCours()) { FRISE.photoA = null; photographier(); }
   }
 
   // la journée d'un habitant, à l'époque de la photo, avec ce que le jeu sait de lui (son travail, sa maison)
@@ -3521,7 +3720,8 @@
     var dt = Math.min(0.1, (now - avant) / 1000);
     avant = now;
     T += dt;
-    var simu = ludiPause ? 0 : dt * VITESSE;
+    var simu = ludiPause || accueilOuvert ? 0 : dt * VITESSE;
+    if (!ludiPause && !accueilOuvert && !document.hidden) { var vc = villeEnCours(); if (vc) vc.ms += dt * 1000; }
     while (simu > 0) { var d = Math.min(0.1, simu); M.pas(monde, d); simu -= d; }
     traiterEvenements();
     dessiner(dt);
@@ -3537,7 +3737,7 @@
 
   // pour les tests automatiques
   setTimeout(panneauBac, 500);
-  window.__jeu = { musique: function () { return { piste: MUS.piste, lecteurs: MUS.lecteurs.length, joue: MUS.actif ? !MUS.actif.paused : false, vol: MUS.actif ? MUS.actif.volume : 0 }; }, photo: function () { photographier(); }, frise: FRISE, pirogues: function () { return pirogues; }, journee: journee, montrerDisparus: function (l) { montrerDisparus(l); }, ombreDe: function (k) { try { return ombreDe(IMG[k]); } catch (e) { return String(e); } }, IMG: IMG, routesCfg: routesCfg, monde: function () { return monde; }, fleches: function () { return fleches; }, cadeaux: function () { return cadeaux; }, voitures: function () { return voitures; }, train: function () { var pts = cheminTrain(); return Object.assign({ pos: pts ? pointTrain(pts, train.s) : null }, train); }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; }, centrerSur: centrerSur, padTir: padTir };
+  window.__jeu = { son: function () { return Object.assign({}, SON); }, dire: function (x) { dire(x); }, villes: { accueil: function () { ouvrirAccueil(); }, liste: function () { return listeVilles(); }, ouvrir: ouvrirVille, nouvelle: nouvelleVille, jeter: jeterVille, paquet: function () { return paquetLudi(); } }, musique: function () { return { piste: MUS.piste, lecteurs: MUS.lecteurs.length, joue: MUS.actif ? !MUS.actif.paused : false, vol: MUS.actif ? MUS.actif.volume : 0 }; }, photo: function () { photographier(); }, frise: FRISE, pirogues: function () { return pirogues; }, journee: journee, montrerDisparus: function (l) { montrerDisparus(l); }, ombreDe: function (k) { try { return ombreDe(IMG[k]); } catch (e) { return String(e); } }, IMG: IMG, routesCfg: routesCfg, monde: function () { return monde; }, fleches: function () { return fleches; }, cadeaux: function () { return cadeaux; }, voitures: function () { return voitures; }, train: function () { var pts = cheminTrain(); return Object.assign({ pos: pts ? pointTrain(pts, train.s) : null }, train); }, M: M, E: E, V: V, toucher: function (x, y) { toucher(x, y); }, choisir: choisir, ouvrirDecouvertes: ouvrirDecouvertes, faireDecouverte: faireDecouverte, cinematique: cinematique, infoBatiment: infoBatiment, ouvrirPage: ouvrirPage, avion: function () { var b = aerodrome(); return b && avion.etat === "vol" ? posAvion(b) : null; }, centrerSur: centrerSur, padTir: padTir };
 
   ouvrirBaseFrise();
   chargerImages(function () {
@@ -3585,7 +3785,15 @@
       }
     }
     majFini(); // une partie déjà finie : la marque « Fini », et Ludiworld le sait
-    if (nouvellePartie && !params.has('test')) montrerEpoque();
+    var direct = false;
+    try { direct = sessionStorage.getItem('feu-direct') === '1'; sessionStorage.removeItem('feu-direct'); } catch (e) {}
+    if (!direct && !params.has('test') && !params.has('neuf')) ouvrirAccueil();
+    else {
+      // sans accueil (tests, ?neuf) : le monde affiché devient une ville s'il n'en est pas une
+      var lv = listeVilles();
+      if (!villeEnCours() && Villes.peutCreer(lv.liste)) { var nv = Villes.nouvelle(lv.liste, Date.now()); lv.liste.push(nv); lv.active = nv.id; ecrireVilles(); }
+      if (nouvellePartie && !params.has('test')) montrerEpoque();
+    }
     ludiProgression();
     requestAnimationFrame(function (t) { avant = t; boucle(t); });
   });

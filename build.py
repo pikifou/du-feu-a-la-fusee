@@ -106,6 +106,12 @@ def assets() -> dict:
         im = Image.open(f).convert("RGB")
         im.thumbnail((1600, 1600), Image.LANCZOS)
         res[f"histoire/{f.stem}"] = webp(im, 80)
+    # le logo du jeu (ADR-064), en français ; l'anglais reste dans assets/logo pour les fiches et les boutiques
+    f = RACINE / "assets" / "logo" / "ma-petite-civilisation.png"
+    if f.exists():
+        im = Image.open(f).convert("RGBA")
+        im.thumbnail((1100, 1100), Image.LANCZOS)
+        res["logo/fr"] = webp(im, 88)
     # vignettes illustrées des fiches (ADR-017), avec leur propre fond
     for f in sorted((SPRITES / "vignettes").glob("*.jpg")):
         im = Image.open(f).convert("RGB")
@@ -138,7 +144,7 @@ def construire(sortie: Path) -> None:
     gabarit = (RACINE / "src" / "index.html").read_text(encoding="utf-8")
     scripts = "".join(
         (RACINE / "src" / n).read_text(encoding="utf-8") + "\n"
-        for n in ["data.js", "terrain.js", "monde.js", "routes.js", "jeu.js"]
+        for n in ["data.js", "terrain.js", "monde.js", "villes.js", "routes.js", "jeu.js"]
     )
     a = assets()
     gabarit = gabarit.replace("<!--PWA-->\n", "")
@@ -185,8 +191,8 @@ def pwa(dossier: Path) -> None:
             '<meta name="apple-mobile-web-app-capable" content="yes">\n'
             '<meta name="mobile-web-app-capable" content="yes">\n'
             '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n'
-            '<meta name="apple-mobile-web-app-title" content="Feu à la Fusée">\n')
-    page = page.replace("<title>Du Feu à la Fusée</title>\n", "<title>Du Feu à la Fusée</title>\n" + tags)
+            '<meta name="apple-mobile-web-app-title" content="Ma Civilisation">\n')
+    page = page.replace("<title>Ma Petite Civilisation</title>\n", "<title>Ma Petite Civilisation</title>\n" + tags)
     # les petites vidéos de l'histoire : seulement dans la version installée (le fichier unique montre l'image)
     page = page.replace("window.CINE = {};", "window.CINE = " + json.dumps({n: f"cine/{n}.mp4" for n in CINES}) + ";", 1)
     # une musique par âge (ADR-058) : à côté de la page, comme les vidéos
@@ -203,7 +209,7 @@ def pwa(dossier: Path) -> None:
     for t in (192, 512):
         icone(t).save(dossier / f"icone-{t}.png")
     manifest = {
-        "name": "Du Feu à la Fusée", "short_name": "Feu à la Fusée", "lang": "fr",
+        "name": "Ma Petite Civilisation", "short_name": "Ma Civilisation", "lang": "fr",
         "start_url": "./", "scope": "./", "display": "fullscreen", "orientation": "landscape",
         "background_color": "#e9dcc4", "theme_color": "#e9dcc4",
         "icons": [{"src": f"icone-{t}.png", "sizes": f"{t}x{t}", "type": "image/png", "purpose": "any"} for t in (192, 512)],

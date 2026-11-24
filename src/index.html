@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#e9dcc4">
-<title>Du Feu à la Fusée</title>
+<title>Ma Petite Civilisation</title>
 <!--PWA-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&display=swap">
@@ -109,6 +109,47 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #frise-ages { position: absolute; left: 0; right: 0; bottom: 0; height: 28px; margin: 0 9px; }
 #frise-scene[hidden], #frise-bas[hidden], #frise-bulle[hidden] { display: none; }
 #frise-ages .age { position: absolute; transform: translateX(-50%); border: 0; background: var(--carte); border-radius: 50%; width: 28px; height: 28px; font-size: 15px; padding: 0; box-shadow: 0 2px 0 rgba(0,0,0,.3); }
+/* ---- l'accueil (ADR-063) : la peinture du début, le titre, les villes en bas ---- */
+#accueil { position: fixed; inset: 0; z-index: 60; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;
+  padding: max(18px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) max(14px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+  background: #3b2a18 center / cover no-repeat; }
+#accueil[hidden] { display: none; }
+#accueil::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(20, 16, 40, .25) 0%, rgba(20, 16, 40, 0) 28%, rgba(20, 16, 40, 0) 60%, rgba(20, 14, 10, .35) 100%); }
+#accueil > * { position: relative; }
+#accueil-titre { margin: 4px 0 0; text-align: center; font-family: 'Lilita One', 'Fredoka', sans-serif; font-weight: 400; color: #fff8ea;
+  font-size: clamp(34px, 6.4vw, 72px); line-height: 1; letter-spacing: .5px; text-shadow: 0 4px 0 #8a4a1c, 0 10px 26px rgba(0, 0, 0, .45);
+  animation: titre-arrive .9s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes titre-arrive { from { transform: translateY(-40px) scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+#accueil-logo { display: block; margin: 0 auto; width: min(58vw, 660px); max-height: 34vh; object-fit: contain; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .4)); }
+/* les villes en bas à droite, sur le décor calme : la famille et la ville restent visibles (ADR-064) */
+#accueil-bas { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+#accueil-villes { display: flex; gap: 12px; align-items: stretch; justify-content: flex-start; max-width: 100%; overflow-x: auto; padding: 14px 4px 6px; scrollbar-width: none; }
+#accueil-villes > * { animation: ville-arrive .5s cubic-bezier(.2, 1.3, .4, 1) both; }
+#accueil-villes > *:nth-child(2) { animation-delay: .08s; } #accueil-villes > *:nth-child(3) { animation-delay: .16s; }
+#accueil-villes > *:nth-child(4) { animation-delay: .24s; } #accueil-villes > *:nth-child(5) { animation-delay: .32s; } #accueil-villes > *:nth-child(6) { animation-delay: .4s; }
+@keyframes ville-arrive { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ville-case { position: relative; flex: 0 0 auto; }
+.ville { width: clamp(118px, 15vw, 168px); border: 0; padding: 0; cursor: pointer; font: inherit; color: var(--encre); text-align: left;
+  background: var(--carte); border-radius: 18px 18px 18px 6px; overflow: hidden; box-shadow: var(--ombre); display: flex; flex-direction: column; height: 100%; }
+.ville:active { transform: translateY(3px); }
+.ville.en-cours { outline: 4px solid var(--orange); outline-offset: -4px; }
+.ville img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #efe2c8; }
+.ville .nom { font-family: 'Lilita One', 'Fredoka', sans-serif; font-size: 19px; padding: 6px 10px 0; }
+.ville .age { font-size: 14px; font-weight: 600; color: var(--encre-douce); padding: 0 10px; line-height: 1.15; }
+.ville .temps { font-size: 14px; font-weight: 700; padding: 2px 10px 9px; font-variant-numeric: tabular-nums; }
+#accueil-nouvelle { width: clamp(118px, 15vw, 168px); border: 3px dashed #fff8ea; border-radius: 6px 18px 18px 18px; background: rgba(233, 135, 59, .9);
+  color: #fff; font: inherit; font-size: 19px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px; }
+#accueil-nouvelle .plus { font-size: 44px; line-height: 1; }
+#accueil-nouvelle:disabled { background: rgba(120, 100, 80, .75); color: #e9dcc4; border-color: #e9dcc4; cursor: default; }
+.ville-jeter { position: absolute; top: -10px; right: -8px; border: 0; border-radius: 999px; background: #fff; color: #8a2f12; font: inherit; font-size: 15px; font-weight: 700;
+  min-width: 40px; height: 40px; padding: 0 10px; box-shadow: 0 3px 0 rgba(0, 0, 0, .25); cursor: pointer; }
+.ville-jeter.sur { background: #b3401b; color: #fff; }
+#accueil-plein { margin: 0; background: var(--carte); color: var(--encre); border-radius: 999px; padding: 6px 16px; font-size: 16px; font-weight: 600; box-shadow: var(--ombre); }
+#accueil-plein[hidden] { display: none; }
+.ludi #accueil { padding-top: 54px; }
+@media (max-height: 460px) { #accueil-logo { max-height: 30vh; } .ville .nom { font-size: 16px; } .ville .age, .ville .temps { font-size: 12px; } #accueil-villes { padding-top: 10px; } }
+@media (prefers-reduced-motion: reduce) { #accueil-titre, #accueil-villes > * { animation: none; } }
 #disparus .fenetre { max-width: 900px; }
 #grille-disparus { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0 14px; max-height: 56vh; overflow-y: auto; }
 .disparu { background: var(--carte-2); border-radius: 18px; padding: 8px 10px 10px; text-align: center; border: 3px solid transparent; cursor: pointer; }
@@ -506,10 +547,11 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   <h2>Pause</h2>
   <button class="petit-bouton" id="menu-voix">🔊 Voix : oui</button><br>
   <button class="petit-bouton" id="menu-musique">🎵 Musique : oui</button><br>
+  <button class="petit-bouton" id="menu-bruitages">🔔 Bruitages : oui</button><br>
   <button class="petit-bouton" id="menu-plein">⛶ Plein écran</button><br>
   <button class="petit-bouton" id="menu-installer" hidden>📲 Installer l'appli</button>
   <p id="menu-ios" hidden style="font-size:15px;color:var(--encre-douce);margin:6px 0">Sur iPhone et iPad : bouton Partager, puis « Sur l'écran d'accueil ».</p>
-  <button class="petit-bouton" id="menu-recommencer">↺ Recommencer la partie</button>
+  <button class="petit-bouton" id="menu-accueil">🏠 Accueil</button>
 </div></div>
 
 <div id="tourner">
@@ -518,6 +560,13 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   <button class="gros-bouton" id="tourner-plein">⛶ Plein écran</button>
 </div>
 
+<div id="accueil" hidden>
+  <h1 id="accueil-titre"><img id="accueil-logo" alt="Ma Petite Civilisation"></h1>
+  <div id="accueil-bas">
+    <div id="accueil-villes"></div>
+    <p id="accueil-plein" hidden>Tu as déjà 5 villes. Jette-en une pour en commencer une nouvelle.</p>
+  </div>
+</div>
 <div id="cine" hidden>
   <video playsinline muted preload="auto"></video>
   <img alt="">
