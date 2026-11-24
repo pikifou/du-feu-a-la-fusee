@@ -88,3 +88,10 @@ La Tour aux Aimants et Chasseur de Dragons tournent sur la même recette, éprou
 - **Villes jetées** : leur `partie` est retenue dans `feu-fusee-villes.jetees` (vingt au plus) et voyage dans le paquet Ludiworld ; `Villes.fusionner` ne les fait pas revenir, d'un côté comme de l'autre, sauf celle que l'autre appareil est en train de jouer.
 - **Sans `DecompressionStream`** (iPad resté en iOS 15) : `Villes.decompresser` décompresse en JavaScript (deflate brut, d'après puff de zlib).
 - **`?neuf`** (outil de développement) range d'abord la ville en cours et fait du monde neuf une nouvelle ville ; il est ignoré au rechargement qui suit le choix d'une ville. Sans ville choisie, rien ne remonte à Ludiworld (époque, découvertes, « fini ») sur le monde affiché derrière l'accueil. L'accueil ne lit que la dernière photo de chaque ville (curseur à rebours). Pendant un changement de ville, les cartes ne répondent plus.
+
+## Les réactions (ADR-066, juiciness)
+- `reagir(cle)` note l'instant (`T`) ; au dessin, `reaction(cle, durée)` rend l'avancement de 0 à 1, ou -1 quand c'est fini ; `rebond(a, force)` donne le facteur de largeur (la hauteur prend `2 - k`). Clés : `b<id>` (bâtiment touché), `pose<id>` (bâtiment posé : chute puis rebond, dans `dessinerBat`, qui enveloppe `dessinerBat0`), `a<id>` (animal), `h<id>` (habitant, posé par `parler`), `t<i>,<j>` (arbre ou rocher), `zones` (zones claires après une case interdite).
+- La récolte : `eclater` (étincelles) ; `enVol` retient ce qui vole encore vers un compteur, `majCompteurs` l'enlève jusqu'à l'arrivée (0,7 s).
+- La fiche pendant la pose : classe `pose` sur `#info` (posée par `choisir`, enlevée par `montrerInfo`) ; `#info-prix` ne se montre qu'en `@media (max-height: 480px)`.
+- Pour les tests : `window.__jeu.bulles()`, `reactions()`, `parts()`. Test : `python tests/juiciness.py [partie.json]` (port 7387).
+

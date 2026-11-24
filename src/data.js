@@ -1866,6 +1866,7 @@ var Donnees = (function () {
     grotte: ['nature/grotte', 'La grotte', "Les premiers humains s'y abritaient. C'est près d'elle qu'on trouve le silex, et qu'on peint sur la roche."],
     mammouth: ['01-pierre/mammouth', 'Le mammouth', "Un éléphant géant couvert de longs poils, qui vivait quand il faisait très froid. Les chasseurs le suivaient pour sa viande, sa fourrure et ses os."],
     chevre: ['02-neolithique/chevre', 'Une chèvre', "Les premiers paysans ont apprivoisé les chèvres : elles donnent du lait et de la laine."],
+    mouton: ['faune/mouton', 'Un mouton', "Le mouton donne sa laine : on la file, puis on la tisse pour faire des vêtements chauds."],
     gue: ['nature/galets', 'Le gué', "Ici, la rivière est peu profonde : on traverse en marchant sur les pierres."],
     sentier: ['nature/touffe', 'Un sentier', "À force de passer toujours au même endroit, les habitants ont usé l'herbe. Plus tard, on en fera de vraies routes !"],
     cheval: ['faune/cheval', 'Un cheval', "Au Moyen Âge, les chevaux tirent les charrettes et les charrues. Le maréchal-ferrant leur met des fers aux sabots pour ne pas les abîmer."],

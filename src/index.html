@@ -307,6 +307,15 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #info img { width: 70px; height: 62px; object-fit: contain; flex: 0 0 auto; }
 #info .info-corps { flex: 1; min-width: 0; }
 #info-titre { font-size: 17px; font-weight: 700; }
+#info-prix { display: none; font-size: 16px; font-weight: 700; white-space: nowrap; }
+/* sur téléphone, pendant qu'on pose un bâtiment : la fiche tient sur une ligne (le nom, le prix, la croix) (ADR-066) */
+@media (max-height: 480px) {
+  #info.pose { align-items: center; padding: 6px 8px 6px 14px; width: auto; max-width: calc(100vw - 28px); }
+  #info.pose #info-img, #info.pose #info-texte, #info.pose #info-statut, #info.pose .info-actions, #info.pose #info-vignettes, #info.pose #info-voix { display: none; }
+  #info.pose .info-corps { display: flex; gap: 14px; align-items: center; }
+  #info.pose #info-titre { font-size: 16px; }
+  #info.pose #info-prix { display: block; }
+}
 #info-texte { font-size: 15px; line-height: 1.35; margin-top: 2px; }
 #info-statut { font-size: 14px; font-weight: 600; color: var(--orange-fonce); margin-top: 5px; }
 #info .info-boutons { display: flex; flex-direction: column; gap: 6px; }
@@ -427,7 +436,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 .dec.faite { cursor: pointer; }
 #scene-illu { width: 100%; max-height: 42vh; object-fit: cover; border-radius: 18px; margin: 4px 0 8px; display: block; }
 
-#vole { position: fixed; pointer-events: none; font-size: 22px; font-weight: 700; z-index: 50; transition: transform .7s cubic-bezier(.5,-0.3,.7,1), opacity .7s; }
+#vole { position: fixed; pointer-events: none; font-size: 32px; font-weight: 700; z-index: 50; color: #fff; text-shadow: 0 2px 0 rgba(90,50,20,.55), 0 0 6px rgba(90,50,20,.35); transition: transform .7s cubic-bezier(.5,-0.3,.7,1), opacity .7s; }
 #menu .fenetre { max-width: 400px; text-align: center; }
 .petit-bouton { border: 0; background: var(--carte-2); color: var(--encre); font-family: inherit; font-size: 17px; font-weight: 600;
   padding: 10px 20px; border-radius: 999px; margin: 8px; cursor: pointer; }
@@ -459,6 +468,7 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   <img id="info-img" alt="">
   <div class="info-corps">
     <div id="info-titre"></div>
+    <div id="info-prix"></div>
     <div id="info-texte"></div>
     <div id="info-statut"></div>
     <div class="info-actions"><button id="info-plus" hidden>📖 En savoir plus</button><button id="info-ameliorer" hidden></button></div>

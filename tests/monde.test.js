@@ -1322,3 +1322,13 @@ test("au changement d'âge, les bâtiments dépassés ne se construisent plus, e
   assert.ok(ev.liste.every(k => D.batiments[k].disparait.epoque === 3));
 });
 
+
+// Toucher un animal ouvre sa fiche (ADR-015) : chaque espèce que le monde fait naître a son texte (le mouton n'en avait pas : la fiche plantait).
+test('chaque animal du monde a sa fiche quand on le touche', () => {
+  const fs = require('fs'), path = require('path');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'monde.js'), 'utf8');
+  const especes = [...new Set([...src.matchAll(/espece: '([a-z]+)'/g)].map((m) => m[1]))];
+  const D = require('../src/data.js');
+  assert.ok(especes.length >= 5, especes.join(' '));
+  especes.forEach((e) => assert.ok(D.textes.nature[e], 'pas de fiche pour : ' + e));
+});

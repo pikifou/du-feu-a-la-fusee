@@ -422,3 +422,16 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Décision** : (1) L'accueil a pour fond l'écran C du tour 60 : la famille de l'âge de pierre autour du feu, au crépuscule, regarde une fusée partir d'une ville lointaine. (2) Le nom du jeu est le logo 2 du tour 60, « flamme et fusée » : « Ma Petite Civilisation » en français, « My Little Civilization » en anglais. (3) Les cartes des villes et « Nouvelle ville » s'alignent en bas à droite, sur le décor qui n'est pas intéressant, pour ne cacher ni les personnages ni la ville. (4) Publier tout de suite : l'accueil, les villes, le nom et le son (ADR-062, ADR-063).
 - **Contexte** : tour 60 (`factory/direction-artistique/tour60-feu-lancement/`), trois écrans et deux logos posés dans le vrai accueil. Julien : « clairement, c'est C avec le logo 2, mais ce qui serait bien, c'est : quand tu mets « Nouvelle ville » et que tu mets les villes, tu commences par aligner tout en bas à droite. […] Ça évite de cacher les personnages et la ville, et on a toute la place qui est prise par ce qui est intéressant. Du coup, tu peux implémenter ça et pousser directement. Pour moi, on est bon. »
 - **Écarté** : l'écran A (la vallée des âges) et B (l'île du temps) ; le logo 1 (les âges dans les lettres).
+
+## ADR-065 : le jeu est à l'étape 5, la juiciness
+- **Date** : 2026-11-24
+- **Statut** : décidée par Julien
+- **Décision** : Le jeu, fait avant les six étapes (`factory/jeux/LISEZ-MOI.md`), est situé à l'étape 5, la juiciness. Les étapes 1 à 4 sont faites et validées : la boucle, la direction artistique, les sept âges produits avec une musique par âge (ADR-060, ADR-061). La release est déjà faite (le jeu est en ligne, sa fiche publiée) : une fois la juiciness validée, le premier cycle est achevé. On fait la passe de juiciness : Claude joue le jeu geste par geste, liste ce qui répond trop peu ; Julien choisit.
+- **Contexte** : Claude proposait l'étape 5, ou « premier cycle achevé » si Julien trouvait déjà le jeu vivant partout. Julien : « faisons une étape de juiciness. »
+
+
+## ADR-066 : la passe de juiciness, les sept points
+- **Date** : 2026-11-24
+- **Statut** : décidée par Julien
+- **Décision** : Les sept points relevés par Claude sont à faire (journal de la session 10, « La juiciness ») : (1) toucher un bâtiment, un animal, un arbre : un petit rebond et un « toc » doux, le lapin bondit, la chèvre et le mouton secouent la tête ; (2) toucher un habitant : il fait un petit saut et se tourne vers nous ; (3) la récolte : la bulle éclate en étincelles, le « +3 » vole plus gros, le compteur monte quand il arrive ; (4) poser un bâtiment : il tombe à sa place et rebondit, avec un vrai nuage de poussière ; (5) une case interdite : les zones claires battent deux fois ; (6) sur téléphone, pendant qu'on pose, la fiche se réduit à une ligne ; (7) le bouton ⚙️ fait le petit son des autres boutons. Code seulement.
+- **Contexte** : ADR-065. Julien : « okay, this is good. Tu peux tout faire. »

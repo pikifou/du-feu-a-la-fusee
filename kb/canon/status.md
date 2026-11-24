@@ -3,10 +3,12 @@ title: État courant
 domain: canon
 type: doc
 status: active
-updated: 2026-11-23
+updated: 2026-11-24
 ---
 
 # Où on en est (25/10/2026)
+
+- **Étape** : 5, la juiciness (ADR-065 ; les six étapes : `factory/jeux/LISEZ-MOI.md`). Ce qui reste pour la valider : que Julien choisisse dans la liste des gestes qui répondent trop peu, qu'ils soient faits, et qu'il trouve le jeu vivant partout. La release est déjà faite : ensuite, le premier cycle est achevé.
 
 **Phase** : préproduction.
 
