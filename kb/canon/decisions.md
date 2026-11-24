@@ -435,3 +435,10 @@ Append-only. Une décision n'est jamais réécrite : si elle change, une nouvell
 - **Statut** : décidée par Julien
 - **Décision** : Les sept points relevés par Claude sont à faire (journal de la session 10, « La juiciness ») : (1) toucher un bâtiment, un animal, un arbre : un petit rebond et un « toc » doux, le lapin bondit, la chèvre et le mouton secouent la tête ; (2) toucher un habitant : il fait un petit saut et se tourne vers nous ; (3) la récolte : la bulle éclate en étincelles, le « +3 » vole plus gros, le compteur monte quand il arrive ; (4) poser un bâtiment : il tombe à sa place et rebondit, avec un vrai nuage de poussière ; (5) une case interdite : les zones claires battent deux fois ; (6) sur téléphone, pendant qu'on pose, la fiche se réduit à une ligne ; (7) le bouton ⚙️ fait le petit son des autres boutons. Code seulement.
 - **Contexte** : ADR-065. Julien : « okay, this is good. Tu peux tout faire. »
+
+## ADR-067 : la juiciness est validée, le premier cycle est achevé
+- **Date** : 2026-11-24
+- **Statut** : décidée par Julien
+- **Décision** : L'étape 5, la juiciness, est validée (ADR-066 essayée). Le jeu est publié : c'est sa release (étape 6, sans validation à part, décision de la plateforme du 23 novembre). Le premier cycle du jeu est achevé.
+- **Contexte** : Julien, après avoir essayé : « on est bons. tu peux pousser et release ».
+

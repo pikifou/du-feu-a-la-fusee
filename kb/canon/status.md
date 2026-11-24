@@ -8,7 +8,7 @@ updated: 2026-11-24
 
 # Où on en est (25/10/2026)
 
-- **Étape** : 5, la juiciness (ADR-065 ; les six étapes : `factory/jeux/LISEZ-MOI.md`). Ce qui reste pour la valider : que Julien choisisse dans la liste des gestes qui répondent trop peu, qu'ils soient faits, et qu'il trouve le jeu vivant partout. La release est déjà faite : ensuite, le premier cycle est achevé.
+- **Étape** : premier cycle achevé (ADR-067, 24/11/2026 ; les six étapes : `factory/jeux/LISEZ-MOI.md`). La juiciness validée, le jeu publié.
 
 **Phase** : préproduction.
 
@@ -40,7 +40,7 @@ updated: 2026-11-24
 - Le game design (`domains/game-design/gd.md`) reste le document de Claude ; ce qui est dans le jeu a été validé au fil des ADR.
 
 ## Prochaine étape
-- **Publié le 24/11/2026** (ADR-064) : la page d'accueil avec l'écran de lancement « du feu à la fusée » et le logo « Ma Petite Civilisation », les villes en bas à droite, jusqu'à cinq villes (ADR-063), le nom (ADR-062), le son réglé par Ludiworld (kit 0.5).
+- **Publié le 24/11/2026** : la passe de juiciness (ADR-066, ADR-067) ; avant, le même jour (ADR-064) : la page d'accueil avec l'écran de lancement « du feu à la fusée » et le logo « Ma Petite Civilisation », les villes en bas à droite, jusqu'à cinq villes (ADR-063), le nom (ADR-062), le son réglé par Ludiworld (kit 0.5).
 
 ## Mesures (joueur automatique)
 - v0.6, joueur qui appuie sur le coq dès que tout le monde dort : âge de pierre ~9 min, néolithique ~8 min (même pour un joueur qui ne récolte que toutes les 20 s). Le rythme est donné par les idées du sage et par les nuits. La cible du GD est 10 à 15 min par époque : à juger avec Joshua.
