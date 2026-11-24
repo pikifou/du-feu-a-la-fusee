@@ -50,7 +50,10 @@
       try { window.Ludi.save(paquetLudi()); } catch (e) {}
     }
   }
-  var monde = params.has('neuf') ? null : charger();
+  // ?neuf (outil de développement) : un monde neuf ; mais pas au rechargement qui suit le choix d'une ville
+  var NEUF = params.has('neuf');
+  try { if (sessionStorage.getItem('feu-direct') === '1') NEUF = false; } catch (e) {}
+  var monde = NEUF ? null : charger();
   var nouvellePartie = !monde;
   if (!monde) monde = M.nouveau((Date.now() % 100000) + 1);
 
@@ -79,6 +82,22 @@
     return VL;
   }
   function villeEnCours() { var l = listeVilles(); return l.liste.filter(function (v) { return v.id === l.active; })[0] || null; }
+  // ?neuf (outil de développement) : la ville en cours est d'abord rangée avec les autres, le monde neuf sera une nouvelle ville
+  if (NEUF) (function () {
+    var o = null, l = null;
+    try { o = JSON.parse(lireLS(CLE) || 'null'); } catch (e) {}
+    if (!o || !o.monde || !o.monde.terrain) return;
+    try { l = JSON.parse(lireLS(CLE_VILLES) || 'null'); } catch (e) {}
+    if (!l || !Array.isArray(l.liste)) l = { active: null, liste: [] };
+    var v = l.liste.filter(function (x) { return x.id === l.active; })[0];
+    if (!v && l.liste.length) return; // le monde derrière l'accueil n'était à personne
+    var m = M.importer(o.monde);
+    if (!m.partie) m.partie = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    if (!v) { v = Villes.nouvelle([], Date.now()); v.epoque = m.epoque; v.ms = Math.round((m.t || 0) * 1000); l.liste.push(v); }
+    v.partie = m.partie;
+    if (!ecrireLS(CLE_VILLE + v.id, JSON.stringify({ v: 2, monde: M.exporterLeger(m), ui: o.ui || {} }))) { figee = true; return; }
+    l.active = null; VL = l; ecrireVilles();
+  })();
   // ce que Ludiworld garde : la ville en cours, la liste, et les autres villes si toutes sont compressées et que ça tient
   function paquetLudi() {
     var l = listeVilles(), autres = {}, toutes = true;
@@ -87,7 +106,7 @@
       var z = lireLS(CLE_VILLE + v.id);
       if (z && z.charAt(0) !== '{') autres[v.id] = z; else toutes = false;
     });
-    return Villes.paquet({ active: l.active, liste: l.liste, monde: M.exporterLeger(monde), ui: ui, autres: toutes ? autres : undefined });
+    return Villes.paquet({ active: l.active, liste: l.liste, monde: M.exporterLeger(monde), ui: ui, autres: toutes ? autres : undefined, jetees: l.jetees });
   }
   function rangerVilleEnCours() {
     var v = villeEnCours();
@@ -115,7 +134,7 @@
       var o = JSON.parse(s), m = M.developper(o.monde);
       if (!m) throw new Error('ville ' + id + ' illisible');
       var avant = JSON.stringify(l);
-      if (!ecrireLS(CLE_VILLES, JSON.stringify({ active: id, liste: l.liste }))) throw new Error('la liste ne s\'écrit pas');
+      if (!ecrireLS(CLE_VILLES, JSON.stringify({ active: id, liste: l.liste, jetees: l.jetees }))) throw new Error('la liste ne s\'écrit pas');
       figee = true;
       if (!ecrireLS(CLE, JSON.stringify({ v: 2, monde: m, ui: o.ui || {} }))) { ecrireLS(CLE_VILLES, avant); throw new Error('plus de place'); }
       l.active = id;
@@ -129,7 +148,7 @@
     return rangerVilleEnCours().then(function () {
       if (restauree) return;
       var n = Villes.nouvelle(l.liste, Date.now()), liste = l.liste.concat([n]);
-      if (!ecrireLS(CLE_VILLES, JSON.stringify({ active: n.id, liste: liste }))) throw new Error('la liste ne s\'écrit pas');
+      if (!ecrireLS(CLE_VILLES, JSON.stringify({ active: n.id, liste: liste, jetees: l.jetees }))) throw new Error('la liste ne s\'écrit pas');
       l.liste = liste; l.active = n.id;
       figee = true; ecrireLS(CLE, null);
       rechargerDirect(); // la page repart sur une partie neuve, avec l'arrivée de la tribu
@@ -139,6 +158,7 @@
     var l = listeVilles(), v = l.liste.filter(function (x) { return x.id === id; })[0];
     if (!v || changeEnCours) return;
     l.liste = Villes.retirer(l.liste, id);
+    if (v.partie) l.jetees = (l.jetees || []).filter(function (p) { return p !== v.partie; }).concat([v.partie]).slice(-20);
     ecrireLS(CLE_VILLE + id, null);
     if (v.partie) supprimerPhotos(v.partie);
     if (l.active === id) l.active = null;
@@ -156,7 +176,7 @@
   // le bouton « ← Ludiworld » occupe le coin haut gauche : les compteurs se décalent (CSS .ludi)
   if (DANS_LUDI) document.documentElement.classList.add('ludi');
   function ludiProgression() {
-    if (!LUDI) return;
+    if (!LUDI || !villeEnCours()) return; // le monde derrière l'accueil, sans ville choisie, n'est à personne
     LUDI.progress('epoque', monde.epoque);
     LUDI.progress('decouvertes', Object.keys(monde.decouvertes).length);
   }
@@ -191,7 +211,7 @@
       delete cles[r.active];
       f.restes.forEach(function (v) { if (anciennes[v.id]) ecrireLS('feu-fusee-ville-reste-' + (v.partie || v.id), anciennes[v.id]); });
       Object.keys(cles).forEach(function (k) { ecrireLS(CLE_VILLE + k, cles[k]); });
-      VL = { active: r.active, liste: f.liste.filter(function (v) { return v.id === r.active || cles[v.id]; }) };
+      VL = { active: r.active, liste: f.liste.filter(function (v) { return v.id === r.active || cles[v.id]; }), jetees: f.jetees };
       if (!ecrireLS(CLE, JSON.stringify({ v: 2, monde: m, ui: r.ui }))) throw new Error('plus de place');
       ecrireVilles();
       ['A', 'B', 'C', 'D', 'E'].forEach(function (k) { if (!cles[k]) ecrireLS(CLE_VILLE + k, null); });
@@ -2620,7 +2640,7 @@
     if (f) ui.fini = true;
     $('marque-fini').hidden = !(f || ui.fini);
     $('marque-fini-mot').textContent = H.fini[LANGUE];
-    if (f && LUDI) LUDI.fini();
+    if (f && LUDI && villeEnCours()) LUDI.fini();
   }
   $('marque-fini').addEventListener('click', function () { son('clic'); cinematique(partieFinie() ? 'fin' : dernierPassage()); });
 
@@ -2941,11 +2961,11 @@
     img.src = repli;
     if (!FRISE.db || !v.partie) return;
     try {
-      var r = FRISE.db.transaction('photos').objectStore('photos').index('partie').getAll(v.partie);
+      var r = FRISE.db.transaction('photos').objectStore('photos').index('partie').openCursor(IDBKeyRange.only(v.partie), 'prev');
       r.onsuccess = function () {
-        var l = r.result || [];
-        if (!l.length) return;
-        var u = URL.createObjectURL(l[l.length - 1].img);
+        var c = r.result;
+        if (!c) return;
+        var u = URL.createObjectURL(c.value.img);
         img.onload = function () { URL.revokeObjectURL(u); };
         img.src = u;
       };
@@ -2970,6 +2990,7 @@
         var s = document.createElement('span'); s.className = x[0]; s.textContent = x[1]; b.appendChild(s);
       });
       b.addEventListener('click', function () {
+        if (changeEnCours) return; // la page va se recharger sur l'autre ville
         son('clic');
         if (v.id === l.active && !figee) fermerAccueil(); else ouvrirVille(v.id);
       });
@@ -3787,7 +3808,7 @@
     majFini(); // une partie déjà finie : la marque « Fini », et Ludiworld le sait
     var direct = false;
     try { direct = sessionStorage.getItem('feu-direct') === '1'; sessionStorage.removeItem('feu-direct'); } catch (e) {}
-    if (!direct && !params.has('test') && !params.has('neuf')) ouvrirAccueil();
+    if (!direct && !params.has('test') && !NEUF) ouvrirAccueil();
     else {
       // sans accueil (tests, ?neuf) : le monde affiché devient une ville s'il n'en est pas une
       var lv = listeVilles();

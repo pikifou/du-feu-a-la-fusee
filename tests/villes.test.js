@@ -54,7 +54,7 @@ test('une sauvegarde d\'avant les villes devient la Ville A, avec le temps déj�
 
 test('un paquet de villes se relit tel quel, et rien ne donne rien', () => {
   const p = { v: 3, active: 'B', liste: [v('A'), v('B')], monde: { epoque: 2 }, ui: {}, autres: { A: 'zz' } };
-  assert.deepStrictEqual(Villes.lire(p), { active: 'B', liste: p.liste, monde: p.monde, ui: p.ui, autres: p.autres });
+  assert.deepStrictEqual(Villes.lire(p), { active: 'B', liste: p.liste, monde: p.monde, ui: p.ui, autres: p.autres, jetees: [] });
   assert.strictEqual(Villes.lire(null), null);
   assert.strictEqual(Villes.lire({ v: 1 }), null);
 });
@@ -88,4 +88,53 @@ test('fusion : au-delà de cinq villes, celles de l\'appareil qui ne tiennent pa
   const f = Villes.fusionner({ active: 'A', liste: [vp('A', 'p6')] }, { active: 'A', liste: ['A', 'B', 'C', 'D', 'E'].map((x, i) => vp(x, 'p' + i)) });
   assert.strictEqual(f.liste.length, 5);
   assert.deepStrictEqual(f.restes.map((v) => v.partie), ['p6']);
+});
+
+// Six petits défauts (chantier accueil-et-villes, tâche « mineurs »), 1 : une ville jetée ne revient pas par une fusion.
+test('fusion : une ville jetée sur cet appareil ne revient pas avec la copie de l\'autre', () => {
+  const f = Villes.fusionner({ active: 'A', liste: [vp('A', 'p1')], jetees: ['p2'] }, { active: 'A', liste: [vp('A', 'p1'), vp('B', 'p2')] });
+  assert.deepStrictEqual(f.liste.map((v) => v.id), ['A']);
+  assert.deepStrictEqual(f.jetees, ['p2']);
+});
+test('fusion : une ville jetée sur l\'autre appareil s\'en va aussi de celui-ci', () => {
+  const f = Villes.fusionner({ active: 'A', liste: [vp('A', 'p1'), vp('B', 'p2')] }, { active: 'A', liste: [vp('A', 'p1')], jetees: ['p2'] });
+  assert.deepStrictEqual(f.liste.map((v) => v.id), ['A']);
+  assert.deepStrictEqual(f.places, []);
+  assert.deepStrictEqual(f.jetees, ['p2']);
+});
+test('fusion : la ville que l\'autre appareil est en train de jouer reste, même jetée ici', () => {
+  const f = Villes.fusionner({ active: 'A', liste: [vp('A', 'p1')], jetees: ['p2'] }, { active: 'B', liste: [vp('A', 'p1'), vp('B', 'p2')] });
+  assert.deepStrictEqual(f.liste.map((v) => v.id), ['A', 'B']);
+  assert.deepStrictEqual(f.jetees, []);
+});
+test('les villes jetées voyagent dans le paquet pour Ludiworld, vingt au plus', () => {
+  const j = Array.from({ length: 25 }, (_, i) => 'p' + i);
+  const p = Villes.paquet({ active: 'A', liste: [v('A')], monde: { x: 1 }, ui: {}, jetees: j });
+  assert.deepStrictEqual(p.jetees, j.slice(-20));
+  assert.deepStrictEqual(Villes.lire(p).jetees, j.slice(-20));
+  assert.deepStrictEqual(Villes.lire({ v: 2, monde: { epoque: 1, t: 0 }, ui: {} }).jetees, []);
+});
+
+// 2 : un navigateur sans DecompressionStream (iPad resté en iOS 15) ouvre quand même une ville compressée ailleurs.
+test('décompression sans DecompressionStream : blocs fixes, dynamiques et non compressés', async () => {
+  const zlib = require('zlib');
+  const textes = ['', 'a', 'Ville A, Ville A, Ville A !', JSON.stringify({ liste: Array.from({ length: 3000 }, (_, i) => ({ i, nom: 'maison ' + (i % 17) })) })];
+  const garde = global.DecompressionStream;
+  delete global.DecompressionStream;
+  try {
+    for (const t of textes) {
+      for (const niveau of [0, 1, 9]) {
+        const b64 = zlib.deflateRawSync(Buffer.from(t, 'utf8'), { level: niveau }).toString('base64');
+        assert.strictEqual(await Villes.decompresser(b64), t, 'niveau ' + niveau + ', ' + t.length + ' caractères');
+      }
+    }
+  } finally { global.DecompressionStream = garde; }
+});
+test('décompression sans DecompressionStream : une grande ville revient à l\'identique', { skip: !fs.existsSync(GRANDE) && 'partie de référence absente' }, async () => {
+  const o = JSON.parse(fs.readFileSync(GRANDE, 'utf8'));
+  const s = JSON.stringify({ v: 2, monde: M.exporterLeger(M.importer(o.monde)), ui: o.ui || {} });
+  const z = await Villes.compresser(s);
+  const garde = global.DecompressionStream;
+  delete global.DecompressionStream;
+  try { assert.strictEqual(await Villes.decompresser(z), s); } finally { global.DecompressionStream = garde; }
 });
